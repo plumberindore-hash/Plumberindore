@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminClient } from '../../../lib/supabase/admin.js';
 import { calculateServerPrice } from '../../../lib/pricing.js';
-import { sendEmail } from '../../../utils/resend.js';
+import { sendEmail, ADMIN_NOTIFICATION_RECIPIENTS, ADMIN_NOTIFICATION_EMAIL } from '../../../utils/brevo.js';
 
 /**
  * GET /api/bookings
@@ -265,148 +265,138 @@ export async function POST(request) {
       }
     }
 
-    // 4. Send Dedicated Admin & Customer Emails via Resend (Awaited)
-    const bookingNo = createdBookingRecord.booking_number || randomBookingNumber;
-    const recipientEmail = (email && email.includes('@')) ? email.trim() : null;
-
-    // Admin Dispatch HTML
-    const adminEmailSubject = `[🚨 NEW BOOKING] #${bookingNo} - ${primaryServiceName} (${name} | ${cleanedPhone})`;
-    const adminEmailHtml = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 620px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; color: #0f172a;">
-        <div style="background-color: #0f172a; padding: 20px; text-align: center; border-radius: 12px 12px 0 0;">
-          <h1 style="color: #fbbf24; margin: 0; font-size: 22px; font-weight: 800;">Plumber<span style="color: #ffffff;">Indore</span></h1>
-          <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 0 0;">New Doorstep Booking Alert</p>
-        </div>
-        <div style="padding: 24px 16px;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <span style="background-color: #fef3c7; color: #b45309; font-size: 13px; font-weight: 800; padding: 6px 16px; border-radius: 9999px; border: 1px solid #fde68a;">
-              ⚡ NEW ORDER #${bookingNo}
-            </span>
-            <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 12px 0 4px 0;">₹${totalAmount} • ${primaryServiceName}</h2>
-          </div>
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #f8fafc; border-radius: 12px; font-size: 13px;">
-            <tr>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b; width: 35%;">Customer Name:</td>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">${name}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Customer Phone:</td>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0284c7;">
-                <a href="tel:${cleanedPhone}" style="color: #0284c7; text-decoration: none;">${cleanedPhone} (Click to Call)</a>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Customer Email:</td>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${email || 'Not provided'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Service Booked:</td>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">${primaryServiceName} (${primaryPackageTitle})</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Scheduled Slot:</td>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #d97706;">${scheduledDate}, ${slot}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Service Address:</td>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${address} (Pincode: ${pincode || '452010'})</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Issue Notes:</td>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${description || 'Standard doorstep appointment'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 16px; font-weight: bold; color: #64748b;">Total Price:</td>
-              <td style="padding: 12px 16px; font-weight: 800; font-size: 16px; color: #059669;">₹${totalAmount} <span style="font-size: 11px; font-weight: normal; color: #64748b;">(Cash / UPI on Doorstep)</span></td>
-            </tr>
-          </table>
-          <div style="text-align: center; margin-top: 16px;">
-            <a href="https://www.plumberindore.in/admin/bookings" style="background-color: #0f172a; color: #ffffff; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 13px; display: inline-block;">
-              Open Admin Dispatch Console →
-            </a>
-          </div>
-        </div>
-      </div>
-    `;
-
-    // Customer Confirmation HTML
-    const customerEmailSubject = `[PlumberIndore Booking Confirmed] #${bookingNo} - ${primaryServiceName}`;
-    const customerEmailHtml = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 620px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; color: #0f172a;">
-        <div style="background-color: #0f172a; padding: 20px; text-align: center; border-radius: 12px 12px 0 0;">
-          <h1 style="color: #fbbf24; margin: 0; font-size: 22px; font-weight: 800;">Plumber<span style="color: #ffffff;">Indore</span></h1>
-          <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 0 0;">Doorstep Plumbing & Home Services</p>
-        </div>
-        <div style="padding: 24px 16px;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <span style="background-color: #ecfdf5; color: #047857; font-size: 12px; font-weight: 800; padding: 6px 14px; border-radius: 9999px; border: 1px solid #a7f3d0;">
-              ✓ BOOKING CONFIRMED (#${bookingNo})
-            </span>
-            <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 12px 0 4px 0;">Doorstep Technician Assigned!</h2>
-            <p style="font-size: 13px; color: #64748b; margin: 0;">Hello ${name}, your doorstep appointment has been confirmed.</p>
-          </div>
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #f8fafc; border-radius: 12px; font-size: 13px;">
-            <tr>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b; width: 35%;">Service(s):</td>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">${primaryServiceName} (${primaryPackageTitle})</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Scheduled Slot:</td>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #d97706;">${scheduledDate}, ${slot}</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Doorstep Address:</td>
-              <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${address} (${pincode || 'Indore'})</td>
-            </tr>
-            <tr>
-              <td style="padding: 12px 16px; font-weight: bold; color: #64748b;">Total Amount Due:</td>
-              <td style="padding: 12px 16px; font-weight: 800; font-size: 16px; color: #059669;">₹${totalAmount} <span style="font-size: 11px; font-weight: normal; color: #64748b;">(Pay on Doorstep Completion)</span></td>
-            </tr>
-          </table>
-          <div style="background-color: #fef3c7; border: 1px solid #fde68a; border-radius: 12px; padding: 14px; text-align: center; font-size: 12px; color: #92400e;">
-            <strong>Doorstep Guarantee:</strong> 45-Min Arrival • Transparent Fixed Rates • 30-Day Service Warranty
-          </div>
-        </div>
-      </div>
-    `;
-
+    // 4. Dispatch Email Notifications via Brevo (Non-blocking on error)
     let adminEmailResult = null;
     let customerEmailResult = null;
+    const bookingNo = createdBookingRecord.booking_number || randomBookingNumber;
+    const customerEmailAddress = (email || '').trim();
 
     try {
-      // 1. Send dedicated Admin Alert to BOTH plumberindore@gmail.com and patidaransh275@gmail.com
-      console.log(`[POST /api/bookings] Dispatching Admin Alert for #${bookingNo}...`);
+      // Admin Alert HTML
+      const adminEmailSubject = `[NEW PLUMBER BOOKING] #${bookingNo} - ${primaryServiceName} (${name.trim()})`;
+      const adminEmailHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 620px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; color: #0f172a;">
+          <div style="background-color: #0f172a; padding: 20px; text-align: center; border-radius: 12px 12px 0 0;">
+            <h1 style="color: #fbbf24; margin: 0; font-size: 22px; font-weight: 800;">Plumber<span style="color: #ffffff;">Indore</span></h1>
+            <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 0 0;">Real-time Doorstep Booking Alert</p>
+          </div>
+          <div style="padding: 24px 16px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <span style="background-color: #fef3c7; color: #92400e; font-size: 12px; font-weight: 800; padding: 6px 14px; border-radius: 9999px; border: 1px solid #fde68a;">
+                ⚡ NEW BOOKING RECEIVED (#${bookingNo})
+              </span>
+              <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 12px 0 4px 0;">New Appointment Created</h2>
+              <p style="font-size: 13px; color: #64748b; margin: 0;">Instant notification dispatched via Brevo</p>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #f8fafc; border-radius: 12px; font-size: 13px;">
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b; width: 35%;">Customer Name:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">${name.trim()}</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Phone:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #2563eb;">
+                  <a href="tel:${cleanedPhone}" style="color: #2563eb; text-decoration: none;">${cleanedPhone}</a>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Customer Email:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${customerEmailAddress || 'Not provided'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Service Booked:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">${primaryServiceName} (${primaryPackageTitle})</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Scheduled Slot:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #d97706;">${scheduledDate}, ${slot}</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Service Address:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${address.trim()} (Pincode: ${pincode || '452010'})</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Issue Notes:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${description || 'Standard doorstep appointment'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; font-weight: bold; color: #64748b;">Total Price:</td>
+                <td style="padding: 12px 16px; font-weight: 800; font-size: 16px; color: #059669;">₹${totalAmount} <span style="font-size: 11px; font-weight: normal; color: #64748b;">(Cash / UPI on Doorstep)</span></td>
+              </tr>
+            </table>
+            <div style="text-align: center; margin-top: 16px;">
+              <a href="https://www.plumberindore.in/admin/bookings" style="background-color: #0f172a; color: #ffffff; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 13px; display: inline-block;">
+                Open Admin Dispatch Console →
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Customer Confirmation HTML
+      const customerEmailSubject = `[PlumberIndore Booking Confirmed] #${bookingNo} - ${primaryServiceName}`;
+      const customerEmailHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 620px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; color: #0f172a;">
+          <div style="background-color: #0f172a; padding: 20px; text-align: center; border-radius: 12px 12px 0 0;">
+            <h1 style="color: #fbbf24; margin: 0; font-size: 22px; font-weight: 800;">Plumber<span style="color: #ffffff;">Indore</span></h1>
+            <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 0 0;">Doorstep Plumbing & Home Services</p>
+          </div>
+          <div style="padding: 24px 16px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <span style="background-color: #ecfdf5; color: #047857; font-size: 12px; font-weight: 800; padding: 6px 14px; border-radius: 9999px; border: 1px solid #a7f3d0;">
+                ✓ BOOKING CONFIRMED (#${bookingNo})
+              </span>
+              <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 12px 0 4px 0;">Doorstep Technician Assigned!</h2>
+              <p style="font-size: 13px; color: #64748b; margin: 0;">Hello ${name.trim()}, your doorstep appointment has been confirmed.</p>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #f8fafc; border-radius: 12px; font-size: 13px;">
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b; width: 35%;">Service(s):</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">${primaryServiceName} (${primaryPackageTitle})</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Scheduled Slot:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #d97706;">${scheduledDate}, ${slot}</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Doorstep Address:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${address.trim()} (${pincode || 'Indore'})</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; font-weight: bold; color: #64748b;">Total Amount Due:</td>
+                <td style="padding: 12px 16px; font-weight: 800; font-size: 16px; color: #059669;">₹${totalAmount} <span style="font-size: 11px; font-weight: normal; color: #64748b;">(Pay on Doorstep Completion)</span></td>
+              </tr>
+            </table>
+            <div style="background-color: #fef3c7; border: 1px solid #fde68a; border-radius: 12px; padding: 14px; text-align: center; font-size: 12px; color: #92400e;">
+              <strong>Doorstep Guarantee:</strong> 45-Min Arrival • Transparent Fixed Rates • 30-Day Service Warranty
+            </div>
+          </div>
+        </div>
+      `;
+
+      // 1. Dispatch Admin Alert to configured admin recipients
+      console.log(`[POST /api/bookings] Dispatching Brevo Admin Alert for #${bookingNo}...`);
       adminEmailResult = await sendEmail({
-        to: ['plumberindore@gmail.com', 'patidaransh275@gmail.com'],
+        to: ADMIN_NOTIFICATION_RECIPIENTS,
         subject: adminEmailSubject,
         html: adminEmailHtml,
-        replyTo: recipientEmail || 'plumberindore@gmail.com'
+        replyTo: customerEmailAddress || ADMIN_NOTIFICATION_EMAIL,
+        emailType: 'booking_admin_alert'
       });
 
-      if (!adminEmailResult?.success || adminEmailResult?.error) {
-        console.error(`[POST /api/bookings ERROR] Resend admin alert failed for #${bookingNo}:`, JSON.stringify(adminEmailResult, null, 2));
-      } else {
-        console.log(`[POST /api/bookings SUCCESS] Resend admin alert delivered for #${bookingNo}:`, JSON.stringify(adminEmailResult, null, 2));
-      }
-
-      // 2. If customer provided email and it is not one of the admin emails, send Customer Confirmation
-      if (recipientEmail && !['plumberindore@gmail.com', 'patidaransh275@gmail.com'].includes(recipientEmail.toLowerCase())) {
-        console.log(`[POST /api/bookings] Dispatching Customer Confirmation to ${recipientEmail} for #${bookingNo}...`);
+      // 2. Dispatch Customer Confirmation if customer email is provided
+      if (customerEmailAddress && !ADMIN_NOTIFICATION_RECIPIENTS.includes(customerEmailAddress.toLowerCase())) {
+        console.log(`[POST /api/bookings] Dispatching Brevo Customer Confirmation to ${customerEmailAddress} for #${bookingNo}...`);
         customerEmailResult = await sendEmail({
-          to: [recipientEmail],
+          to: customerEmailAddress,
           subject: customerEmailSubject,
           html: customerEmailHtml,
-          replyTo: 'plumberindore@gmail.com'
+          replyTo: ADMIN_NOTIFICATION_EMAIL,
+          emailType: 'booking_customer_confirmation'
         });
-
-        if (!customerEmailResult?.success || customerEmailResult?.error) {
-          console.error(`[POST /api/bookings ERROR] Resend customer confirmation failed for #${bookingNo}:`, JSON.stringify(customerEmailResult, null, 2));
-        } else {
-          console.log(`[POST /api/bookings SUCCESS] Resend customer confirmation delivered for #${bookingNo}:`, JSON.stringify(customerEmailResult, null, 2));
-        }
       }
     } catch (emailErr) {
-      console.error(`[POST /api/bookings EXCEPTION] Email dispatch exception for #${bookingNo}:`, emailErr);
+      console.error(`[POST /api/bookings EXCEPTION] Brevo dispatch exception for #${bookingNo}:`, emailErr);
     }
 
     return NextResponse.json({

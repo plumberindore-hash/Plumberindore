@@ -17,7 +17,7 @@ export default function WarrantyClaimModal({ isOpen, onClose, booking }) {
     setClaimId(cid);
     setSubmitted(true);
 
-    // Notify backend via Resend
+    // Notify backend
     fetch('/api/booking/notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -27,7 +27,7 @@ export default function WarrantyClaimModal({ isOpen, onClose, booking }) {
         claimReason,
         claimDescription: description
       })
-    }).catch(err => console.warn('Warranty claim email dispatch error:', err));
+    }).catch(err => console.warn('Warranty claim dispatch error:', err));
   };
 
   return (

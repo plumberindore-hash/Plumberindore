@@ -55,7 +55,7 @@ export default function CostCalculatorModal({ isOpen, onClose }) {
   const selectedIssueObj = currentIssues.find(i => i.title === issue) || currentIssues[0];
 
   const handleBookEstimate = async () => {
-    // Send quote notification to Resend
+    // Send quote notification
     try {
       fetch('/api/quote', {
         method: 'POST',

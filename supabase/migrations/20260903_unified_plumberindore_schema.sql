@@ -340,7 +340,7 @@ CREATE TABLE IF NOT EXISTS public.email_logs (
     subject TEXT NOT NULL,
     email_type VARCHAR(50) NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'failed', 'delivered')),
-    resend_id VARCHAR(100),
+    message_id VARCHAR(100),
     error_message TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT TIMEZONE('utc', NOW())
 );

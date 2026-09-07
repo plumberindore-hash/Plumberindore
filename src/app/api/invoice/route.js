@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { sendEmail } from '../../../utils/resend.js';
 import { UPI_ID, UPI_PAYEE_NAME, UPI_QR_DATA_URI } from '../../../lib/qrCode.js';
 import { getAdminClient } from '../../../lib/supabase/admin.js';
 import { checkRateLimit, getClientIp } from '../../../lib/security.js';
+import { sendEmail, sendNotificationEmail, ADMIN_NOTIFICATION_RECIPIENTS, ADMIN_NOTIFICATION_EMAIL } from '../../../utils/brevo.js';
 
 export async function POST(request) {
   try {
@@ -41,125 +41,6 @@ export async function POST(request) {
     }
 
     const issueDate = date || new Date().toISOString().split('T')[0];
-
-    const htmlContent = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 650px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; color: #0f172a;">
-        
-        <!-- Header -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 24px;">
-          <div>
-            <h1 style="font-size: 24px; font-weight: 800; margin: 0; color: #0f172a;">Plumber<span style="color: #f59e0b;">Indore</span></h1>
-            <p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;">PlumberIndore Tech Services Private Limited</p>
-            <p style="font-size: 11px; color: #64748b; margin: 2px 0 0 0;">Indore, Madhya Pradesh • Helpline: +91 91749 34135</p>
-          </div>
-          <div style="text-align: right;">
-            <span style="background-color: #ecfdf5; color: #047857; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; border: 1px solid #a7f3d0; text-transform: uppercase;">
-              PAID SERVICE INVOICE
-            </span>
-            <p style="font-size: 14px; font-weight: 700; font-family: monospace; color: #0f172a; margin: 8px 0 0 0;">${invoiceNumber}</p>
-            <p style="font-size: 11px; color: #64748b; margin: 2px 0 0 0;">Date: ${issueDate}</p>
-          </div>
-        </div>
-
-        <!-- Customer & Service Overview -->
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; background-color: #f8fafc; border-radius: 12px; overflow: hidden; font-size: 12px;">
-          <tr>
-            <td style="padding: 16px; width: 50%; vertical-align: top; border-right: 1px solid #e2e8f0;">
-              <strong style="color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Billed To:</strong>
-              <div style="font-size: 14px; font-weight: 700; color: #0f172a;">${customerName}</div>
-              <div style="color: #475569; margin-top: 2px;">${customerPhone || '+91 91749 34135'}</div>
-              <div style="color: #475569; margin-top: 2px;">${address || 'Indore, MP'}</div>
-            </td>
-            <td style="padding: 16px; width: 50%; vertical-align: top;">
-              <strong style="color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Payment Summary:</strong>
-              <div style="font-size: 13px; font-weight: 700; color: #047857;">● Payment Verified</div>
-              <div style="color: #475569; margin-top: 2px;">Method: <strong>${paymentMethod}</strong></div>
-              <div style="color: #64748b; font-size: 11px; margin-top: 2px;">Ref: ${paymentRef || 'TXN-' + Math.floor(100000 + Math.random() * 900000)}</div>
-            </td>
-          </tr>
-        </table>
-
-        <!-- Itemized Table -->
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 24px;">
-          <thead>
-            <tr style="border-bottom: 2px solid #e2e8f0; color: #475569; font-size: 11px; text-transform: uppercase; text-align: left;">
-              <th style="padding: 10px 8px;">Service Item & Description</th>
-              <th style="padding: 10px 8px; text-align: center;">Qty</th>
-              <th style="padding: 10px 8px; text-align: right;">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="border-bottom: 1px solid #f1f5f9;">
-              <td style="padding: 12px 8px;">
-                <div style="font-weight: 700; color: #0f172a;">${serviceName} - ${packageTitle}</div>
-                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">45-min doorstep visit, diagnostic check & verified labor work</div>
-              </td>
-              <td style="padding: 12px 8px; text-align: center;">1</td>
-              <td style="padding: 12px 8px; text-align: right; font-weight: 600;">₹${totalPaid}</td>
-            </tr>
-            ${partsCost > 0 ? `
-            <tr style="border-bottom: 1px solid #f1f5f9;">
-              <td style="padding: 12px 8px;">
-                <div style="font-weight: 700; color: #0f172a;">Original Spare Parts / Materials</div>
-                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">OEM certified replacement components with warranty</div>
-              </td>
-              <td style="padding: 12px 8px; text-align: center;">1</td>
-              <td style="padding: 12px 8px; text-align: right; font-weight: 600;">₹${partsCost}</td>
-            </tr>` : ''}
-            ${discountCost > 0 ? `
-            <tr style="border-bottom: 1px solid #f1f5f9;">
-              <td style="padding: 12px 8px; color: #059669;">
-                <div style="font-weight: 700;">Promotional / First-Order Discount</div>
-              </td>
-              <td style="padding: 12px 8px; text-align: center; color: #059669;">-</td>
-              <td style="padding: 12px 8px; text-align: right; font-weight: 700; color: #059669;">-₹${discountCost}</td>
-            </tr>` : ''}
-          </tbody>
-        </table>
-
-        <!-- Total Calculation Box -->
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
-          <div style="width: 260px; background-color: #0f172a; color: #ffffff; padding: 16px; border-radius: 12px;">
-            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: #94a3b8;">
-              <span>Total Amount:</span>
-              <span>₹${totalPaid}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; border-top: 1px solid #334155; padding-top: 8px; color: #fbbf24;">
-              <span>Amount Paid:</span>
-              <span>₹${totalPaid}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Compact UPI Scan & Pay Box -->
-        <table style="width: 100%; margin-bottom: 20px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
-          <tr>
-            <td style="width: 64px; vertical-align: middle; padding-right: 12px;">
-              <img src="${UPI_QR_DATA_URI}" alt="UPI QR" style="width: 60px; height: 60px; display: block; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff;" />
-            </td>
-            <td style="vertical-align: middle;">
-              <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #b45309; background: #fef3c7; display: inline-block; padding: 2px 6px; border-radius: 4px; margin-bottom: 3px;">
-                Quick Scan & Pay via UPI
-              </div>
-              <div style="font-size: 13px; font-weight: 700; color: #0f172a;">
-                UPI ID: <span style="color: #059669; font-family: monospace;">${UPI_ID}</span> (${UPI_PAYEE_NAME})
-              </div>
-              <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
-                Google Pay • PhonePe • Paytm • BHIM • Cred
-              </div>
-            </td>
-          </tr>
-        </table>
-
-        <!-- Footer -->
-        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; font-size: 11px; color: #475569; text-align: center; line-height: 1.5;">
-          This is a computer-generated tax invoice issued by PlumberIndore Tech Services.<br />
-          For doorstep re-inspection or 24x7 customer support, call <strong>+91 91749 34135</strong> or email <strong>plumberindore@gmail.com</strong>.
-        </div>
-      </div>
-    `;
-
-    const recipient = customerEmail || 'plumberindore@gmail.com';
 
     // 1. Persist in Supabase PostgreSQL
     try {
@@ -204,30 +85,55 @@ export async function POST(request) {
         }
       }
     } catch (dbEx) {
-      console.warn('Supabase invoice save exception (continuing email dispatch):', dbEx.message);
+      console.warn('Supabase invoice save exception:', dbEx.message);
     }
 
-    // 2. Dispatch Email via Resend
-    const { sendEmail } = await import('../../../utils/resend.js');
-    const result = await sendEmail({
-      to: [recipient, 'plumberindore@gmail.com'],
-      subject: `[PlumberIndore Tax Invoice] ${invoiceNumber} - ₹${totalPaid} (${serviceName})`,
-      html: htmlContent,
-      replyTo: 'plumberindore@gmail.com'
-    });
+    // Dispatch invoice email via Brevo
+    try {
+      const invoiceHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+          <div style="background-color: #0f172a; padding: 18px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h2 style="color: #fbbf24; margin: 0;">Plumber<span style="color: #ffffff;">Indore</span></h2>
+            <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 0 0;">Official Service Receipt & Tax Invoice</p>
+          </div>
+          <div style="padding: 20px 8px;">
+            <h3 style="color: #0f172a; margin-top: 0;">Tax Invoice: ${invoiceNumber}</h3>
+            <p><strong>Customer:</strong> ${customerName}</p>
+            <p><strong>Service:</strong> ${serviceName} (${packageTitle || 'Standard'})</p>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 14px; background: #f8fafc; border-radius: 8px;">
+              <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; color: #64748b;">Labor:</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-weight: bold;">₹${laborCost || totalPaid}</td></tr>
+              <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; color: #64748b;">Parts:</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-weight: bold;">₹${partsCost || 0}</td></tr>
+              <tr><td style="padding: 10px; color: #64748b; font-weight: bold;">Total Paid:</td><td style="padding: 10px; font-weight: bold; color: #059669; font-size: 16px;">₹${totalPaid}</td></tr>
+            </table>
+            <p style="font-size: 12px; color: #64748b; margin-top: 16px;">Payment Method: ${paymentMethod} | Reference: ${paymentRef || invoiceNumber}</p>
+          </div>
+        </div>
+      `;
 
-    if (!result.success) {
-      return NextResponse.json(
-        { success: false, error: result.error },
-        { status: 500 }
-      );
+      if (customerEmail) {
+        await sendEmail({
+          to: customerEmail,
+          subject: `[Invoice ${invoiceNumber}] Plumber Indore - ₹${totalPaid}`,
+          html: invoiceHtml,
+          replyTo: ADMIN_NOTIFICATION_EMAIL,
+          emailType: 'customer_invoice'
+        });
+      }
+
+      await sendNotificationEmail({
+        subject: `[New Invoice Recorded] ${invoiceNumber} - ₹${totalPaid} (${customerName})`,
+        html: invoiceHtml,
+        emailType: 'admin_invoice_copy'
+      });
+    } catch (mailErr) {
+      console.warn('[POST /api/invoice] Brevo invoice dispatch notice:', mailErr);
     }
 
     return NextResponse.json(
       { 
         success: true, 
-        message: `Invoice ${invoiceNumber} successfully emailed to ${recipient}!`,
-        data: result.data
+        message: `Invoice ${invoiceNumber} created and recorded successfully!`,
+        data: { invoiceNumber, totalPaid }
       },
       { status: 200 }
     );

@@ -185,7 +185,7 @@ export default function AdminInvoicesDashboard() {
       if (res.ok && data.success) {
         setEmailStatusMessage({ type: 'success', text: `Invoice ${inv.invoiceNumber} emailed successfully!` });
       } else {
-        setEmailStatusMessage({ type: 'error', text: data.error || 'Failed to email invoice via Resend.' });
+        setEmailStatusMessage({ type: 'error', text: data.error || 'Failed to email invoice.' });
       }
     } catch (err) {
       setEmailStatusMessage({ type: 'error', text: 'Network error sending invoice email.' });

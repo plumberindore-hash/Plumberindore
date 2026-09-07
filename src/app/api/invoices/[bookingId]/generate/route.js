@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getAdminClient } from '../../../../../lib/supabase/admin.js';
-import { sendEmail } from '../../../../../utils/resend.js';
 import { UPI_ID, UPI_PAYEE_NAME, UPI_QR_DATA_URI } from '../../../../../lib/qrCode.js';
 import { isValidUUID, checkRateLimit, getClientIp } from '../../../../../lib/security.js';
+import { sendEmail, sendNotificationEmail, ADMIN_NOTIFICATION_EMAIL } from '../../../../../utils/brevo.js';
 
 /**
  * POST /api/invoices/[bookingId]/generate
- * Generates an official tax invoice in Supabase and emails it via Resend.
+ * Generates an official tax invoice in Supabase.
  */
 export async function POST(request, { params }) {
   try {
@@ -122,70 +122,51 @@ export async function POST(request, { params }) {
       ]);
     }
 
-    // Build Email Template
-    const recipientEmail = targetBooking.customer_email && targetBooking.customer_email.includes('@')
-      ? targetBooking.customer_email
-      : 'plumberindore@gmail.com';
-
-    const invoiceHtml = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 620px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; color: #0f172a;">
-        <div style="background-color: #0f172a; padding: 20px; text-align: center; border-radius: 12px 12px 0 0;">
-          <h1 style="color: #fbbf24; margin: 0; font-size: 22px; font-weight: 800;">Plumber<span style="color: #ffffff;">Indore</span></h1>
-          <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 0 0;">Official Paid Service Invoice</p>
-        </div>
-        <div style="padding: 24px 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 16px; margin-bottom: 20px;">
-            <div>
-              <span style="background-color: #ecfdf5; color: #047857; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; border: 1px solid #a7f3d0; text-transform: uppercase;">
-                ✓ PAID & VERIFIED
-              </span>
-              <p style="font-size: 15px; font-weight: 800; font-family: monospace; color: #0f172a; margin: 8px 0 0 0;">${invNumber}</p>
-            </div>
-            <div style="text-align: right;">
-              <p style="font-size: 12px; color: #64748b; margin: 0;">Date: ${new Date().toISOString().split('T')[0]}</p>
-              <p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;">Method: ${targetBooking.payment_method || 'UPI'}</p>
-            </div>
+    // Dispatch Brevo email with invoice summary
+    try {
+      const invoiceHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+          <div style="background-color: #0f172a; padding: 18px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h2 style="color: #fbbf24; margin: 0;">Plumber<span style="color: #ffffff;">Indore</span></h2>
+            <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 0 0;">Tax Invoice Generated</p>
           </div>
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #f8fafc; border-radius: 12px; font-size: 13px;">
-            <tr>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b; width: 35%;">Customer:</td>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">${targetBooking.customer_name} (${targetBooking.customer_phone})</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Service Address:</td>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${targetBooking.service_address}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Item / Work:</td>
-              <td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${targetBooking.service_name} (${targetBooking.package_title || 'Service'})</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 14px; font-weight: bold; color: #64748b;">Total Amount Paid:</td>
-              <td style="padding: 10px 14px; font-weight: 800; font-size: 16px; color: #047857;">₹${totalPaid}</td>
-            </tr>
-          </table>
-          <p style="font-size: 11px; color: #94a3b8; text-align: center; margin-top: 24px;">
-            PlumberIndore Tech Services • Helpline: +91 91749 34135 • Indore, Madhya Pradesh
-          </p>
+          <div style="padding: 20px 8px;">
+            <h3 style="color: #0f172a; margin-top: 0;">Invoice #${invNumber}</h3>
+            <p><strong>Customer:</strong> ${targetBooking.customer_name}</p>
+            <p><strong>Service:</strong> ${targetBooking.service_name}</p>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 14px; background: #f8fafc; border-radius: 8px;">
+              <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; color: #64748b;">Labor:</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-weight: bold;">₹${laborCost}</td></tr>
+              <tr><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; color: #64748b;">Parts:</td><td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-weight: bold;">₹${partsCost}</td></tr>
+              <tr><td style="padding: 10px; color: #64748b; font-weight: bold;">Total Paid:</td><td style="padding: 10px; font-weight: bold; color: #059669; font-size: 16px;">₹${totalPaid}</td></tr>
+            </table>
+          </div>
         </div>
-      </div>
-    `;
+      `;
 
-    // Dispatch email
-    const emailResult = await sendEmail({
-      to: [recipientEmail, 'plumberindore@gmail.com'],
-      subject: `[PlumberIndore Invoice] ${invNumber} - ₹${totalPaid} (${targetBooking.service_name})`,
-      html: invoiceHtml,
-      replyTo: 'plumberindore@gmail.com'
-    });
+      if (targetBooking.customer_email) {
+        await sendEmail({
+          to: targetBooking.customer_email,
+          subject: `[Tax Invoice ${invNumber}] Plumber Indore - ₹${totalPaid}`,
+          html: invoiceHtml,
+          replyTo: ADMIN_NOTIFICATION_EMAIL,
+          emailType: 'customer_invoice'
+        });
+      }
+
+      await sendNotificationEmail({
+        subject: `[Invoice Generated] ${invNumber} - ₹${totalPaid} (${targetBooking.customer_name})`,
+        html: invoiceHtml,
+        emailType: 'admin_invoice_copy'
+      });
+    } catch (mailErr) {
+      console.warn('[POST /api/invoices/[bookingId]/generate] Brevo email notice:', mailErr);
+    }
 
     return NextResponse.json({
       success: true,
       invoiceNumber: invNumber,
       totalPaid,
-      customerName: targetBooking.customer_name,
-      emailSent: emailResult.success,
-      emailRecipient: recipientEmail
+      customerName: targetBooking.customer_name
     });
 
   } catch (error) {

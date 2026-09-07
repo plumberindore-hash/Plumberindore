@@ -17,7 +17,7 @@ export default function DisputeTicketModal({ isOpen, onClose, booking }) {
     setTicketId(tid);
     setSubmitted(true);
 
-    // Notify backend via Resend
+    // Notify backend
     fetch('/api/booking/notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -27,7 +27,7 @@ export default function DisputeTicketModal({ isOpen, onClose, booking }) {
         claimReason: `Dispute / Ticket: ${issueType}`,
         claimDescription: details
       })
-    }).catch(err => console.warn('Dispute ticket email dispatch error:', err));
+    }).catch(err => console.warn('Dispute ticket dispatch error:', err));
   };
 
   return (

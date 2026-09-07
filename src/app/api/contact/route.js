@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { sendNotificationEmail } from '../../../utils/resend.js';
 import { checkRateLimit, sanitizeString, validateIndianPhone, validateEmail, getClientIp } from '../../../lib/security.js';
+import { sendNotificationEmail, ADMIN_NOTIFICATION_EMAIL } from '../../../utils/brevo.js';
 
 export async function POST(request) {
   try {
@@ -49,50 +49,6 @@ export async function POST(request) {
     const phone = cleanPhone;
     const email = cleanEmail;
 
-    const submissionTime = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded: 12px; background-color: #ffffff;">
-        <div style="background-color: #0f172a; padding: 16px; text-align: center; border-radius: 8px 8px 0 0;">
-          <h2 style="color: #fbbf24; margin: 0; font-size: 20px;">PlumberIndore - New Contact Form Inquiry</h2>
-        </div>
-        <div style="padding: 24px; color: #1e293b; line-height: 1.6;">
-          <p style="font-size: 14px; margin-top: 0;">A new message was submitted via the <strong>Contact Support Desk</strong> on PlumberIndore:</p>
-          
-          <table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;">
-            <tr style="background-color: #f8fafc;">
-              <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold; width: 35%;">Customer Name:</td>
-              <td style="padding: 10px; border: 1px solid #e2e8f0;">${name}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">Mobile Number:</td>
-              <td style="padding: 10px; border: 1px solid #e2e8f0;"><a href="tel:${phone}" style="color: #d97706; text-decoration: none; font-weight: bold;">${phone}</a></td>
-            </tr>
-            ${email ? `
-            <tr style="background-color: #f8fafc;">
-              <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">Email Address:</td>
-              <td style="padding: 10px; border: 1px solid #e2e8f0;">${email}</td>
-            </tr>` : ''}
-            <tr style="background-color: ${email ? '#ffffff' : '#f8fafc'};">
-              <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">Submission Time:</td>
-              <td style="padding: 10px; border: 1px solid #e2e8f0;">${submissionTime} (IST)</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold; vertical-align: top;">Message / Query:</td>
-              <td style="padding: 10px; border: 1px solid #e2e8f0; white-space: pre-line;">${message}</td>
-            </tr>
-          </table>
-
-          <div style="margin-top: 20px; padding: 12px; background-color: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px; font-size: 13px;">
-            <strong>Doorstep Action:</strong> Call customer at <strong>${phone}</strong> or reply to this inquiry directly.
-          </div>
-        </div>
-        <div style="text-align: center; padding: 12px; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0;">
-          PlumberIndore Notification System • Verified Domain: plumberindore.in
-        </div>
-      </div>
-    `;
-
     // Persist in Supabase contact_messages table
     let dbRecord = null;
     try {
@@ -113,30 +69,54 @@ export async function POST(request) {
       console.warn('Supabase contact save exception:', dbEx.message);
     }
 
-    let emailResult = { sent: false };
+    // Dispatch Brevo notification to admin team
     try {
-      emailResult = await sendNotificationEmail({
-        subject: `[PlumberIndore] New Contact Message from ${name} (${phone})`,
-        html: htmlContent,
-        replyTo: email || 'plumberindore@gmail.com'
-      });
+      const emailHtml = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+          <div style="background-color: #0f172a; padding: 16px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h2 style="color: #fbbf24; margin: 0; font-size: 20px;">Plumber<span style="color: #ffffff;">Indore</span></h2>
+            <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 0 0;">New Website Inquiry Alert</p>
+          </div>
+          <div style="padding: 20px 8px;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+              <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b; width: 30%;">Name:</td>
+                <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">${name.trim()}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;">Phone:</td>
+                <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">
+                  <a href="tel:${phone.trim()}" style="color: #2563eb; font-weight: bold; text-decoration: none;">${phone.trim()}</a>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;">Email:</td>
+                <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">${email ? email.trim() : 'Not provided'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; font-weight: bold; color: #64748b;">Message:</td>
+                <td style="padding: 10px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">${message.trim()}</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      `;
 
-      if (!emailResult?.success || emailResult?.error) {
-        console.error('[POST /api/contact ERROR] Resend dispatch error:', JSON.stringify(emailResult, null, 2));
-      } else {
-        console.log('[POST /api/contact SUCCESS] Contact alert delivered:', JSON.stringify(emailResult, null, 2));
-      }
-    } catch (emailErr) {
-      console.error('[POST /api/contact EXCEPTION]:', emailErr);
-      emailResult = { sent: false, error: emailErr.message };
+      await sendNotificationEmail({
+        subject: `[Contact Inquiry] New Message from ${name.trim()} (${phone.trim()})`,
+        html: emailHtml,
+        replyTo: email ? email.trim() : ADMIN_NOTIFICATION_EMAIL,
+        emailType: 'contact_inquiry'
+      });
+    } catch (mailErr) {
+      console.error('[POST /api/contact] Brevo dispatch exception:', mailErr);
     }
 
     return NextResponse.json(
       { 
         success: true, 
         message: 'Your message has been received! Our Indore support team will reach out shortly.',
-        data: dbRecord || { name, phone },
-        emailDispatch: emailResult
+        data: dbRecord || { name, phone }
       },
       { status: 200 }
     );

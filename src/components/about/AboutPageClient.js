@@ -222,7 +222,7 @@ export default function AboutPageClient() {
               {submitted && (
                 <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Message delivered to support desk via Resend! We will call you back within 15 minutes.</span>
+                  <span>Message delivered to support desk! We will call you back within 15 minutes.</span>
                 </div>
               )}
 
@@ -241,7 +241,7 @@ export default function AboutPageClient() {
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
-                    <span>Sending via Resend...</span>
+                    <span>Sending message...</span>
                   </>
                 ) : (
                   <>

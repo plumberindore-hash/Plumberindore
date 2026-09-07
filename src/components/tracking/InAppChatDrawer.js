@@ -28,7 +28,7 @@ export default function InAppChatDrawer({ isOpen, onClose, booking }) {
     setMessages((prev) => [...prev, newMsg]);
     setInputMsg('');
 
-    // Asynchronously notify backend via Resend API
+    // Asynchronously notify backend via chat API
     try {
       fetch('/api/chat', {
         method: 'POST',
