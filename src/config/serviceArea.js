@@ -34,7 +34,7 @@ const envBookingEnabled = typeof process !== 'undefined' && process.env
  */
 export const IS_BOOKING_ENABLED = envBookingEnabled !== null 
   ? envBookingEnabled 
-  : false; // Default: false (Service suspended as requested)
+  : true; // Default: true (All booking services & pincode checks fully active across Indore)
 
 /**
  * Configurable list of active serviceable Indore pincodes.

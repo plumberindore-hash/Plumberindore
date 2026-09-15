@@ -7,14 +7,14 @@ import {
   Calendar, Wrench, AlertTriangle, MessageSquare, Bot, Sparkles, 
   TrendingUp, CheckCircle2, ChevronRight, X, ExternalLink, Copy,
   CheckCircle, ArrowUpRight, DollarSign, Activity, SlidersHorizontal,
-  User, Briefcase, Zap, Shield, HelpCircle
+  User, Briefcase, Zap, Shield, HelpCircle, RotateCcw
 } from 'lucide-react';
 
 // Hardcoded Master Auth Credentials
 const AUTH_EMAIL = 'admin@plumberindore.in';
 const AUTH_PASS = 'admin123';
 const AUTH_STORAGE_KEY = 'plumberindore_portal_auth_v1';
-const DATA_STORAGE_KEY = 'plumberindore_ops_portal_data_v1';
+const DATA_STORAGE_KEY = 'plumberindore_ops_portal_data_v2';
 
 // Available Localities in Indore
 const INDORE_LOCALITIES = [
@@ -30,195 +30,10 @@ const INDORE_LOCALITIES = [
   'Geeta Bhawan'
 ];
 
-// Preloaded Realistic Seed Data for Zero-Backend Operation
-const INITIAL_BOOKINGS = [
-  {
-    id: 'IND-84210',
-    customerName: 'Vikramaditya Sharma',
-    customerPhone: '9826012345',
-    customerEmail: 'vikram.sharma@gmail.com',
-    locality: 'Vijay Nagar',
-    address: 'Flat 402, BCM Heights, Near Bombay Hospital, Vijay Nagar, Indore',
-    pincode: '452010',
-    serviceName: 'Concealed Pipe Leakage & Wall Seepage Detection',
-    packageTitle: 'Laser Acoustic Leak Detection & Repair',
-    price: 1450,
-    status: 'In Progress',
-    priority: 'Urgent',
-    scheduledDate: '2026-09-15',
-    timeSlot: '02:00 PM - 04:00 PM',
-    paymentStatus: 'Pending',
-    paymentMethod: 'UPI on Completion',
-    assignedTechnician: 'Rajesh Malviya (Senior Plumber)',
-    notes: 'Severe seepage behind bathroom wall. Pressure dropping rapidly.',
-    createdAt: '2026-09-15T08:30:00Z'
-  },
-  {
-    id: 'IND-84211',
-    customerName: 'Ananya Solanki',
-    customerPhone: '9425098765',
-    customerEmail: 'ananya.s@outlook.com',
-    locality: 'Palasia',
-    address: '14/2 Old Palasia, Behind Industry House, AB Road, Indore',
-    pincode: '452001',
-    serviceName: 'Kitchen Sink & Drain Clog Unclogging',
-    packageTitle: 'Motorized Mechanical Snake De-Clogging',
-    price: 699,
-    status: 'Technician Assigned',
-    priority: 'High',
-    scheduledDate: '2026-09-15',
-    timeSlot: '03:30 PM - 05:30 PM',
-    paymentStatus: 'Pending',
-    paymentMethod: 'Cash / UPI on Doorstep',
-    assignedTechnician: 'Sunil Chouhan',
-    notes: 'Kitchen sink overflow and foul smell. Food residue blockage.',
-    createdAt: '2026-09-15T09:15:00Z'
-  },
-  {
-    id: 'IND-84212',
-    customerName: 'Gaurav Rathore',
-    customerPhone: '9752044321',
-    customerEmail: 'grathore.indore@gmail.com',
-    locality: 'Bhawarkua',
-    address: 'Plot 88, Bholaram Ustad Marg, Near Holkar Science College, Bhawarkua, Indore',
-    pincode: '452014',
-    serviceName: 'Toilet Flush Cistern & Siphon Overhaul',
-    packageTitle: 'Dual Flush Internal Valve Overhaul',
-    price: 549,
-    status: 'Technician Assigned',
-    priority: 'Standard',
-    scheduledDate: '2026-09-15',
-    timeSlot: '04:00 PM - 06:00 PM',
-    paymentStatus: 'Paid',
-    paymentMethod: 'Prepaid UPI',
-    assignedTechnician: 'Dinesh Parmar',
-    notes: 'Water continuously running in western commode, wastage of tank water.',
-    createdAt: '2026-09-15T10:00:00Z'
-  },
-  {
-    id: 'IND-84205',
-    customerName: 'Pooja Agarwal',
-    customerPhone: '9827011223',
-    customerEmail: 'pooja.agarwal77@yahoo.com',
-    locality: 'Mahalaxmi Nagar',
-    address: 'Row House 22, Sector R, Mahalaxmi Nagar, Indore',
-    pincode: '452010',
-    serviceName: 'Overhead Sintex Water Tank Cleaning',
-    packageTitle: '5-Stage High Pressure Rotary & UV Sterilization',
-    price: 1199,
-    status: 'Completed',
-    priority: 'Standard',
-    scheduledDate: '2026-09-14',
-    timeSlot: '11:00 AM - 01:00 PM',
-    paymentStatus: 'Paid',
-    paymentMethod: 'UPI Verified (TXN-98214)',
-    assignedTechnician: 'Rajesh Malviya',
-    notes: '2000L tank sediment cleaned, float valve replaced.',
-    createdAt: '2026-09-14T07:20:00Z'
-  },
-  {
-    id: 'IND-84201',
-    customerName: 'Harishankar Tiwari',
-    customerPhone: '9981055443',
-    customerEmail: 'htiwari.tax@gmail.com',
-    locality: 'Annapurna',
-    address: '76 Usha Nagar Ext, Near Ranjeet Hanuman Temple, Annapurna, Indore',
-    pincode: '452009',
-    serviceName: 'Bathroom Tap Mixer & Shower Replacement',
-    packageTitle: 'Wall Mixer & Overhead Rain Shower Fitting',
-    price: 850,
-    status: 'Completed',
-    priority: 'Standard',
-    scheduledDate: '2026-09-14',
-    timeSlot: '02:00 PM - 04:00 PM',
-    paymentStatus: 'Paid',
-    paymentMethod: 'Cash on Delivery',
-    assignedTechnician: 'Sunil Chouhan',
-    notes: 'Jaquar quarter turn mixer spindle replaced.',
-    createdAt: '2026-09-14T08:45:00Z'
-  },
-  {
-    id: 'IND-84214',
-    customerName: 'Dr. Manish Patidar',
-    customerPhone: '9174934135',
-    customerEmail: 'patidar.clinic@gmail.com',
-    locality: 'Sudama Nagar',
-    address: 'Sector E, Gopur Square Main Road, Sudama Nagar, Indore',
-    pincode: '452009',
-    serviceName: 'Water Motor Booster Pump Fitting',
-    packageTitle: '0.5 HP Automatic Pressure Booster Installation',
-    price: 1850,
-    status: 'Pending',
-    priority: 'Urgent',
-    scheduledDate: '2026-09-15',
-    timeSlot: '05:00 PM - 07:00 PM',
-    paymentStatus: 'Pending',
-    paymentMethod: 'Cash / UPI on Doorstep',
-    assignedTechnician: 'Unassigned',
-    notes: 'New booster pump delivery arrived. Needs bypass pipe connection.',
-    createdAt: '2026-09-15T11:20:00Z'
-  }
-];
-
-const INITIAL_INQUIRIES = [
-  {
-    id: 'INQ-101',
-    customerName: 'Neeraj Joshi',
-    phone: '9826555123',
-    locality: 'Vijay Nagar',
-    category: 'Full Bathroom Plumbing Renovation',
-    message: 'Want to remodel two bathrooms in Scheme 78 with CPVC pipe lines and concealed valves. Need site visit and quote.',
-    createdAt: '2026-09-15T10:45:00Z',
-    status: 'New'
-  },
-  {
-    id: 'INQ-102',
-    customerName: 'Kavita Verma',
-    phone: '9425112233',
-    locality: 'Palasia',
-    category: 'Water Meter & Main Line Repair',
-    message: 'Narmada water line inlet valve leaking outside the bungalow boundary wall.',
-    createdAt: '2026-09-15T09:30:00Z',
-    status: 'Contacted'
-  },
-  {
-    id: 'INQ-103',
-    customerName: 'Mohit Dubey',
-    phone: '9755889900',
-    locality: 'Bhawarkua',
-    category: 'Commercial Hostel Tank Overflow',
-    message: 'Student hostel 5000L tank float ball cock broken. Water overflowing into street.',
-    createdAt: '2026-09-15T08:15:00Z',
-    status: 'Converted'
-  }
-];
-
-const INITIAL_CHATS = [
-  {
-    id: 'CHAT-301',
-    customerName: 'Sunita Jain (Vijay Nagar)',
-    phone: '9826199887',
-    lastActive: '5 mins ago',
-    unread: true,
-    messages: [
-      { sender: 'customer', text: 'Namaste, mera geyser ka inlet pipe leak ho raha hai.', time: '12:35 PM' },
-      { sender: 'bot', text: 'Namaste Sunita ji! Hum 45 minute me Vijay Nagar me technician bhej sakte hain. Kya geyser se paani bohot tez tapak raha hai?', time: '12:36 PM' },
-      { sender: 'customer', text: 'Haan, bucket rakhna pad raha hai. Jaldi bhej do.', time: '12:38 PM' }
-    ]
-  },
-  {
-    id: 'CHAT-302',
-    customerName: 'Amit Saxena (Palasia)',
-    phone: '9977233445',
-    lastActive: '18 mins ago',
-    unread: false,
-    messages: [
-      { sender: 'customer', text: 'Tap repair ke kya charges hain?', time: '12:10 PM' },
-      { sender: 'bot', text: 'Doorstep inspection & minor repair ₹199 se shuru hota hai. Agar parts badalna ho toh technician pehle exact quote batayega.', time: '12:12 PM' },
-      { sender: 'customer', text: 'Theek hai, sham 4 baje ka slot book kar dijiye.', time: '12:15 PM' }
-    ]
-  }
-];
+// Clean Zero-State: All test bookings, dispatches, inquiries & chats cleared
+const INITIAL_BOOKINGS = [];
+const INITIAL_INQUIRIES = [];
+const INITIAL_CHATS = [];
 
 // Pre-canned Quick Replies for Chatbot Monitor
 const QUICK_REPLIES = [
@@ -271,33 +86,6 @@ function OfficialBrandLogo({ size = 'md', isDarkBg = false, showTagline = true }
   );
 }
 
-/**
- * Vector SVG PlumberIndore Brand Shield Mark
- */
-function BrandShieldSvg({ className = "w-10 h-10" }) {
-  return (
-    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <defs>
-        <linearGradient id="piNavyGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#0F172A" />
-          <stop offset="1" stopColor="#1E3A8A" />
-        </linearGradient>
-        <linearGradient id="piAmberGrad" x1="10" y1="10" x2="30" y2="30" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#F59E0B" />
-          <stop offset="1" stopColor="#F97316" />
-        </linearGradient>
-      </defs>
-      <rect width="40" height="40" rx="10" fill="url(#piNavyGrad)" />
-      {/* Precision Wrench */}
-      <path d="M28 12C26.3 10.3 23.8 9.9 22.1 11.2L17.1 16.2L23.8 22.9L28.8 17.9C30.1 16.2 29.7 13.7 28 12Z" fill="url(#piAmberGrad)" />
-      {/* Water Droplet */}
-      <path d="M14 23C14 20.5 17.5 17 17.5 17C17.5 17 21 20.5 21 23C21 24.9 19.4 26.5 17.5 26.5C15.6 26.5 14 24.9 14 23Z" fill="#38BDF8" />
-      {/* Wrench Handle */}
-      <path d="M17.1 17.9L11.7 23.3C10.9 24.1 10.9 25.4 11.7 26.2L13.8 28.3C14.6 29.1 15.9 29.1 16.7 28.3L22.1 22.9L17.1 17.9Z" fill="#CBD5E1" />
-    </svg>
-  );
-}
-
 export default function OpsPortalClient() {
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -306,12 +94,12 @@ export default function OpsPortalClient() {
   const [authError, setAuthError] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  // Portal State
+  // Portal State - Clean Zero-State by Default
   const [activeTab, setActiveTab] = useState('bookings'); // 'bookings' | 'inquiries' | 'chats' | 'diagnostics'
   const [bookings, setBookings] = useState(INITIAL_BOOKINGS);
   const [inquiries, setInquiries] = useState(INITIAL_INQUIRIES);
   const [chats, setChats] = useState(INITIAL_CHATS);
-  const [selectedChatId, setSelectedChatId] = useState('CHAT-301');
+  const [selectedChatId, setSelectedChatId] = useState(null);
   const [chatReplyText, setChatReplyText] = useState('');
 
   // Filters
@@ -321,8 +109,7 @@ export default function OpsPortalClient() {
 
   // Modals & Drawers
   const [isManualLeadOpen, setIsManualLeadOpen] = useState(false);
-  const [whatsappModalData, setWhatsappModalData] = useState(null); // { booking, target: 'customer' | 'technician', message: '' }
-  const [diagnosticModalData, setDiagnosticModalData] = useState(null); // { booking, symptomInput, output: null }
+  const [whatsappModalData, setWhatsappModalData] = useState(null);
   const [selectedBookingDetail, setSelectedBookingDetail] = useState(null);
   const [copiedNotice, setCopiedNotice] = useState(false);
 
@@ -346,7 +133,7 @@ export default function OpsPortalClient() {
   const [diagResult, setDiagResult] = useState(null);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
 
-  // 1. Check LocalStorage Auth on Mount
+  // 1. Check LocalStorage Auth on Mount & Clear Any Old Test Data
   useEffect(() => {
     try {
       const storedAuth = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -354,13 +141,23 @@ export default function OpsPortalClient() {
         setIsAuthenticated(true);
       }
 
-      // Load cached portal state if present
+      // Explicitly remove legacy test demo storage key
+      localStorage.removeItem('plumberindore_ops_portal_data_v1');
+
+      // Load cached portal state if present (v2)
       const storedData = localStorage.getItem(DATA_STORAGE_KEY);
       if (storedData) {
         const parsed = JSON.parse(storedData);
         if (parsed.bookings && Array.isArray(parsed.bookings)) setBookings(parsed.bookings);
         if (parsed.inquiries && Array.isArray(parsed.inquiries)) setInquiries(parsed.inquiries);
-        if (parsed.chats && Array.isArray(parsed.chats)) setChats(parsed.chats);
+        if (parsed.chats && Array.isArray(parsed.chats)) {
+          setChats(parsed.chats);
+          if (parsed.chats.length > 0) setSelectedChatId(parsed.chats[0].id);
+        }
+      } else {
+        setBookings([]);
+        setInquiries([]);
+        setChats([]);
       }
     } catch (e) {
       console.warn('Ops portal localStorage initialization error:', e);
@@ -380,6 +177,28 @@ export default function OpsPortalClient() {
     } catch (e) {
       console.warn('Ops portal persist error:', e);
     }
+  };
+
+  // Reset / Clear All Data & Wipe LocalStorage
+  const handleResetAllData = () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to clear all bookings, dispatches, inquiries and chat records?\n\nThis will reset all dashboard counters to zero.'
+    );
+    if (!confirmed) return;
+
+    setBookings([]);
+    setInquiries([]);
+    setChats([]);
+    setSelectedChatId(null);
+    localStorage.removeItem(DATA_STORAGE_KEY);
+    localStorage.removeItem('plumberindore_ops_portal_data_v1');
+    const emptyPayload = {
+      bookings: [],
+      inquiries: [],
+      chats: [],
+      lastUpdated: new Date().toISOString()
+    };
+    localStorage.setItem(DATA_STORAGE_KEY, JSON.stringify(emptyPayload));
   };
 
   // Auth Handler
@@ -412,7 +231,7 @@ export default function OpsPortalClient() {
     setAuthError('');
   };
 
-  // KPI Calculations
+  // KPI Calculations - Starts at ZERO when empty
   const kpis = useMemo(() => {
     const totalRev = bookings
       .filter(b => b.status === 'Completed' || b.paymentStatus === 'Paid')
@@ -432,8 +251,8 @@ export default function OpsPortalClient() {
       activeDispatches,
       pendingLeads,
       completedJobs,
-      avgArrival: '28 Min',
-      csatRating: '4.9 ★'
+      avgArrival: completedJobs > 0 ? '28 Min' : '0 Min',
+      csatRating: completedJobs > 0 ? '4.9 ★' : '0.0 ★'
     };
   }, [bookings, inquiries]);
 
@@ -697,7 +516,7 @@ export default function OpsPortalClient() {
 
   // Chat Quick Reply Handler
   const sendQuickReply = (text) => {
-    if (!text) return;
+    if (!text || !selectedChatId) return;
     const updatedChats = chats.map(c => {
       if (c.id === selectedChatId) {
         return {
@@ -731,7 +550,6 @@ export default function OpsPortalClient() {
       notes: `Converted from Inquiry #${inquiry.id}: ${inquiry.message}`
     });
     
-    // Mark inquiry as converted
     const updatedInquiries = inquiries.map(i => 
       i.id === inquiry.id ? { ...i, status: 'Converted' } : i
     );
@@ -746,7 +564,6 @@ export default function OpsPortalClient() {
   if (!isAuthenticated) {
     return (
       <div className="fixed inset-0 z-[9999] min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center items-center px-4 selection:bg-amber-100 selection:text-slate-900 overflow-y-auto">
-        {/* Subtle Brand Ambient Backdrops */}
         <div className="absolute top-1/4 -left-32 w-96 h-96 bg-blue-100/60 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-amber-100/60 rounded-full blur-3xl pointer-events-none" />
         
@@ -845,7 +662,7 @@ export default function OpsPortalClient() {
   // -------------------------------------------------------------
   // RENDER: Authenticated Ops Dashboard (White / Light-Slate & Navy Theme)
   // -------------------------------------------------------------
-  const activeChat = chats.find(c => c.id === selectedChatId) || chats[0];
+  const activeChat = chats.find(c => c.id === selectedChatId) || chats[0] || null;
 
   return (
     <div className="fixed inset-0 z-[9999] min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-amber-100 selection:text-slate-900 overflow-y-auto pb-16">
@@ -856,7 +673,7 @@ export default function OpsPortalClient() {
             <OfficialBrandLogo size="md" isDarkBg={false} showTagline={true} />
           </div>
 
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => setIsManualLeadOpen(true)}
               className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
@@ -868,10 +685,20 @@ export default function OpsPortalClient() {
 
             <button
               onClick={exportBookingsCSV}
-              className="bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-200 flex items-center gap-1.5 shadow-soft-sm transition-colors"
+              disabled={filteredBookings.length === 0}
+              className="bg-white hover:bg-slate-50 disabled:opacity-50 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-200 flex items-center gap-1.5 shadow-soft-sm transition-colors"
             >
               <Download className="w-3.5 h-3.5 text-slate-500" />
               <span className="hidden sm:inline">Export CSV</span>
+            </button>
+
+            <button
+              onClick={handleResetAllData}
+              className="bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-700 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 hover:border-rose-200 flex items-center gap-1.5 shadow-soft-sm transition-colors"
+              title="Clear all local booking & inquiry records and reset counters to zero"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+              <span className="hidden sm:inline">Reset to Zero</span>
             </button>
 
             <div className="h-5 w-px bg-slate-200 mx-0.5 hidden sm:block" />
@@ -891,7 +718,7 @@ export default function OpsPortalClient() {
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         
-        {/* 4 KPI Metric Cards */}
+        {/* 4 KPI Metric Cards - Clean Zero State */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {/* KPI 1: Total Revenue */}
           <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-soft-sm hover:shadow-soft-md transition-all">
@@ -906,7 +733,7 @@ export default function OpsPortalClient() {
             </div>
             <div className="mt-2 flex items-center gap-1 text-[11px] text-emerald-700 font-semibold">
               <TrendingUp className="w-3 h-3 text-emerald-600" />
-              <span>{kpis.completedJobs} jobs verified completed (+14.2%)</span>
+              <span>{kpis.completedJobs} jobs verified completed ({kpis.completedJobs > 0 ? '+14.2%' : '0%'})</span>
             </div>
           </div>
 
@@ -935,7 +762,7 @@ export default function OpsPortalClient() {
                 <Clock className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-amber-600 tracking-tight font-heading">
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
               {kpis.pendingLeads}
             </div>
             <div className="mt-2 text-[11px] text-amber-700 font-semibold flex items-center gap-1">
@@ -996,7 +823,7 @@ export default function OpsPortalClient() {
             }`}
           >
             <MessageSquare className="w-4 h-4" />
-            <span>Live Chatbot Monitor</span>
+            <span>Live Chatbot Monitor ({chats.length})</span>
           </button>
 
           <button
@@ -1097,10 +924,19 @@ export default function OpsPortalClient() {
                   <tbody className="divide-y divide-slate-100">
                     {filteredBookings.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-12 text-center text-slate-500">
-                          <AlertTriangle className="w-8 h-8 mx-auto text-slate-400 mb-2" />
-                          <p className="font-semibold text-slate-700">No matching bookings found</p>
-                          <p className="text-xs mt-1 text-slate-500">Try relaxing your locality or status filter.</p>
+                        <td colSpan={7} className="py-16 text-center text-slate-500">
+                          <Briefcase className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+                          <p className="font-bold text-slate-800 text-base font-heading">No bookings recorded</p>
+                          <p className="text-xs mt-1 text-slate-500 max-w-md mx-auto">
+                            All test records have been wiped and counters reset to zero. New customer bookings from the website checkout or manual dispatches will appear here.
+                          </p>
+                          <button
+                            onClick={() => setIsManualLeadOpen(true)}
+                            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all active:scale-95"
+                          >
+                            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                            <span>Log Direct Booking</span>
+                          </button>
                         </td>
                       </tr>
                     ) : (
@@ -1239,60 +1075,70 @@ export default function OpsPortalClient() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {inquiries.map((inq) => (
-                <div key={inq.id} className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-soft-sm hover:shadow-soft-md transition-all">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-mono font-bold text-slate-500">{inq.id}</span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                        inq.status === 'New' ? 'bg-amber-50 text-amber-800 border-amber-200' :
-                        inq.status === 'Converted' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
-                        'bg-slate-100 text-slate-700 border-slate-200'
-                      }`}>
-                        {inq.status}
-                      </span>
+            {inquiries.length === 0 ? (
+              <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center text-slate-500 shadow-soft-sm">
+                <HelpCircle className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+                <h3 className="font-bold text-slate-800 text-base font-heading">No customer inquiries or quote requests</h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  All test leads have been cleared and reset to zero. Inbound inquiries from the contact form and quote calculators will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {inquiries.map((inq) => (
+                  <div key={inq.id} className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-soft-sm hover:shadow-soft-md transition-all">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-mono font-bold text-slate-500">{inq.id}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          inq.status === 'New' ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                          inq.status === 'Converted' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
+                          'bg-slate-100 text-slate-700 border-slate-200'
+                        }`}>
+                          {inq.status}
+                        </span>
+                      </div>
+
+                      <h3 className="font-bold text-slate-900 text-base font-heading">{inq.customerName}</h3>
+                      
+                      <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                        <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                        <a href={`tel:${inq.phone}`} className="hover:text-emerald-700 font-mono font-semibold">
+                          {inq.phone}
+                        </a>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-slate-700 font-medium">📍 {inq.locality}</span>
+                      </div>
+
+                      <div className="mt-3 p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700">
+                        <p className="font-bold text-slate-900 mb-1">{inq.category}</p>
+                        <p className="text-slate-600 text-xs leading-relaxed">{inq.message}</p>
+                      </div>
                     </div>
 
-                    <h3 className="font-bold text-slate-900 text-base font-heading">{inq.customerName}</h3>
-                    
-                    <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
-                      <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                      <a href={`tel:${inq.phone}`} className="hover:text-emerald-700 font-mono font-semibold">
-                        {inq.phone}
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <a
+                        href={`https://wa.me/91${inq.phone}?text=${encodeURIComponent(`Namaste ${inq.customerName} ji, this is PlumberIndore Operations regarding your plumbing inquiry in ${inq.locality}. How can we assist you today?`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-semibold rounded-xl text-center transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>WhatsApp</span>
                       </a>
-                      <span className="text-slate-300">•</span>
-                      <span className="text-slate-700 font-medium">📍 {inq.locality}</span>
-                    </div>
 
-                    <div className="mt-3 p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700">
-                      <p className="font-bold text-slate-900 mb-1">{inq.category}</p>
-                      <p className="text-slate-600 text-xs leading-relaxed">{inq.message}</p>
+                      <button
+                        onClick={() => convertInquiryToBooking(inq)}
+                        className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl text-center transition-colors flex items-center justify-center gap-1 shadow-sm"
+                      >
+                        <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                        <span>Convert Lead</span>
+                      </button>
                     </div>
                   </div>
-
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                    <a
-                      href={`https://wa.me/91${inq.phone}?text=${encodeURIComponent(`Namaste ${inq.customerName} ji, this is PlumberIndore Operations regarding your plumbing inquiry in ${inq.locality}. How can we assist you today?`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-semibold rounded-xl text-center transition-colors flex items-center justify-center gap-1.5"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5" />
-                      <span>WhatsApp</span>
-                    </a>
-
-                    <button
-                      onClick={() => convertInquiryToBooking(inq)}
-                      className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl text-center transition-colors flex items-center justify-center gap-1 shadow-sm"
-                    >
-                      <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                      <span>Convert Lead</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -1300,118 +1146,132 @@ export default function OpsPortalClient() {
         {/* TAB 3: CHATBOT LIVE MONITOR */}
         {/* --------------------------------------------------------- */}
         {activeTab === 'chats' && (
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden grid grid-cols-1 md:grid-cols-3 min-h-[550px] shadow-soft-sm">
-            {/* Conversations Sidebar */}
-            <div className="border-r border-slate-200 bg-slate-50/60 p-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-                Live Conversations
-              </h3>
-              <div className="space-y-2">
-                {chats.map(c => (
-                  <button
-                    key={c.id}
-                    onClick={() => setSelectedChatId(c.id)}
-                    className={`w-full text-left p-3 rounded-xl border transition-all ${
-                      selectedChatId === c.id
-                        ? 'bg-white border-slate-900 text-slate-900 shadow-sm'
-                        : 'bg-white/60 border-slate-200 text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-xs text-slate-900">{c.customerName}</span>
-                      <span className="text-[10px] text-slate-400">{c.lastActive}</span>
-                    </div>
-                    <p className="text-xs text-slate-500 truncate">
-                      {c.messages[c.messages.length - 1]?.text}
-                    </p>
-                  </button>
-                ))}
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-soft-sm">
+            {chats.length === 0 ? (
+              <div className="p-16 text-center text-slate-400 bg-white flex flex-col items-center justify-center">
+                <MessageSquare className="w-12 h-12 text-slate-200 mb-3" />
+                <h3 className="font-bold text-slate-700 text-base font-heading">No Active Chat Conversations</h3>
+                <p className="text-xs text-slate-400 max-w-sm mt-1 leading-relaxed">
+                  All test chat logs have been wiped. Live visitor questions from the doorstep chatbot widget will appear here in real-time.
+                </p>
               </div>
-            </div>
-
-            {/* Active Chat Conversation View */}
-            <div className="md:col-span-2 flex flex-col justify-between bg-white p-4 sm:p-6">
-              <div>
-                <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-sm font-heading">{activeChat?.customerName}</h3>
-                    <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
-                      <span>Phone: <strong className="font-mono text-slate-700">{activeChat?.phone}</strong></span>
-                      <span className="text-emerald-700 flex items-center gap-1 font-medium">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Live Customer Session
-                      </span>
-                    </p>
-                  </div>
-
-                  <a
-                    href={`tel:${activeChat?.phone}`}
-                    className="p-2 bg-slate-100 hover:bg-slate-200 text-emerald-700 rounded-xl border border-slate-200 transition-colors"
-                    title="Call Customer"
-                  >
-                    <Phone className="w-4 h-4" />
-                  </a>
-                </div>
-
-                {/* Message Log */}
-                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 mb-4">
-                  {activeChat?.messages.map((m, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex flex-col ${m.sender === 'customer' ? 'items-start' : 'items-end'}`}
-                    >
-                      <div
-                        className={`max-w-md p-3 rounded-2xl text-xs sm:text-sm leading-relaxed ${
-                          m.sender === 'customer'
-                            ? 'bg-slate-100 border border-slate-200 text-slate-900 rounded-tl-none'
-                            : 'bg-slate-900 text-white font-medium rounded-tr-none shadow-sm'
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 min-h-[550px]">
+                {/* Conversations Sidebar */}
+                <div className="border-r border-slate-200 bg-slate-50/60 p-4">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                    Live Conversations
+                  </h3>
+                  <div className="space-y-2">
+                    {chats.map(c => (
+                      <button
+                        key={c.id}
+                        onClick={() => setSelectedChatId(c.id)}
+                        className={`w-full text-left p-3 rounded-xl border transition-all ${
+                          selectedChatId === c.id
+                            ? 'bg-white border-slate-900 text-slate-900 shadow-sm'
+                            : 'bg-white/60 border-slate-200 text-slate-600 hover:border-slate-300'
                         }`}
                       >
-                        {m.text}
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-xs text-slate-900">{c.customerName}</span>
+                          <span className="text-[10px] text-slate-400">{c.lastActive}</span>
+                        </div>
+                        <p className="text-xs text-slate-500 truncate">
+                          {c.messages[c.messages.length - 1]?.text}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Active Chat Conversation View */}
+                <div className="md:col-span-2 flex flex-col justify-between bg-white p-4 sm:p-6">
+                  {activeChat ? (
+                    <>
+                      <div>
+                        <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+                          <div>
+                            <h3 className="font-bold text-slate-900 text-sm font-heading">{activeChat?.customerName}</h3>
+                            <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                              <span>Phone: <strong className="font-mono text-slate-700">{activeChat?.phone}</strong></span>
+                              <span className="text-emerald-700 flex items-center gap-1 font-medium">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Live Customer Session
+                              </span>
+                            </p>
+                          </div>
+
+                          <a
+                            href={`tel:${activeChat?.phone}`}
+                            className="p-2 bg-slate-100 hover:bg-slate-200 text-emerald-700 rounded-xl border border-slate-200 transition-colors"
+                            title="Call Customer"
+                          >
+                            <Phone className="w-4 h-4" />
+                          </a>
+                        </div>
+
+                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 mb-4">
+                          {activeChat?.messages.map((m, idx) => (
+                            <div
+                              key={idx}
+                              className={`flex flex-col ${m.sender === 'customer' ? 'items-start' : 'items-end'}`}
+                            >
+                              <div
+                                className={`max-w-md p-3 rounded-2xl text-xs sm:text-sm leading-relaxed ${
+                                  m.sender === 'customer'
+                                    ? 'bg-slate-100 border border-slate-200 text-slate-900 rounded-tl-none'
+                                    : 'bg-slate-900 text-white font-medium rounded-tr-none shadow-sm'
+                                }`}
+                              >
+                                {m.text}
+                              </div>
+                              <span className="text-[10px] text-slate-400 mt-1 px-1">{m.time}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <span className="text-[10px] text-slate-400 mt-1 px-1">{m.time}</span>
-                    </div>
-                  ))}
+
+                      <div className="pt-3 border-t border-slate-200">
+                        <div className="text-[11px] font-bold text-slate-600 mb-2 flex items-center gap-1">
+                          <Zap className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Ops One-Click Quick Replies:</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-3">
+                          {QUICK_REPLIES.map((reply, i) => (
+                            <button
+                              key={i}
+                              onClick={() => sendQuickReply(reply)}
+                              className="text-left p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] text-slate-700 font-medium rounded-xl transition-colors truncate"
+                              title={reply}
+                            >
+                              {reply}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={chatReplyText}
+                            onChange={(e) => setChatReplyText(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && sendQuickReply(chatReplyText)}
+                            placeholder="Type custom dispatch message or response..."
+                            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+                          />
+                          <button
+                            onClick={() => sendQuickReply(chatReplyText)}
+                            disabled={!chatReplyText.trim()}
+                            className="bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold p-2.5 rounded-xl transition-all shadow-sm"
+                          >
+                            <Send className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
                 </div>
               </div>
-
-              {/* Quick Reply Canned Responses & Custom Composer */}
-              <div className="pt-3 border-t border-slate-200">
-                <div className="text-[11px] font-bold text-slate-600 mb-2 flex items-center gap-1">
-                  <Zap className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Ops One-Click Quick Replies:</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-3">
-                  {QUICK_REPLIES.map((reply, i) => (
-                    <button
-                      key={i}
-                      onClick={() => sendQuickReply(reply)}
-                      className="text-left p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] text-slate-700 font-medium rounded-xl transition-colors truncate"
-                      title={reply}
-                    >
-                      {reply}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={chatReplyText}
-                    onChange={(e) => setChatReplyText(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && sendQuickReply(chatReplyText)}
-                    placeholder="Type custom dispatch message or response..."
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
-                  />
-                  <button
-                    onClick={() => sendQuickReply(chatReplyText)}
-                    disabled={!chatReplyText.trim()}
-                    className="bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold p-2.5 rounded-xl transition-all shadow-sm"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
