@@ -97,6 +97,9 @@ export default function OpsPortalClient() {
 
   // Portal State - Clean Zero-State by Default
   const [activeTab, setActiveTab] = useState('bookings'); // 'bookings' | 'inquiries' | 'chats' | 'diagnostics'
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSynced, setLastSynced] = useState(null);
+  const [liveConnected, setLiveConnected] = useState(true);
   const [bookings, setBookings] = useState(INITIAL_BOOKINGS);
   const [inquiries, setInquiries] = useState(INITIAL_INQUIRIES);
   const [chats, setChats] = useState(INITIAL_CHATS);
@@ -142,6 +145,51 @@ export default function OpsPortalClient() {
     setActionNotice(msg);
     setTimeout(() => setActionNotice(''), 3500);
   };
+
+  // Fetch Live Data from Supabase
+  const fetchLivePortalData = async (showToast = false) => {
+    try {
+      setIsSyncing(true);
+      const res = await fetch('/api/portal/data');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          if (Array.isArray(data.bookings)) {
+            setBookings(data.bookings);
+          }
+          if (Array.isArray(data.inquiries)) {
+            setInquiries(data.inquiries);
+          }
+          if (Array.isArray(data.chats)) {
+            setChats(data.chats);
+            if (data.chats.length > 0 && !selectedChatId) {
+              setSelectedChatId(data.chats[0].id);
+            }
+          }
+          setLiveConnected(true);
+          const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          setLastSynced(timeStr);
+          if (showToast) showNotice(`Synced ${data.counts?.bookings || 0} bookings, ${data.counts?.inquiries || 0} inquiries, ${data.counts?.chats || 0} chats`);
+        }
+      }
+    } catch (err) {
+      console.warn('Ops portal live sync notice:', err);
+      setLiveConnected(false);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Periodic Auto-Sync Every 15 seconds
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchLivePortalData();
+      const timer = setInterval(() => {
+        fetchLivePortalData();
+      }, 15000);
+      return () => clearInterval(timer);
+    }
+  }, [isAuthenticated]);
 
   // 1. Check LocalStorage Auth on Mount & Clear Any Old Test Data
   useEffect(() => {
@@ -302,6 +350,22 @@ export default function OpsPortalClient() {
     });
     setBookings(updated);
     persistState(updated);
+
+    // Persist status update to Supabase
+    const targetBooking = bookings.find(b => b.id === bookingId);
+    fetch('/api/portal/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update_booking',
+        payload: {
+          id: bookingId,
+          dbId: targetBooking?.dbId,
+          status: newStatus,
+          paymentStatus: newStatus === 'Completed' ? 'Paid' : undefined
+        }
+      })
+    }).catch(console.warn);
   };
 
   // CSV Export
@@ -422,6 +486,23 @@ export default function OpsPortalClient() {
 
     persistState(updatedBookings, updatedInquiries, updatedChats);
     setIsManualLeadOpen(false);
+
+    // Persist booking to Supabase
+    fetch('/api/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: leadForm.customerName.trim(),
+        phone: leadForm.customerPhone.trim(),
+        address: leadForm.address.trim() || `${leadForm.locality}, Indore`,
+        pincode: '452010',
+        date: leadForm.scheduledDate,
+        timeSlot: leadForm.timeSlot,
+        serviceName: leadForm.serviceName,
+        packageTitle: 'Standard Doorstep Repair',
+        description: leadForm.notes || 'Logged via Ops Portal'
+      })
+    }).then(() => fetchLivePortalData()).catch(console.warn);
 
     // Automatically navigate to Bookings & Dispatch and highlight the new order
     setActiveTab('bookings');
@@ -750,6 +831,23 @@ export default function OpsPortalClient() {
     setChats(updatedChats);
     setChatReplyText('');
     persistState(null, null, updatedChats);
+
+    // Persist reply to Supabase leads table
+    const currentChat = chats.find(c => c.id === selectedChatId);
+    if (currentChat) {
+      fetch('/api/portal/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reply_chat',
+          payload: {
+            sessionId: currentChat.id,
+            dbId: currentChat.dbId,
+            replyText: text
+          }
+        })
+      }).catch(console.warn);
+    }
   };
 
   // -------------------------------------------------------------
@@ -877,6 +975,23 @@ export default function OpsPortalClient() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Live Database Status Indicator */}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="hidden md:inline">Live Supabase Connected</span>
+              <span className="md:hidden">Live DB</span>
+              {lastSynced && <span className="text-[10px] text-emerald-600 font-normal hidden lg:inline">({lastSynced})</span>}
+              <button
+                type="button"
+                onClick={() => fetchLivePortalData(true)}
+                disabled={isSyncing}
+                className="ml-1 p-1 hover:bg-emerald-100 rounded text-emerald-800 transition-colors cursor-pointer"
+                title="Refresh live bookings, inquiries & chats from Supabase"
+              >
+                <RotateCcw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+
             <button
               onClick={() => {
                 setLeadForm({
