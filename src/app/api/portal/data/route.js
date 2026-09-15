@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAdminClient } from '../../../../lib/supabase/admin.js';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 function extractLocality(address = '', pincode = '') {
   const addr = (address || '').toLowerCase();
@@ -130,7 +131,7 @@ export async function GET(request) {
       .from('leads')
       .select('*')
       .eq('source', 'live_chat')
-      .order('updated_at', { ascending: false });
+      .order('created_at', { ascending: false });
 
     const chats = (dbChats || []).map((l) => ({
       id: l.lead_number || `CHAT-${l.id.slice(0, 5)}`,
@@ -162,6 +163,12 @@ export async function GET(request) {
       inquiries,
       chats,
       syncedAt: new Date().toISOString()
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
     });
 
   } catch (error) {

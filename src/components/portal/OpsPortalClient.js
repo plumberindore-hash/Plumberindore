@@ -150,7 +150,7 @@ export default function OpsPortalClient() {
   const fetchLivePortalData = async (showToast = false) => {
     try {
       setIsSyncing(true);
-      const res = await fetch('/api/portal/data');
+      const res = await fetch(`/api/portal/data?ts=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data.success) {
