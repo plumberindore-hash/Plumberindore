@@ -7,7 +7,8 @@ import {
   Calendar, Wrench, AlertTriangle, MessageSquare, Bot, Sparkles, 
   TrendingUp, CheckCircle2, ChevronRight, X, ExternalLink, Copy,
   CheckCircle, ArrowUpRight, DollarSign, Activity, SlidersHorizontal,
-  User, Briefcase, Zap, Shield, HelpCircle, RotateCcw
+  User, Briefcase, Zap, Shield, HelpCircle, RotateCcw, ArrowRight,
+  MessageCircle, Layers
 } from 'lucide-react';
 
 // Hardcoded Master Auth Credentials
@@ -30,7 +31,7 @@ const INDORE_LOCALITIES = [
   'Geeta Bhawan'
 ];
 
-// Clean Zero-State: All test bookings, dispatches, inquiries & chats cleared
+// Clean Zero-State: All test bookings, dispatches, inquiries & chats cleared by default
 const INITIAL_BOOKINGS = [];
 const INITIAL_INQUIRIES = [];
 const INITIAL_CHATS = [];
@@ -112,8 +113,9 @@ export default function OpsPortalClient() {
   const [whatsappModalData, setWhatsappModalData] = useState(null);
   const [selectedBookingDetail, setSelectedBookingDetail] = useState(null);
   const [copiedNotice, setCopiedNotice] = useState(false);
+  const [actionNotice, setActionNotice] = useState('');
 
-  // Manual Lead Form State
+  // Manual Lead Form State with linking
   const [leadForm, setLeadForm] = useState({
     customerName: '',
     customerPhone: '',
@@ -124,7 +126,9 @@ export default function OpsPortalClient() {
     priority: 'High',
     scheduledDate: new Date().toISOString().split('T')[0],
     timeSlot: '02:00 PM - 04:00 PM',
-    notes: ''
+    notes: '',
+    linkedInquiryId: null,
+    linkedChatId: null
   });
 
   // Diagnostic Assistant State
@@ -132,6 +136,12 @@ export default function OpsPortalClient() {
   const [diagLocality, setDiagLocality] = useState('Vijay Nagar');
   const [diagResult, setDiagResult] = useState(null);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
+
+  // Notice Banner Helper
+  const showNotice = (msg) => {
+    setActionNotice(msg);
+    setTimeout(() => setActionNotice(''), 3500);
+  };
 
   // 1. Check LocalStorage Auth on Mount & Clear Any Old Test Data
   useEffect(() => {
@@ -199,6 +209,7 @@ export default function OpsPortalClient() {
       lastUpdated: new Date().toISOString()
     };
     localStorage.setItem(DATA_STORAGE_KEY, JSON.stringify(emptyPayload));
+    showNotice('All records cleared. Counters reset to zero.');
   };
 
   // Auth Handler
@@ -311,6 +322,8 @@ export default function OpsPortalClient() {
       'Scheduled Date',
       'Time Slot',
       'Technician',
+      'Linked Inquiry',
+      'Linked Chat',
       'Created At'
     ];
 
@@ -330,6 +343,8 @@ export default function OpsPortalClient() {
       `"${b.scheduledDate}"`,
       `"${b.timeSlot}"`,
       `"${b.assignedTechnician || 'Unassigned'}"`,
+      `"${b.linkedInquiryId || ''}"`,
+      `"${b.linkedChatId || ''}"`,
       `"${b.createdAt}"`
     ]);
 
@@ -346,13 +361,18 @@ export default function OpsPortalClient() {
     URL.revokeObjectURL(url);
   };
 
-  // Manual Lead Creation
+  // -------------------------------------------------------------
+  // CROSS-LINKING ACTIONS: CONNECTING CHATS, INQUIRIES & BOOKINGS
+  // -------------------------------------------------------------
+
+  // 1. Manual / Converted Lead Creation (Links to Booking)
   const handleCreateManualLead = (e) => {
     e.preventDefault();
     if (!leadForm.customerName || !leadForm.customerPhone) return;
 
+    const newBookingId = `IND-${Math.floor(10000 + Math.random() * 90000)}`;
     const newBooking = {
-      id: `IND-${Math.floor(10000 + Math.random() * 90000)}`,
+      id: newBookingId,
       customerName: leadForm.customerName.trim(),
       customerPhone: leadForm.customerPhone.trim(),
       customerEmail: '',
@@ -370,13 +390,42 @@ export default function OpsPortalClient() {
       paymentMethod: 'Cash / UPI on Doorstep',
       assignedTechnician: 'Pending Assignment',
       notes: leadForm.notes || 'Manually logged via Ops Portal.',
+      linkedInquiryId: leadForm.linkedInquiryId || null,
+      linkedChatId: leadForm.linkedChatId || null,
       createdAt: new Date().toISOString()
     };
 
-    const updated = [newBooking, ...bookings];
-    setBookings(updated);
-    persistState(updated);
+    const updatedBookings = [newBooking, ...bookings];
+    setBookings(updatedBookings);
+
+    // If converted from inquiry, update inquiry status & link booking ID
+    let updatedInquiries = inquiries;
+    if (leadForm.linkedInquiryId) {
+      updatedInquiries = inquiries.map(inq => 
+        inq.id === leadForm.linkedInquiryId 
+          ? { ...inq, status: 'Converted', linkedBookingId: newBookingId }
+          : inq
+      );
+      setInquiries(updatedInquiries);
+    }
+
+    // If converted from chat, update chat & link booking ID
+    let updatedChats = chats;
+    if (leadForm.linkedChatId) {
+      updatedChats = chats.map(c => 
+        c.id === leadForm.linkedChatId 
+          ? { ...c, linkedBookingId: newBookingId }
+          : c
+      );
+      setChats(updatedChats);
+    }
+
+    persistState(updatedBookings, updatedInquiries, updatedChats);
     setIsManualLeadOpen(false);
+
+    // Automatically navigate to Bookings & Dispatch and highlight the new order
+    setActiveTab('bookings');
+    showNotice(`✅ Booking #${newBookingId} successfully created and linked!`);
 
     // Reset Form
     setLeadForm({
@@ -389,8 +438,176 @@ export default function OpsPortalClient() {
       priority: 'High',
       scheduledDate: new Date().toISOString().split('T')[0],
       timeSlot: '02:00 PM - 04:00 PM',
-      notes: ''
+      notes: '',
+      linkedInquiryId: null,
+      linkedChatId: null
     });
+  };
+
+  // 2. Convert Inquiry ➔ Booking
+  const convertInquiryToBooking = (inquiry) => {
+    setLeadForm({
+      customerName: inquiry.customerName,
+      customerPhone: inquiry.phone,
+      locality: inquiry.locality,
+      address: `${inquiry.locality}, Indore`,
+      serviceName: inquiry.category || 'General Plumbing Inquiry',
+      price: '599',
+      priority: 'High',
+      scheduledDate: new Date().toISOString().split('T')[0],
+      timeSlot: '03:00 PM - 05:00 PM',
+      notes: `Converted from Inquiry #${inquiry.id}: ${inquiry.message}`,
+      linkedInquiryId: inquiry.id,
+      linkedChatId: inquiry.linkedChatId || null
+    });
+    setIsManualLeadOpen(true);
+  };
+
+  // 3. Convert Chat ➔ Booking directly
+  const convertChatToBooking = (chat) => {
+    if (!chat) return;
+    const cleanName = chat.customerName.replace(/\s*\([^)]*\)/, '').trim();
+    const detectedLoc = chat.customerName.includes('Palasia') ? 'Palasia' : chat.customerName.includes('Bhawarkua') ? 'Bhawarkua' : 'Vijay Nagar';
+    const lastMsg = chat.messages?.[chat.messages.length - 1]?.text || 'Live customer discussion';
+
+    setLeadForm({
+      customerName: cleanName,
+      customerPhone: chat.phone,
+      locality: detectedLoc,
+      address: `${detectedLoc}, Indore`,
+      serviceName: 'Doorstep Plumbing Inspection & Repair',
+      price: '499',
+      priority: 'High',
+      scheduledDate: new Date().toISOString().split('T')[0],
+      timeSlot: '02:00 PM - 04:00 PM',
+      notes: `Converted from Live Chat #${chat.id}: "${lastMsg}"`,
+      linkedInquiryId: chat.linkedInquiryId || null,
+      linkedChatId: chat.id
+    });
+    setIsManualLeadOpen(true);
+  };
+
+  // 4. Convert Chat ➔ Inquiry
+  const convertChatToInquiry = (chat) => {
+    if (!chat) return;
+    const inqId = `INQ-${Math.floor(100 + Math.random() * 900)}`;
+    const cleanName = chat.customerName.replace(/\s*\([^)]*\)/, '').trim();
+    const detectedLoc = chat.customerName.includes('Palasia') ? 'Palasia' : chat.customerName.includes('Bhawarkua') ? 'Bhawarkua' : 'Vijay Nagar';
+    const lastMsg = chat.messages?.[chat.messages.length - 1]?.text || 'Inquiry escalated from customer chat.';
+
+    const newInq = {
+      id: inqId,
+      customerName: cleanName,
+      phone: chat.phone,
+      locality: detectedLoc,
+      category: 'Plumbing Inquiry (Escalated from Live Chat)',
+      message: `[From Chat #${chat.id}] ${lastMsg}`,
+      createdAt: new Date().toISOString(),
+      status: 'New',
+      linkedChatId: chat.id
+    };
+
+    const updatedInquiries = [newInq, ...inquiries];
+    setInquiries(updatedInquiries);
+
+    const updatedChats = chats.map(c => 
+      c.id === chat.id ? { ...c, linkedInquiryId: inqId } : c
+    );
+    setChats(updatedChats);
+
+    persistState(null, updatedInquiries, updatedChats);
+    setActiveTab('inquiries');
+    showNotice(`📩 Chat #${chat.id} linked & converted to Inquiry #${inqId}!`);
+  };
+
+  // 5. Open or Create Live Chat session from Booking or Inquiry
+  const openOrCreateChatForCustomer = (name, phone, locality = 'Vijay Nagar', initialNote = '') => {
+    const existing = chats.find(c => c.phone === phone);
+    if (existing) {
+      setSelectedChatId(existing.id);
+      setActiveTab('chats');
+      showNotice(`💬 Opened active chat with ${existing.customerName}`);
+      return;
+    }
+
+    const cleanName = name.replace(/\s*\([^)]*\)/, '').trim();
+    const newChatId = `CHAT-${Math.floor(300 + Math.random() * 699)}`;
+    const newChat = {
+      id: newChatId,
+      customerName: `${cleanName} (${locality})`,
+      phone: phone,
+      lastActive: 'Just now',
+      unread: false,
+      messages: [
+        { 
+          sender: 'bot', 
+          text: initialNote || `Namaste ${cleanName} ji! PlumberIndore Operations here. We are reviewing your request in ${locality}. How can we assist you?`, 
+          time: 'Just now' 
+        }
+      ]
+    };
+
+    const updatedChats = [newChat, ...chats];
+    setChats(updatedChats);
+    setSelectedChatId(newChatId);
+    persistState(null, null, updatedChats);
+    setActiveTab('chats');
+    showNotice(`💬 Created live chat session #${newChatId} for ${cleanName}`);
+  };
+
+  // 6. Simulation Generators for Quick Testing
+  const simulateSampleChat = () => {
+    const samples = [
+      { name: 'Sunita Jain', loc: 'Vijay Nagar', phone: '9826199887', issue: 'Namaste, mera geyser ka inlet pipe leak ho raha hai. Jaldi technician bhej do.' },
+      { name: 'Amit Saxena', loc: 'Palasia', phone: '9977233445', issue: 'Kitchen sink blocked ho gaya hai. Emergency visit chahiye.' },
+      { name: 'Gaurav Rathore', loc: 'Bhawarkua', phone: '9752044321', issue: 'Toilet cistern flush valve leak ho raha hai. Rate kya hai?' }
+    ];
+    const pick = samples[Math.floor(Math.random() * samples.length)];
+    const newId = `CHAT-${Math.floor(300 + Math.random() * 699)}`;
+    const newChat = {
+      id: newId,
+      customerName: `${pick.name} (${pick.loc})`,
+      phone: pick.phone,
+      lastActive: 'Just now',
+      unread: true,
+      messages: [
+        { sender: 'customer', text: pick.issue, time: '12:40 PM' },
+        { sender: 'bot', text: `Namaste ${pick.name} ji! Hum 45 minute me ${pick.loc} me technician bhej sakte hain.`, time: '12:41 PM' }
+      ]
+    };
+
+    const updated = [newChat, ...chats];
+    setChats(updated);
+    setSelectedChatId(newId);
+    persistState(null, null, updated);
+    setActiveTab('chats');
+    showNotice(`✨ Simulated incoming customer chat session #${newId}`);
+  };
+
+  const simulateSampleInquiry = () => {
+    const samples = [
+      { name: 'Neeraj Joshi', phone: '9826555123', loc: 'Vijay Nagar', cat: 'Full Bathroom Plumbing Renovation', msg: 'Want to remodel bathroom in Scheme 78 with concealed valves. Need quote.' },
+      { name: 'Kavita Verma', phone: '9425112233', loc: 'Palasia', cat: 'Water Meter & Main Line Repair', msg: 'Narmada water line inlet valve leaking outside boundary wall.' },
+      { name: 'Dr. Manish Patidar', phone: '9174934135', loc: 'Sudama Nagar', cat: 'Water Motor Booster Pump Installation', msg: 'Need automatic 0.5HP pressure booster pump installed.' }
+    ];
+    const pick = samples[Math.floor(Math.random() * samples.length)];
+    const newId = `INQ-${Math.floor(100 + Math.random() * 900)}`;
+    const newInq = {
+      id: newId,
+      customerName: pick.name,
+      phone: pick.phone,
+      locality: pick.loc,
+      category: pick.cat,
+      message: pick.msg,
+      createdAt: new Date().toISOString(),
+      status: 'New'
+    };
+
+    const updated = [newInq, ...inquiries];
+    setInquiries(updated);
+    persistState(null, updated, null);
+    setActiveTab('inquiries');
+    showNotice(`✨ Simulated incoming customer inquiry #${newId}`);
   };
 
   // WhatsApp Message Generator
@@ -535,29 +752,6 @@ export default function OpsPortalClient() {
     persistState(null, null, updatedChats);
   };
 
-  // Convert Inquiry to Booking
-  const convertInquiryToBooking = (inquiry) => {
-    setLeadForm({
-      customerName: inquiry.customerName,
-      customerPhone: inquiry.phone,
-      locality: inquiry.locality,
-      address: `${inquiry.locality}, Indore`,
-      serviceName: inquiry.category || 'General Plumbing Inquiry',
-      price: '599',
-      priority: 'High',
-      scheduledDate: new Date().toISOString().split('T')[0],
-      timeSlot: '03:00 PM - 05:00 PM',
-      notes: `Converted from Inquiry #${inquiry.id}: ${inquiry.message}`
-    });
-    
-    const updatedInquiries = inquiries.map(i => 
-      i.id === inquiry.id ? { ...i, status: 'Converted' } : i
-    );
-    setInquiries(updatedInquiries);
-    persistState(null, updatedInquiries);
-    setIsManualLeadOpen(true);
-  };
-
   // -------------------------------------------------------------
   // RENDER: Unauthenticated Shield Gate (Crisp White / Light-Slate Theme)
   // -------------------------------------------------------------
@@ -666,6 +860,15 @@ export default function OpsPortalClient() {
 
   return (
     <div className="fixed inset-0 z-[9999] min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-amber-100 selection:text-slate-900 overflow-y-auto pb-16">
+      
+      {/* Dynamic Action Notification Banner */}
+      {actionNotice && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg border border-slate-700 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{actionNotice}</span>
+        </div>
+      )}
+
       {/* Top Ops Navigation Bar */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -675,7 +878,23 @@ export default function OpsPortalClient() {
 
           <div className="flex items-center gap-2 sm:gap-3">
             <button
-              onClick={() => setIsManualLeadOpen(true)}
+              onClick={() => {
+                setLeadForm({
+                  customerName: '',
+                  customerPhone: '',
+                  locality: 'Vijay Nagar',
+                  address: '',
+                  serviceName: 'Tap & Mixer Leakage Repair',
+                  price: '499',
+                  priority: 'High',
+                  scheduledDate: new Date().toISOString().split('T')[0],
+                  timeSlot: '02:00 PM - 04:00 PM',
+                  notes: '',
+                  linkedInquiryId: null,
+                  linkedChatId: null
+                });
+                setIsManualLeadOpen(true);
+              }}
               className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
             >
               <Plus className="w-3.5 h-3.5 stroke-[3]" />
@@ -762,7 +981,7 @@ export default function OpsPortalClient() {
                 <Clock className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+            <div className="text-2xl sm:text-3xl font-extrabold text-amber-600 tracking-tight font-heading">
               {kpis.pendingLeads}
             </div>
             <div className="mt-2 text-[11px] text-amber-700 font-semibold flex items-center gap-1">
@@ -788,7 +1007,91 @@ export default function OpsPortalClient() {
           </div>
         </section>
 
-        {/* Tab Navigation */}
+        {/* ------------------------------------------------------------- */}
+        {/* INTERCONNECTED WORKFLOW PIPELINE BREADCRUMB */}
+        {/* ------------------------------------------------------------- */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-3 mb-4 flex flex-wrap items-center justify-between gap-3 shadow-soft-sm">
+          <div className="flex items-center gap-2 sm:gap-3 text-xs overflow-x-auto no-scrollbar py-0.5">
+            <span className="font-bold text-slate-400 uppercase text-[10px] tracking-wider shrink-0 flex items-center gap-1">
+              <Layers className="w-3.5 h-3.5 text-slate-500" />
+              <span>Ops Pipeline:</span>
+            </span>
+
+            {/* Stage 1: Live Chats */}
+            <button
+              onClick={() => setActiveTab('chats')}
+              className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 font-bold shrink-0 ${
+                activeTab === 'chats'
+                  ? 'bg-blue-50 text-blue-800 border border-blue-200 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
+              <span>1. Live Chat Monitor</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 text-blue-800 font-mono">
+                {chats.length}
+              </span>
+            </button>
+
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+
+            {/* Stage 2: Inquiries */}
+            <button
+              onClick={() => setActiveTab('inquiries')}
+              className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 font-bold shrink-0 ${
+                activeTab === 'inquiries'
+                  ? 'bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-amber-600" />
+              <span>2. Inquiries & Quotes</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-800 font-mono">
+                {inquiries.length}
+              </span>
+            </button>
+
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+
+            {/* Stage 3: Bookings */}
+            <button
+              onClick={() => setActiveTab('bookings')}
+              className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 font-bold shrink-0 ${
+                activeTab === 'bookings'
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Briefcase className="w-3.5 h-3.5 text-emerald-600" />
+              <span>3. Bookings & Dispatch</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-mono">
+                {bookings.length}
+              </span>
+            </button>
+          </div>
+
+          {/* Quick Simulation Trigger for Demonstration */}
+          <div className="flex items-center gap-2 shrink-0 text-xs">
+            <button
+              onClick={simulateSampleChat}
+              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-semibold transition-colors flex items-center gap-1"
+              title="Simulate incoming customer chat to test cross-linking"
+            >
+              <Plus className="w-3 h-3" />
+              <span>Simulate Chat</span>
+            </button>
+            <button
+              onClick={simulateSampleInquiry}
+              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-semibold transition-colors flex items-center gap-1"
+              title="Simulate customer quote inquiry to test cross-linking"
+            >
+              <Plus className="w-3 h-3" />
+              <span>Simulate Inquiry</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Navigation Main Bar */}
         <div className="flex items-center gap-2 border-b border-slate-200 pb-3 mb-6 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('bookings')}
@@ -906,19 +1209,19 @@ export default function OpsPortalClient() {
               </div>
             </div>
 
-            {/* Bookings Table */}
+            {/* Bookings Table with Cross-Linking */}
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-soft-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs sm:text-sm">
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-[11px] font-bold tracking-wider">
                     <tr>
-                      <th className="py-3.5 px-4">Booking ID</th>
+                      <th className="py-3.5 px-4">Booking ID & Origin</th>
                       <th className="py-3.5 px-4">Customer & Contact</th>
                       <th className="py-3.5 px-4">Locality & Address</th>
                       <th className="py-3.5 px-4">Service Booked</th>
                       <th className="py-3.5 px-4">Slot & Price</th>
                       <th className="py-3.5 px-4">Dispatch Status</th>
-                      <th className="py-3.5 px-4 text-right">Actions</th>
+                      <th className="py-3.5 px-4 text-right">Actions & Chat</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -928,15 +1231,47 @@ export default function OpsPortalClient() {
                           <Briefcase className="w-10 h-10 mx-auto text-slate-300 mb-3" />
                           <p className="font-bold text-slate-800 text-base font-heading">No bookings recorded</p>
                           <p className="text-xs mt-1 text-slate-500 max-w-md mx-auto">
-                            All test records have been wiped and counters reset to zero. New customer bookings from the website checkout or manual dispatches will appear here.
+                            All test records have been wiped and counters reset to zero. Convert an inquiry, escalate a live customer chat, or log a direct booking below.
                           </p>
-                          <button
-                            onClick={() => setIsManualLeadOpen(true)}
-                            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all active:scale-95"
-                          >
-                            <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                            <span>Log Direct Booking</span>
-                          </button>
+                          <div className="mt-4 flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => {
+                                setLeadForm({
+                                  customerName: '',
+                                  customerPhone: '',
+                                  locality: 'Vijay Nagar',
+                                  address: '',
+                                  serviceName: 'Tap & Mixer Leakage Repair',
+                                  price: '499',
+                                  priority: 'High',
+                                  scheduledDate: new Date().toISOString().split('T')[0],
+                                  timeSlot: '02:00 PM - 04:00 PM',
+                                  notes: '',
+                                  linkedInquiryId: null,
+                                  linkedChatId: null
+                                });
+                                setIsManualLeadOpen(true);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all active:scale-95"
+                            >
+                              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                              <span>Log Direct Booking</span>
+                            </button>
+                            <button
+                              onClick={() => setActiveTab('inquiries')}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
+                            >
+                              <HelpCircle className="w-3.5 h-3.5" />
+                              <span>View Inquiries ({inquiries.length})</span>
+                            </button>
+                            <button
+                              onClick={() => setActiveTab('chats')}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5" />
+                              <span>View Chats ({chats.length})</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ) : (
@@ -959,6 +1294,37 @@ export default function OpsPortalClient() {
                                 )}
                               </div>
                               <span className="text-[10px] text-slate-500 block font-sans font-normal">{b.scheduledDate}</span>
+                              
+                              {/* Cross-Link Badges to Source Inquiry / Chat */}
+                              <div className="flex flex-wrap gap-1 mt-1 font-sans">
+                                {b.linkedInquiryId && (
+                                  <button
+                                    onClick={() => {
+                                      setActiveTab('inquiries');
+                                      showNotice(`Viewing Source Inquiry #${b.linkedInquiryId}`);
+                                    }}
+                                    className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded text-[9px] font-bold transition-colors"
+                                    title={`Click to view original Inquiry #${b.linkedInquiryId}`}
+                                  >
+                                    <span>From {b.linkedInquiryId}</span>
+                                    <ArrowUpRight className="w-2.5 h-2.5" />
+                                  </button>
+                                )}
+                                {b.linkedChatId && (
+                                  <button
+                                    onClick={() => {
+                                      setActiveTab('chats');
+                                      setSelectedChatId(b.linkedChatId);
+                                      showNotice(`Viewing Source Chat Session #${b.linkedChatId}`);
+                                    }}
+                                    className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded text-[9px] font-bold transition-colors"
+                                    title={`Click to open original Chat Session #${b.linkedChatId}`}
+                                  >
+                                    <span>From {b.linkedChatId}</span>
+                                    <ArrowUpRight className="w-2.5 h-2.5" />
+                                  </button>
+                                )}
+                              </div>
                             </td>
 
                             <td className="py-4 px-4">
@@ -1019,6 +1385,15 @@ export default function OpsPortalClient() {
 
                             <td className="py-4 px-4 text-right whitespace-nowrap">
                               <div className="flex items-center justify-end gap-1.5">
+                                {/* Cross-Link: Open/Create Live Customer Chat */}
+                                <button
+                                  onClick={() => openOrCreateChatForCustomer(b.customerName, b.customerPhone, b.locality, `Namaste ${b.customerName} ji, this is PlumberIndore regarding your Booking #${b.id} (${b.serviceName}). How can we assist you?`)}
+                                  title="Open / Start Live Chat with this customer"
+                                  className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg transition-colors"
+                                >
+                                  <MessageCircle className="w-3.5 h-3.5" />
+                                </button>
+
                                 {/* WhatsApp Dispatch Trigger */}
                                 <button
                                   onClick={() => openWhatsAppModal(b, 'customer')}
@@ -1037,9 +1412,9 @@ export default function OpsPortalClient() {
                                     runAIDiagnostic(`${b.serviceName}. ${b.notes || ''}`, b);
                                   }}
                                   title="Analyze with AI Diagnostic"
-                                  className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg transition-colors"
+                                  className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg transition-colors"
                                 >
-                                  <Sparkles className="w-3.5 h-3.5" />
+                                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                                 </button>
 
                                 {/* View Detail Drawer */}
@@ -1068,10 +1443,20 @@ export default function OpsPortalClient() {
         {/* --------------------------------------------------------- */}
         {activeTab === 'inquiries' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-bold text-slate-900 font-heading">Customer Inquiries & Quote Requests</h2>
-                <p className="text-xs text-slate-500">Review inbound leads from contact form & quotation calculators across Indore.</p>
+                <p className="text-xs text-slate-500">Inbound leads linked to the dispatch pipeline. Convert directly to Bookings or Live Chat.</p>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={simulateSampleInquiry}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Simulate New Inquiry</span>
+                </button>
               </div>
             </div>
 
@@ -1080,8 +1465,24 @@ export default function OpsPortalClient() {
                 <HelpCircle className="w-10 h-10 mx-auto text-slate-300 mb-3" />
                 <h3 className="font-bold text-slate-800 text-base font-heading">No customer inquiries or quote requests</h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                  All test leads have been cleared and reset to zero. Inbound inquiries from the contact form and quote calculators will appear here.
+                  All test leads have been cleared. Inbound inquiries from the website, contact forms, or escalated from live chats will appear here.
                 </p>
+                <div className="mt-4 flex items-center justify-center gap-2">
+                  <button
+                    onClick={simulateSampleInquiry}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all active:scale-95"
+                  >
+                    <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                    <span>Create Sample Inquiry</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('chats')}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Monitor Live Chats ({chats.length})</span>
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1114,25 +1515,72 @@ export default function OpsPortalClient() {
                         <p className="font-bold text-slate-900 mb-1">{inq.category}</p>
                         <p className="text-slate-600 text-xs leading-relaxed">{inq.message}</p>
                       </div>
+
+                      {/* Cross-Link Status Badges */}
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {inq.linkedBookingId && (
+                          <button
+                            onClick={() => {
+                              setActiveTab('bookings');
+                              setSearchQuery(inq.linkedBookingId);
+                              showNotice(`Viewing Linked Booking #${inq.linkedBookingId}`);
+                            }}
+                            className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition-colors"
+                          >
+                            <Briefcase className="w-3 h-3 text-emerald-600" />
+                            <span>Linked Booking #{inq.linkedBookingId}</span>
+                            <ArrowRight className="w-2.5 h-2.5" />
+                          </button>
+                        )}
+                        {inq.linkedChatId && (
+                          <button
+                            onClick={() => {
+                              setActiveTab('chats');
+                              setSelectedChatId(inq.linkedChatId);
+                              showNotice(`Viewing Linked Chat Session #${inq.linkedChatId}`);
+                            }}
+                            className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-md transition-colors"
+                          >
+                            <MessageSquare className="w-3 h-3 text-blue-600" />
+                            <span>Linked Chat #{inq.linkedChatId}</span>
+                            <ArrowRight className="w-2.5 h-2.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <a
-                        href={`https://wa.me/91${inq.phone}?text=${encodeURIComponent(`Namaste ${inq.customerName} ji, this is PlumberIndore Operations regarding your plumbing inquiry in ${inq.locality}. How can we assist you today?`)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-semibold rounded-xl text-center transition-colors flex items-center justify-center gap-1.5"
+                      {/* Cross-link to live chat */}
+                      <button
+                        onClick={() => openOrCreateChatForCustomer(inq.customerName, inq.phone, inq.locality, `Namaste ${inq.customerName} ji! PlumberIndore here regarding your inquiry for ${inq.category}.`)}
+                        className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl text-center transition-colors flex items-center justify-center gap-1.5"
+                        title="Chat directly with customer in Live Monitor"
                       >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                        <span>WhatsApp</span>
-                      </a>
+                        <MessageCircle className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Chat</span>
+                      </button>
 
+                      {/* Convert to Booking */}
                       <button
                         onClick={() => convertInquiryToBooking(inq)}
-                        className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl text-center transition-colors flex items-center justify-center gap-1 shadow-sm"
+                        disabled={inq.status === 'Converted'}
+                        className={`flex-1 py-2 rounded-xl text-xs font-bold text-center transition-colors flex items-center justify-center gap-1 shadow-sm ${
+                          inq.status === 'Converted'
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 cursor-default'
+                            : 'bg-slate-900 hover:bg-slate-800 text-white'
+                        }`}
                       >
-                        <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                        <span>Convert Lead</span>
+                        {inq.status === 'Converted' ? (
+                          <>
+                            <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Converted</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                            <span>Convert Lead</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -1152,16 +1600,40 @@ export default function OpsPortalClient() {
                 <MessageSquare className="w-12 h-12 text-slate-200 mb-3" />
                 <h3 className="font-bold text-slate-700 text-base font-heading">No Active Chat Conversations</h3>
                 <p className="text-xs text-slate-400 max-w-sm mt-1 leading-relaxed">
-                  All test chat logs have been wiped. Live visitor questions from the doorstep chatbot widget will appear here in real-time.
+                  All test chat logs have been wiped. Live visitor conversations from the doorstep chatbot widget will appear here in real-time.
                 </p>
+                <div className="mt-4 flex items-center gap-2">
+                  <button
+                    onClick={simulateSampleChat}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all active:scale-95"
+                  >
+                    <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                    <span>Simulate Inbound Customer Chat</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('bookings')}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
+                  >
+                    <Briefcase className="w-3.5 h-3.5" />
+                    <span>View Bookings ({bookings.length})</span>
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 min-h-[550px]">
                 {/* Conversations Sidebar */}
                 <div className="border-r border-slate-200 bg-slate-50/60 p-4">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-                    Live Conversations
-                  </h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Live Conversations ({chats.length})
+                    </h3>
+                    <button
+                      onClick={simulateSampleChat}
+                      className="text-[10px] text-blue-700 hover:underline font-bold"
+                    >
+                      + Add Chat
+                    </button>
+                  </div>
                   <div className="space-y-2">
                     {chats.map(c => (
                       <button
@@ -1180,6 +1652,20 @@ export default function OpsPortalClient() {
                         <p className="text-xs text-slate-500 truncate">
                           {c.messages[c.messages.length - 1]?.text}
                         </p>
+                        
+                        {/* Status Pills */}
+                        <div className="flex items-center gap-1 mt-1.5">
+                          {c.linkedBookingId && (
+                            <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                              Booked #{c.linkedBookingId}
+                            </span>
+                          )}
+                          {c.linkedInquiryId && (
+                            <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded">
+                              Inquiry #{c.linkedInquiryId}
+                            </span>
+                          )}
+                        </div>
                       </button>
                     ))}
                   </div>
@@ -1190,9 +1676,13 @@ export default function OpsPortalClient() {
                   {activeChat ? (
                     <>
                       <div>
-                        <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+                        {/* Chat Header with Direct Link Actions */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 mb-4 gap-3">
                           <div>
-                            <h3 className="font-bold text-slate-900 text-sm font-heading">{activeChat?.customerName}</h3>
+                            <h3 className="font-bold text-slate-900 text-sm font-heading flex items-center gap-2">
+                              <span>{activeChat?.customerName}</span>
+                              <span className="text-[10px] font-mono text-slate-400">({activeChat?.id})</span>
+                            </h3>
                             <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
                               <span>Phone: <strong className="font-mono text-slate-700">{activeChat?.phone}</strong></span>
                               <span className="text-emerald-700 flex items-center gap-1 font-medium">
@@ -1201,14 +1691,71 @@ export default function OpsPortalClient() {
                             </p>
                           </div>
 
-                          <a
-                            href={`tel:${activeChat?.phone}`}
-                            className="p-2 bg-slate-100 hover:bg-slate-200 text-emerald-700 rounded-xl border border-slate-200 transition-colors"
-                            title="Call Customer"
-                          >
-                            <Phone className="w-4 h-4" />
-                          </a>
+                          {/* Cross-Link Action Buttons */}
+                          <div className="flex items-center gap-2">
+                            {/* Convert to Booking Button */}
+                            <button
+                              onClick={() => convertChatToBooking(activeChat)}
+                              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1"
+                              title="Create and link a booking order directly from this chat"
+                            >
+                              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                              <span>Create Booking</span>
+                            </button>
+
+                            {/* Convert to Inquiry Button */}
+                            <button
+                              onClick={() => convertChatToInquiry(activeChat)}
+                              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1"
+                              title="Escalate and save this conversation as an Inquiry"
+                            >
+                              <HelpCircle className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Save as Inquiry</span>
+                            </button>
+
+                            <a
+                              href={`tel:${activeChat?.phone}`}
+                              className="p-2 bg-slate-100 hover:bg-slate-200 text-emerald-700 rounded-xl border border-slate-200 transition-colors"
+                              title="Direct Phone Call"
+                            >
+                              <Phone className="w-4 h-4" />
+                            </a>
+                          </div>
                         </div>
+
+                        {/* Linked Chips if already converted */}
+                        {(activeChat.linkedBookingId || activeChat.linkedInquiryId) && (
+                          <div className="mb-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3 text-xs">
+                            <span className="font-bold text-slate-500 text-[11px]">Linked Records:</span>
+                            {activeChat.linkedBookingId && (
+                              <button
+                                onClick={() => {
+                                  setActiveTab('bookings');
+                                  setSearchQuery(activeChat.linkedBookingId);
+                                  showNotice(`Viewing Linked Booking #${activeChat.linkedBookingId}`);
+                                }}
+                                className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-100/60 hover:bg-emerald-200 px-2 py-0.5 rounded-lg font-bold transition-colors"
+                              >
+                                <Briefcase className="w-3 h-3 text-emerald-600" />
+                                <span>Booking #{activeChat.linkedBookingId}</span>
+                                <ArrowRight className="w-3 h-3" />
+                              </button>
+                            )}
+                            {activeChat.linkedInquiryId && (
+                              <button
+                                onClick={() => {
+                                  setActiveTab('inquiries');
+                                  showNotice(`Viewing Linked Inquiry #${activeChat.linkedInquiryId}`);
+                                }}
+                                className="inline-flex items-center gap-1 text-amber-800 bg-amber-100/60 hover:bg-amber-200 px-2 py-0.5 rounded-lg font-bold transition-colors"
+                              >
+                                <HelpCircle className="w-3 h-3 text-amber-600" />
+                                <span>Inquiry #{activeChat.linkedInquiryId}</span>
+                                <ArrowRight className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        )}
 
                         <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 mb-4">
                           {activeChat?.messages.map((m, idx) => (
@@ -1455,7 +2002,7 @@ export default function OpsPortalClient() {
       </main>
 
       {/* ------------------------------------------------------------- */}
-      {/* MODAL 1: MANUAL LEAD ENTRY MODAL */}
+      {/* MODAL 1: MANUAL LEAD ENTRY MODAL (Supports linking to chat/inquiry) */}
       {/* ------------------------------------------------------------- */}
       {isManualLeadOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1465,7 +2012,18 @@ export default function OpsPortalClient() {
                 <div className="p-1.5 bg-slate-900 text-white rounded-lg">
                   <Plus className="w-4 h-4 stroke-[3]" />
                 </div>
-                <h3 className="font-bold text-slate-900 text-base font-heading">Direct Lead & Booking Entry</h3>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base font-heading">
+                    {leadForm.linkedInquiryId ? `Convert Inquiry #${leadForm.linkedInquiryId} to Booking` : 
+                     leadForm.linkedChatId ? `Convert Chat #${leadForm.linkedChatId} to Booking` : 
+                     'Direct Lead & Booking Entry'}
+                  </h3>
+                  {(leadForm.linkedInquiryId || leadForm.linkedChatId) && (
+                    <p className="text-[11px] text-slate-500">
+                      Linked to {leadForm.linkedInquiryId ? `Inquiry #${leadForm.linkedInquiryId}` : `Chat #${leadForm.linkedChatId}`}
+                    </p>
+                  )}
+                </div>
               </div>
               <button
                 onClick={() => setIsManualLeadOpen(false)}
@@ -1612,7 +2170,7 @@ export default function OpsPortalClient() {
                   type="submit"
                   className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs shadow-sm transition-all active:scale-95"
                 >
-                  Save & Log Booking
+                  {leadForm.linkedInquiryId || leadForm.linkedChatId ? 'Confirm & Create Linked Booking' : 'Save & Log Booking'}
                 </button>
               </div>
             </form>
@@ -1740,6 +2298,39 @@ export default function OpsPortalClient() {
                   <span className="text-slate-500 font-medium">Full Address:</span>
                   <span className="text-right text-slate-700 max-w-[240px]">{selectedBookingDetail.address}</span>
                 </div>
+                {selectedBookingDetail.linkedInquiryId && (
+                  <div className="flex justify-between pt-1 border-t border-slate-200/60">
+                    <span className="text-slate-500 font-medium">Origin Inquiry:</span>
+                    <button
+                      onClick={() => {
+                        setSelectedBookingDetail(null);
+                        setActiveTab('inquiries');
+                        showNotice(`Viewing Source Inquiry #${selectedBookingDetail.linkedInquiryId}`);
+                      }}
+                      className="font-bold text-amber-700 hover:underline flex items-center gap-1"
+                    >
+                      <span>Inquiry #{selectedBookingDetail.linkedInquiryId}</span>
+                      <ArrowUpRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+                {selectedBookingDetail.linkedChatId && (
+                  <div className="flex justify-between pt-1 border-t border-slate-200/60">
+                    <span className="text-slate-500 font-medium">Origin Chat Session:</span>
+                    <button
+                      onClick={() => {
+                        setSelectedBookingDetail(null);
+                        setActiveTab('chats');
+                        setSelectedChatId(selectedBookingDetail.linkedChatId);
+                        showNotice(`Viewing Source Chat Session #${selectedBookingDetail.linkedChatId}`);
+                      }}
+                      className="font-bold text-blue-700 hover:underline flex items-center gap-1"
+                    >
+                      <span>Chat #{selectedBookingDetail.linkedChatId}</span>
+                      <ArrowUpRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
@@ -1769,7 +2360,19 @@ export default function OpsPortalClient() {
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end">
+              <div className="pt-2 flex items-center justify-between">
+                <button
+                  onClick={() => {
+                    const b = selectedBookingDetail;
+                    setSelectedBookingDetail(null);
+                    openOrCreateChatForCustomer(b.customerName, b.customerPhone, b.locality, `Namaste ${b.customerName} ji! Discussing booking #${b.id}.`);
+                  }}
+                  className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>Open Customer Chat</span>
+                </button>
+
                 <button
                   onClick={() => setSelectedBookingDetail(null)}
                   className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold"
