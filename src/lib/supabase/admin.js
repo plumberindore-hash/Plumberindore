@@ -28,7 +28,7 @@ export function getAdminClient() {
 
   const activeKey = (serviceRoleKey && serviceRoleKey !== 'your_secret_key') 
     ? serviceRoleKey 
-    : (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+    : (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_BT_qk2dmGPrd82h-FWZ-VA_ONM7HKJO');
 
   if (!supabaseUrl || !activeKey) {
     return null;
