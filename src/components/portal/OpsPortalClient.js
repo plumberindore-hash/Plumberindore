@@ -675,7 +675,7 @@ export default function OpsPortalClient() {
   // -------------------------------------------------------------
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center px-4 selection:bg-cyan-500 selection:text-slate-950 relative overflow-hidden">
+      <div className="fixed inset-0 z-[9999] min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center px-4 selection:bg-cyan-500 selection:text-slate-950 overflow-y-auto">
         {/* Background ambient lighting */}
         <div className="absolute top-1/4 -left-32 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
@@ -767,7 +767,7 @@ export default function OpsPortalClient() {
   const activeChat = chats.find(c => c.id === selectedChatId) || chats[0];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-cyan-500 selection:text-slate-950 pb-16">
+    <div className="fixed inset-0 z-[9999] min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-cyan-500 selection:text-slate-950 overflow-y-auto pb-16">
       {/* Top Ops Navigation Bar */}
       <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
