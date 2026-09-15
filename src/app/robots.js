@@ -6,7 +6,7 @@ export default function robots() {
       disallow: [
         '/api/',
         '/profile/',
-        '/admin/',
+        '/portal-indore-ops-9821',
         '/login',
         '/signup',
         '/privacy-policy',

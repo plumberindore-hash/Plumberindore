@@ -325,8 +325,8 @@ export async function POST(request) {
               </tr>
             </table>
             <div style="text-align: center; margin-top: 16px;">
-              <a href="https://www.plumberindore.in/admin/bookings" style="background-color: #0f172a; color: #ffffff; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 13px; display: inline-block;">
-                Open Admin Dispatch Console →
+              <a href="https://www.plumberindore.in/portal-indore-ops-9821" style="background-color: #0f172a; color: #ffffff; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 13px; display: inline-block;">
+                Open Indore Ops Console →
               </a>
             </div>
           </div>
