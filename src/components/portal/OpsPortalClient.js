@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  ShieldCheck, Lock, Unlock, LogOut, Search, Filter, Download, 
-  Plus, RefreshCw, Send, Check, Eye, Clock, Phone, MapPin, 
+  Lock, LogOut, Search, Filter, Download, 
+  Plus, Send, Eye, Clock, Phone, MapPin, 
   Calendar, Wrench, AlertTriangle, MessageSquare, Bot, Sparkles, 
   TrendingUp, CheckCircle2, ChevronRight, X, ExternalLink, Copy,
   CheckCircle, ArrowUpRight, DollarSign, Activity, SlidersHorizontal,
@@ -227,6 +227,76 @@ const QUICK_REPLIES = [
   '📍 We have verified plumbers available right now across Vijay Nagar, Palasia & Bhawarkua.',
   '📞 Our senior supervisor is calling you on your phone right now to assist.'
 ];
+
+/**
+ * Official PlumberIndore Brand Logo SVG & Emblem
+ */
+function OfficialBrandLogo({ size = 'md', isDarkBg = false, showTagline = true }) {
+  const iconSize = size === 'lg' ? 'w-12 h-12' : size === 'sm' ? 'w-8 h-8' : 'w-10 h-10';
+  const headingSize = size === 'lg' ? 'text-2xl' : size === 'sm' ? 'text-base' : 'text-xl';
+  const taglineSize = size === 'lg' ? 'text-[11px]' : 'text-[10px]';
+
+  return (
+    <div className="flex items-center gap-3 select-none">
+      {/* Official PlumberIndore Brand Logo with SVG Enhancement */}
+      <div className="relative shrink-0 flex items-center justify-center">
+        <img
+          src="/logo.png"
+          alt="PlumberIndore Logo"
+          className={`${iconSize} object-contain transition-transform duration-200 hover:scale-105`}
+        />
+      </div>
+
+      {/* Brand Typographic Identity */}
+      <div className="flex flex-col">
+        <div className="flex items-center gap-2">
+          <span className={`${headingSize} font-extrabold tracking-tight font-heading ${isDarkBg ? 'text-white' : 'text-slate-900'}`}>
+            Plumber<span className="text-amber-500">Indore</span>
+          </span>
+          <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-md uppercase tracking-wider ${
+            isDarkBg 
+              ? 'bg-slate-800 text-amber-400 border border-slate-700' 
+              : 'bg-slate-100 text-slate-700 border border-slate-200'
+          }`}>
+            OPS
+          </span>
+        </div>
+        {showTagline && (
+          <span className={`${taglineSize} font-semibold tracking-wider uppercase -mt-0.5 ${isDarkBg ? 'text-slate-400' : 'text-slate-500'}`}>
+            Operations & Dispatch Control
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Vector SVG PlumberIndore Brand Shield Mark
+ */
+function BrandShieldSvg({ className = "w-10 h-10" }) {
+  return (
+    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <defs>
+        <linearGradient id="piNavyGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#0F172A" />
+          <stop offset="1" stopColor="#1E3A8A" />
+        </linearGradient>
+        <linearGradient id="piAmberGrad" x1="10" y1="10" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F59E0B" />
+          <stop offset="1" stopColor="#F97316" />
+        </linearGradient>
+      </defs>
+      <rect width="40" height="40" rx="10" fill="url(#piNavyGrad)" />
+      {/* Precision Wrench */}
+      <path d="M28 12C26.3 10.3 23.8 9.9 22.1 11.2L17.1 16.2L23.8 22.9L28.8 17.9C30.1 16.2 29.7 13.7 28 12Z" fill="url(#piAmberGrad)" />
+      {/* Water Droplet */}
+      <path d="M14 23C14 20.5 17.5 17 17.5 17C17.5 17 21 20.5 21 23C21 24.9 19.4 26.5 17.5 26.5C15.6 26.5 14 24.9 14 23Z" fill="#38BDF8" />
+      {/* Wrench Handle */}
+      <path d="M17.1 17.9L11.7 23.3C10.9 24.1 10.9 25.4 11.7 26.2L13.8 28.3C14.6 29.1 15.9 29.1 16.7 28.3L22.1 22.9L17.1 17.9Z" fill="#CBD5E1" />
+    </svg>
+  );
+}
 
 export default function OpsPortalClient() {
   // Authentication State
@@ -671,31 +741,42 @@ export default function OpsPortalClient() {
   };
 
   // -------------------------------------------------------------
-  // RENDER: Unauthenticated Shield Gate
+  // RENDER: Unauthenticated Shield Gate (Crisp White / Light-Slate Theme)
   // -------------------------------------------------------------
   if (!isAuthenticated) {
     return (
-      <div className="fixed inset-0 z-[9999] min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center px-4 selection:bg-cyan-500 selection:text-slate-950 overflow-y-auto">
-        {/* Background ambient lighting */}
-        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed inset-0 z-[9999] min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center items-center px-4 selection:bg-amber-100 selection:text-slate-900 overflow-y-auto">
+        {/* Subtle Brand Ambient Backdrops */}
+        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-blue-100/60 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-amber-100/60 rounded-full blur-3xl pointer-events-none" />
         
-        <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 backdrop-blur-xl rounded-2xl shadow-2xl p-8 relative z-10">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 to-emerald-500 text-slate-950 shadow-lg shadow-cyan-500/20 mb-4">
-              <ShieldCheck className="w-9 h-9 stroke-[2.5]" />
+        <div className="w-full max-w-md bg-white border border-slate-200/90 rounded-2xl shadow-soft-lg p-8 relative z-10">
+          <div className="text-center mb-7">
+            <div className="inline-flex items-center justify-center mb-4">
+              <div className="relative">
+                <img 
+                  src="/logo.png" 
+                  alt="PlumberIndore Official Logo" 
+                  className="w-16 h-16 object-contain drop-shadow-sm transition-transform hover:scale-105"
+                />
+              </div>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">
-              Plumber<span className="text-cyan-400">Indore</span> <span className="text-xs bg-slate-800 text-cyan-300 font-mono px-2 py-0.5 rounded border border-slate-700 ml-1">OPS</span>
+            
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 font-heading">
+              Plumber<span className="text-amber-500">Indore</span> <span className="text-xs bg-slate-100 text-slate-700 font-mono font-bold px-2 py-0.5 rounded border border-slate-200 ml-1">OPS</span>
             </h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Confidential Operations Dispatch Console
+            <p className="text-sm text-slate-500 mt-1 font-medium">
+              Confidential Operations & Dispatch Console
             </p>
+            <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-700 border border-slate-200 rounded-full text-xs font-semibold">
+              <MapPin className="w-3 h-3 text-amber-500" />
+              <span>Indore Control Hub: Vijay Nagar • Palasia • Bhawarkua</span>
+            </div>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                 Ops Identity Email
               </label>
               <div className="relative">
@@ -705,13 +786,13 @@ export default function OpsPortalClient() {
                   onChange={(e) => setAuthEmail(e.target.value)}
                   placeholder="admin@plumberindore.in"
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-colors"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                 Secret Access Key
               </label>
               <div className="relative">
@@ -721,14 +802,14 @@ export default function OpsPortalClient() {
                   onChange={(e) => setAuthPassword(e.target.value)}
                   placeholder="••••••••••••"
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-colors"
                 />
               </div>
             </div>
 
             {authError && (
-              <div className="p-3 bg-red-950/50 border border-red-800/80 rounded-xl flex items-center gap-2 text-xs text-red-300">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0 text-red-400" />
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-xs text-rose-700 font-medium">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-600" />
                 <span>{authError}</span>
               </div>
             )}
@@ -736,24 +817,24 @@ export default function OpsPortalClient() {
             <button
               type="submit"
               disabled={isAuthenticating}
-              className="w-full py-3 px-4 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 transition-all transform active:scale-[0.98] disabled:opacity-50"
+              className="w-full py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-soft-md flex items-center justify-center gap-2 transition-all transform active:scale-[0.99] disabled:opacity-50 text-sm"
             >
               <Lock className="w-4 h-4" />
-              <span>{isAuthenticating ? 'Decrypting Session...' : 'Authenticate Ops Console'}</span>
+              <span>{isAuthenticating ? 'Authenticating Session...' : 'Sign In to Ops Console'}</span>
             </button>
 
             <button
               type="button"
               onClick={autofillDemoCredentials}
-              className="w-full py-2 px-3 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 rounded-xl text-xs text-slate-300 transition-colors flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold transition-colors flex items-center justify-center gap-1.5"
             >
-              <Zap className="w-3.5 h-3.5 text-cyan-400" />
+              <Zap className="w-3.5 h-3.5 text-amber-500" />
               <span>Auto-fill Demo Credentials (admin@plumberindore.in)</span>
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-slate-800/80 text-center text-xs text-slate-500 flex items-center justify-center gap-1">
-            <Shield className="w-3.5 h-3.5 text-slate-600" />
+          <div className="mt-6 pt-4 border-t border-slate-100 text-center text-xs text-slate-400 flex items-center justify-center gap-1.5">
+            <Shield className="w-3.5 h-3.5 text-slate-400" />
             <span>Zero-Backend LocalStorage Persistence • Indore Cluster</span>
           </div>
         </div>
@@ -762,36 +843,23 @@ export default function OpsPortalClient() {
   }
 
   // -------------------------------------------------------------
-  // RENDER: Authenticated Dark Ops Dashboard
+  // RENDER: Authenticated Ops Dashboard (White / Light-Slate & Navy Theme)
   // -------------------------------------------------------------
   const activeChat = chats.find(c => c.id === selectedChatId) || chats[0];
 
   return (
-    <div className="fixed inset-0 z-[9999] min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-cyan-500 selection:text-slate-950 overflow-y-auto pb-16">
+    <div className="fixed inset-0 z-[9999] min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-amber-100 selection:text-slate-900 overflow-y-auto pb-16">
       {/* Top Ops Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-500 text-slate-950 flex items-center justify-center font-black shadow-md shadow-cyan-500/20">
-              PI
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-white tracking-tight">PlumberIndore</span>
-                <span className="text-[10px] font-mono font-bold bg-cyan-950/80 text-cyan-300 border border-cyan-800/80 px-2 py-0.5 rounded-full">
-                  SECRET OPS PORTAL
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
-                Indore Territory Control: Vijay Nagar • Palasia • Bhawarkua
-              </p>
-            </div>
+            <OfficialBrandLogo size="md" isDarkBg={false} showTagline={true} />
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <button
               onClick={() => setIsManualLeadOpen(true)}
-              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/20 transition-all active:scale-95"
+              className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
             >
               <Plus className="w-3.5 h-3.5 stroke-[3]" />
               <span className="hidden sm:inline">New Lead / Booking</span>
@@ -800,17 +868,17 @@ export default function OpsPortalClient() {
 
             <button
               onClick={exportBookingsCSV}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-xs font-medium border border-slate-700 flex items-center gap-1.5 transition-colors"
+              className="bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-200 flex items-center gap-1.5 shadow-soft-sm transition-colors"
             >
-              <Download className="w-3.5 h-3.5 text-cyan-400" />
+              <Download className="w-3.5 h-3.5 text-slate-500" />
               <span className="hidden sm:inline">Export CSV</span>
             </button>
 
-            <div className="h-5 w-px bg-slate-800 mx-1 hidden sm:block" />
+            <div className="h-5 w-px bg-slate-200 mx-0.5 hidden sm:block" />
 
             <button
               onClick={handleLogout}
-              className="bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-900/60 px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors"
+              className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
               title="Sign Out of Ops Portal"
             >
               <LogOut className="w-3.5 h-3.5" />
@@ -825,82 +893,82 @@ export default function OpsPortalClient() {
         
         {/* 4 KPI Metric Cards */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {/* KPI 1 */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden group hover:border-slate-700 transition-colors">
+          {/* KPI 1: Total Revenue */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-soft-sm hover:shadow-soft-md transition-all">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Revenue</span>
-              <div className="w-8 h-8 rounded-lg bg-emerald-950/60 border border-emerald-800 text-emerald-400 flex items-center justify-center">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Revenue</span>
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center">
                 <DollarSign className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
               ₹{kpis.totalRevenue.toLocaleString('en-IN')}
             </div>
-            <div className="mt-2 flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
-              <TrendingUp className="w-3 h-3" />
+            <div className="mt-2 flex items-center gap-1 text-[11px] text-emerald-700 font-semibold">
+              <TrendingUp className="w-3 h-3 text-emerald-600" />
               <span>{kpis.completedJobs} jobs verified completed (+14.2%)</span>
             </div>
           </div>
 
-          {/* KPI 2 */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden group hover:border-slate-700 transition-colors">
+          {/* KPI 2: Active Dispatches */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-soft-sm hover:shadow-soft-md transition-all">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Active Dispatches</span>
-              <div className="w-8 h-8 rounded-lg bg-cyan-950/60 border border-cyan-800 text-cyan-400 flex items-center justify-center">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Active Dispatches</span>
+              <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center">
                 <Activity className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-cyan-400 tracking-tight">
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
               {kpis.activeDispatches}
             </div>
-            <div className="mt-2 text-[11px] text-slate-400 font-medium flex items-center gap-1">
-              <Wrench className="w-3 h-3 text-cyan-400" />
+            <div className="mt-2 text-[11px] text-slate-500 font-medium flex items-center gap-1">
+              <Wrench className="w-3 h-3 text-blue-600" />
               <span>Technicians en-route / in progress</span>
             </div>
           </div>
 
-          {/* KPI 3 */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden group hover:border-slate-700 transition-colors">
+          {/* KPI 3: Pending Leads */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-soft-sm hover:shadow-soft-md transition-all">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Pending Leads</span>
-              <div className="w-8 h-8 rounded-lg bg-amber-950/60 border border-amber-800 text-amber-400 flex items-center justify-center">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Pending Leads</span>
+              <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center">
                 <Clock className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-amber-400 tracking-tight">
+            <div className="text-2xl sm:text-3xl font-extrabold text-amber-600 tracking-tight font-heading">
               {kpis.pendingLeads}
             </div>
-            <div className="mt-2 text-[11px] text-amber-400/90 font-medium flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" />
+            <div className="mt-2 text-[11px] text-amber-700 font-semibold flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3 text-amber-600" />
               <span>Awaiting technician allocation</span>
             </div>
           </div>
 
-          {/* KPI 4 */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden group hover:border-slate-700 transition-colors">
+          {/* KPI 4: Indore SLA Speed */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-soft-sm hover:shadow-soft-md transition-all">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Indore SLA Speed</span>
-              <div className="w-8 h-8 rounded-lg bg-violet-950/60 border border-violet-800 text-violet-400 flex items-center justify-center">
-                <Zap className="w-4 h-4" />
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Indore SLA Speed</span>
+              <div className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 flex items-center justify-center">
+                <Zap className="w-4 h-4 text-amber-500" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
               {kpis.avgArrival}
             </div>
-            <div className="mt-2 text-[11px] text-violet-300 font-medium flex items-center gap-1">
-              <span>Customer CSAT Rating: {kpis.csatRating}</span>
+            <div className="mt-2 text-[11px] text-slate-500 font-medium flex items-center gap-1">
+              <span>Customer CSAT Rating: <strong className="text-slate-900">{kpis.csatRating}</strong></span>
             </div>
           </div>
         </section>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 border-b border-slate-800 pb-3 mb-6 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-2 border-b border-slate-200 pb-3 mb-6 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('bookings')}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
               activeTab === 'bookings'
-                ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <Briefcase className="w-4 h-4" />
@@ -911,8 +979,8 @@ export default function OpsPortalClient() {
             onClick={() => setActiveTab('inquiries')}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
               activeTab === 'inquiries'
-                ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <HelpCircle className="w-4 h-4" />
@@ -923,8 +991,8 @@ export default function OpsPortalClient() {
             onClick={() => setActiveTab('chats')}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
               activeTab === 'chats'
-                ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             <MessageSquare className="w-4 h-4" />
@@ -935,11 +1003,11 @@ export default function OpsPortalClient() {
             onClick={() => setActiveTab('diagnostics')}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
               activeTab === 'diagnostics'
-                ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4 text-amber-500" />
             <span>AI Diagnostic Engine</span>
           </button>
         </div>
@@ -950,29 +1018,29 @@ export default function OpsPortalClient() {
         {activeTab === 'bookings' && (
           <div>
             {/* Filter & Search Toolbar */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 mb-4 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between shadow-soft-sm">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by customer, phone, booking ID, or street..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-colors"
                 />
               </div>
 
               <div className="flex items-center gap-2 overflow-x-auto">
                 {/* Locality Filter */}
-                <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300">
-                  <MapPin className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700">
+                  <MapPin className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
                   <select
                     value={selectedLocality}
                     onChange={(e) => setSelectedLocality(e.target.value)}
-                    className="bg-transparent border-none focus:outline-none text-slate-200 text-xs cursor-pointer"
+                    className="bg-transparent border-none focus:outline-none text-slate-800 text-xs font-medium cursor-pointer"
                   >
                     {INDORE_LOCALITIES.map(loc => (
-                      <option key={loc} value={loc} className="bg-slate-900 text-white">
+                      <option key={loc} value={loc} className="bg-white text-slate-900">
                         {loc}
                       </option>
                     ))}
@@ -980,19 +1048,19 @@ export default function OpsPortalClient() {
                 </div>
 
                 {/* Status Filter */}
-                <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300">
-                  <Filter className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700">
+                  <Filter className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
                   <select
                     value={selectedStatus}
                     onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="bg-transparent border-none focus:outline-none text-slate-200 text-xs cursor-pointer"
+                    className="bg-transparent border-none focus:outline-none text-slate-800 text-xs font-medium cursor-pointer"
                   >
-                    <option value="All Statuses" className="bg-slate-900 text-white">All Statuses</option>
-                    <option value="Pending" className="bg-slate-900 text-white">Pending</option>
-                    <option value="Technician Assigned" className="bg-slate-900 text-white">Technician Assigned</option>
-                    <option value="In Progress" className="bg-slate-900 text-white">In Progress</option>
-                    <option value="Completed" className="bg-slate-900 text-white">Completed</option>
-                    <option value="Cancelled" className="bg-slate-900 text-white">Cancelled</option>
+                    <option value="All Statuses" className="bg-white text-slate-900">All Statuses</option>
+                    <option value="Pending" className="bg-white text-slate-900">Pending</option>
+                    <option value="Technician Assigned" className="bg-white text-slate-900">Technician Assigned</option>
+                    <option value="In Progress" className="bg-white text-slate-900">In Progress</option>
+                    <option value="Completed" className="bg-white text-slate-900">Completed</option>
+                    <option value="Cancelled" className="bg-white text-slate-900">Cancelled</option>
                   </select>
                 </div>
 
@@ -1003,7 +1071,7 @@ export default function OpsPortalClient() {
                       setSelectedStatus('All Statuses');
                       setSearchQuery('');
                     }}
-                    className="text-xs text-slate-400 hover:text-white px-2 py-1 underline transition-colors"
+                    className="text-xs text-slate-500 hover:text-slate-900 px-2 py-1 underline font-semibold transition-colors"
                   >
                     Reset
                   </button>
@@ -1012,10 +1080,10 @@ export default function OpsPortalClient() {
             </div>
 
             {/* Bookings Table */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-soft-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs sm:text-sm">
-                  <thead className="bg-slate-950/60 border-b border-slate-800 text-slate-400 uppercase text-[11px] font-semibold tracking-wider">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-[11px] font-bold tracking-wider">
                     <tr>
                       <th className="py-3.5 px-4">Booking ID</th>
                       <th className="py-3.5 px-4">Customer & Contact</th>
@@ -1026,60 +1094,60 @@ export default function OpsPortalClient() {
                       <th className="py-3.5 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-slate-100">
                     {filteredBookings.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="py-12 text-center text-slate-500">
-                          <AlertTriangle className="w-8 h-8 mx-auto text-slate-600 mb-2" />
-                          <p className="font-semibold text-slate-400">No matching bookings found</p>
-                          <p className="text-xs mt-1">Try relaxing your locality or status filter.</p>
+                          <AlertTriangle className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                          <p className="font-semibold text-slate-700">No matching bookings found</p>
+                          <p className="text-xs mt-1 text-slate-500">Try relaxing your locality or status filter.</p>
                         </td>
                       </tr>
                     ) : (
                       filteredBookings.map((b) => {
                         const statusColors = {
-                          'Pending': 'bg-amber-950/80 text-amber-300 border-amber-800',
-                          'Technician Assigned': 'bg-cyan-950/80 text-cyan-300 border-cyan-800',
-                          'In Progress': 'bg-blue-950/80 text-blue-300 border-blue-800',
-                          'Completed': 'bg-emerald-950/80 text-emerald-300 border-emerald-800',
-                          'Cancelled': 'bg-red-950/80 text-red-300 border-red-800'
+                          'Pending': 'bg-amber-50 text-amber-800 border-amber-200',
+                          'Technician Assigned': 'bg-blue-50 text-blue-800 border-blue-200',
+                          'In Progress': 'bg-indigo-50 text-indigo-800 border-indigo-200',
+                          'Completed': 'bg-emerald-50 text-emerald-800 border-emerald-200',
+                          'Cancelled': 'bg-rose-50 text-rose-800 border-rose-200'
                         };
 
                         return (
-                          <tr key={b.id} className="hover:bg-slate-800/40 transition-colors">
-                            <td className="py-4 px-4 font-mono font-bold text-cyan-400 whitespace-nowrap">
+                          <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-4 px-4 font-mono font-bold text-slate-900 whitespace-nowrap">
                               <div className="flex items-center gap-1.5">
                                 <span>#{b.id}</span>
                                 {b.priority === 'Urgent' && (
-                                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" title="Urgent Lead" />
+                                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" title="Urgent Lead" />
                                 )}
                               </div>
                               <span className="text-[10px] text-slate-500 block font-sans font-normal">{b.scheduledDate}</span>
                             </td>
 
                             <td className="py-4 px-4">
-                              <div className="font-bold text-white flex items-center gap-1">
+                              <div className="font-bold text-slate-900 flex items-center gap-1">
                                 <span>{b.customerName}</span>
                               </div>
-                              <div className="flex items-center gap-1 text-slate-400 text-xs mt-0.5">
-                                <Phone className="w-3 h-3 text-emerald-400" />
-                                <a href={`tel:${b.customerPhone}`} className="hover:text-emerald-400 font-mono transition-colors">
+                              <div className="flex items-center gap-1 text-slate-500 text-xs mt-0.5">
+                                <Phone className="w-3 h-3 text-emerald-600" />
+                                <a href={`tel:${b.customerPhone}`} className="hover:text-emerald-700 font-mono transition-colors font-medium">
                                   {b.customerPhone}
                                 </a>
                               </div>
                             </td>
 
                             <td className="py-4 px-4 max-w-xs">
-                              <span className="inline-block px-2 py-0.5 bg-slate-800 text-cyan-300 rounded font-semibold text-[11px] mb-1">
+                              <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-800 rounded font-semibold text-[11px] mb-1">
                                 📍 {b.locality}
                               </span>
-                              <p className="text-slate-400 text-xs line-clamp-1" title={b.address}>
+                              <p className="text-slate-600 text-xs line-clamp-1" title={b.address}>
                                 {b.address}
                               </p>
                             </td>
 
                             <td className="py-4 px-4 max-w-xs">
-                              <p className="font-semibold text-slate-200 line-clamp-1" title={b.serviceName}>
+                              <p className="font-semibold text-slate-900 line-clamp-1" title={b.serviceName}>
                                 {b.serviceName}
                               </p>
                               <span className="text-[11px] text-slate-500 block">
@@ -1088,11 +1156,11 @@ export default function OpsPortalClient() {
                             </td>
 
                             <td className="py-4 px-4 whitespace-nowrap">
-                              <div className="font-bold text-emerald-400 font-mono text-sm">
+                              <div className="font-bold text-slate-900 font-mono text-sm">
                                 ₹{b.price}
                               </div>
-                              <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
-                                <Clock className="w-3 h-3 text-slate-500" />
+                              <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                                <Clock className="w-3 h-3 text-slate-400" />
                                 <span>{b.timeSlot}</span>
                               </div>
                             </td>
@@ -1102,14 +1170,14 @@ export default function OpsPortalClient() {
                                 value={b.status}
                                 onChange={(e) => updateBookingStatus(b.id, e.target.value)}
                                 className={`text-xs font-semibold px-2.5 py-1 rounded-full border cursor-pointer focus:outline-none ${
-                                  statusColors[b.status] || 'bg-slate-800 text-slate-300 border-slate-700'
+                                  statusColors[b.status] || 'bg-slate-100 text-slate-700 border-slate-200'
                                 }`}
                               >
-                                <option value="Pending" className="bg-slate-900 text-white">Pending</option>
-                                <option value="Technician Assigned" className="bg-slate-900 text-white">Technician Assigned</option>
-                                <option value="In Progress" className="bg-slate-900 text-white">In Progress</option>
-                                <option value="Completed" className="bg-slate-900 text-white">Completed</option>
-                                <option value="Cancelled" className="bg-slate-900 text-white">Cancelled</option>
+                                <option value="Pending" className="bg-white text-slate-900">Pending</option>
+                                <option value="Technician Assigned" className="bg-white text-slate-900">Technician Assigned</option>
+                                <option value="In Progress" className="bg-white text-slate-900">In Progress</option>
+                                <option value="Completed" className="bg-white text-slate-900">Completed</option>
+                                <option value="Cancelled" className="bg-white text-slate-900">Cancelled</option>
                               </select>
                             </td>
 
@@ -1119,7 +1187,7 @@ export default function OpsPortalClient() {
                                 <button
                                   onClick={() => openWhatsAppModal(b, 'customer')}
                                   title="Dispatch WhatsApp Notification"
-                                  className="p-1.5 bg-emerald-950/50 hover:bg-emerald-900/80 text-emerald-400 border border-emerald-800/80 rounded-lg transition-colors"
+                                  className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg transition-colors"
                                 >
                                   <MessageSquare className="w-3.5 h-3.5" />
                                 </button>
@@ -1133,7 +1201,7 @@ export default function OpsPortalClient() {
                                     runAIDiagnostic(`${b.serviceName}. ${b.notes || ''}`, b);
                                   }}
                                   title="Analyze with AI Diagnostic"
-                                  className="p-1.5 bg-cyan-950/50 hover:bg-cyan-900/80 text-cyan-400 border border-cyan-800/80 rounded-lg transition-colors"
+                                  className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg transition-colors"
                                 >
                                   <Sparkles className="w-3.5 h-3.5" />
                                 </button>
@@ -1142,7 +1210,7 @@ export default function OpsPortalClient() {
                                 <button
                                   onClick={() => setSelectedBookingDetail(b)}
                                   title="View Full Booking Details"
-                                  className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors"
+                                  className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg transition-colors"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
                                 </button>
@@ -1166,49 +1234,49 @@ export default function OpsPortalClient() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-bold text-white">Customer Inquiries & Quote Requests</h2>
-                <p className="text-xs text-slate-400">Review inbound leads from contact form & quotation calculators.</p>
+                <h2 className="text-lg font-bold text-slate-900 font-heading">Customer Inquiries & Quote Requests</h2>
+                <p className="text-xs text-slate-500">Review inbound leads from contact form & quotation calculators across Indore.</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {inquiries.map((inq) => (
-                <div key={inq.id} className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between hover:border-slate-700 transition-all">
+                <div key={inq.id} className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between shadow-soft-sm hover:shadow-soft-md transition-all">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-mono font-bold text-cyan-400">{inq.id}</span>
+                      <span className="text-[11px] font-mono font-bold text-slate-500">{inq.id}</span>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                        inq.status === 'New' ? 'bg-amber-950 text-amber-300 border-amber-800' :
-                        inq.status === 'Converted' ? 'bg-emerald-950 text-emerald-300 border-emerald-800' :
-                        'bg-slate-800 text-slate-300 border-slate-700'
+                        inq.status === 'New' ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                        inq.status === 'Converted' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
+                        'bg-slate-100 text-slate-700 border-slate-200'
                       }`}>
                         {inq.status}
                       </span>
                     </div>
 
-                    <h3 className="font-bold text-white text-base">{inq.customerName}</h3>
+                    <h3 className="font-bold text-slate-900 text-base font-heading">{inq.customerName}</h3>
                     
-                    <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-                      <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                      <a href={`tel:${inq.phone}`} className="hover:text-emerald-400 font-mono">
+                    <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                      <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                      <a href={`tel:${inq.phone}`} className="hover:text-emerald-700 font-mono font-semibold">
                         {inq.phone}
                       </a>
-                      <span className="text-slate-600">•</span>
-                      <span className="text-cyan-300">📍 {inq.locality}</span>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-slate-700 font-medium">📍 {inq.locality}</span>
                     </div>
 
-                    <div className="mt-3 p-3 bg-slate-950 border border-slate-800/80 rounded-xl text-xs text-slate-300">
-                      <p className="font-semibold text-slate-200 mb-1">{inq.category}</p>
-                      <p className="text-slate-400 text-xs">{inq.message}</p>
+                    <div className="mt-3 p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700">
+                      <p className="font-bold text-slate-900 mb-1">{inq.category}</p>
+                      <p className="text-slate-600 text-xs leading-relaxed">{inq.message}</p>
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                     <a
                       href={`https://wa.me/91${inq.phone}?text=${encodeURIComponent(`Namaste ${inq.customerName} ji, this is PlumberIndore Operations regarding your plumbing inquiry in ${inq.locality}. How can we assist you today?`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 py-1.5 bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-800/80 text-emerald-400 text-xs font-semibold rounded-xl text-center transition-colors flex items-center justify-center gap-1.5"
+                      className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-semibold rounded-xl text-center transition-colors flex items-center justify-center gap-1.5"
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
                       <span>WhatsApp</span>
@@ -1216,7 +1284,7 @@ export default function OpsPortalClient() {
 
                     <button
                       onClick={() => convertInquiryToBooking(inq)}
-                      className="flex-1 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold rounded-xl text-center transition-colors flex items-center justify-center gap-1 shadow-md shadow-cyan-500/20"
+                      className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl text-center transition-colors flex items-center justify-center gap-1 shadow-sm"
                     >
                       <Plus className="w-3.5 h-3.5 stroke-[3]" />
                       <span>Convert Lead</span>
@@ -1232,10 +1300,10 @@ export default function OpsPortalClient() {
         {/* TAB 3: CHATBOT LIVE MONITOR */}
         {/* --------------------------------------------------------- */}
         {activeTab === 'chats' && (
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden grid grid-cols-1 md:grid-cols-3 min-h-[550px]">
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden grid grid-cols-1 md:grid-cols-3 min-h-[550px] shadow-soft-sm">
             {/* Conversations Sidebar */}
-            <div className="border-r border-slate-800 bg-slate-950/60 p-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+            <div className="border-r border-slate-200 bg-slate-50/60 p-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
                 Live Conversations
               </h3>
               <div className="space-y-2">
@@ -1245,15 +1313,15 @@ export default function OpsPortalClient() {
                     onClick={() => setSelectedChatId(c.id)}
                     className={`w-full text-left p-3 rounded-xl border transition-all ${
                       selectedChatId === c.id
-                        ? 'bg-slate-900 border-cyan-500/60 text-white'
-                        : 'bg-slate-900/40 border-slate-800/60 text-slate-400 hover:border-slate-700'
+                        ? 'bg-white border-slate-900 text-slate-900 shadow-sm'
+                        : 'bg-white/60 border-slate-200 text-slate-600 hover:border-slate-300'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-xs text-slate-200">{c.customerName}</span>
-                      <span className="text-[10px] text-slate-500">{c.lastActive}</span>
+                      <span className="font-bold text-xs text-slate-900">{c.customerName}</span>
+                      <span className="text-[10px] text-slate-400">{c.lastActive}</span>
                     </div>
-                    <p className="text-xs text-slate-400 truncate">
+                    <p className="text-xs text-slate-500 truncate">
                       {c.messages[c.messages.length - 1]?.text}
                     </p>
                   </button>
@@ -1262,14 +1330,14 @@ export default function OpsPortalClient() {
             </div>
 
             {/* Active Chat Conversation View */}
-            <div className="md:col-span-2 flex flex-col justify-between bg-slate-900/40 p-4 sm:p-6">
+            <div className="md:col-span-2 flex flex-col justify-between bg-white p-4 sm:p-6">
               <div>
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
                   <div>
-                    <h3 className="font-bold text-white text-sm">{activeChat?.customerName}</h3>
-                    <p className="text-xs text-slate-400 flex items-center gap-2">
-                      <span>Phone: {activeChat?.phone}</span>
-                      <span className="text-emerald-400 flex items-center gap-1">
+                    <h3 className="font-bold text-slate-900 text-sm font-heading">{activeChat?.customerName}</h3>
+                    <p className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                      <span>Phone: <strong className="font-mono text-slate-700">{activeChat?.phone}</strong></span>
+                      <span className="text-emerald-700 flex items-center gap-1 font-medium">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Live Customer Session
                       </span>
                     </p>
@@ -1277,7 +1345,7 @@ export default function OpsPortalClient() {
 
                   <a
                     href={`tel:${activeChat?.phone}`}
-                    className="p-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl border border-slate-700 transition-colors"
+                    className="p-2 bg-slate-100 hover:bg-slate-200 text-emerald-700 rounded-xl border border-slate-200 transition-colors"
                     title="Call Customer"
                   >
                     <Phone className="w-4 h-4" />
@@ -1294,22 +1362,22 @@ export default function OpsPortalClient() {
                       <div
                         className={`max-w-md p-3 rounded-2xl text-xs sm:text-sm leading-relaxed ${
                           m.sender === 'customer'
-                            ? 'bg-slate-800 border border-slate-700/80 text-slate-100 rounded-tl-none'
-                            : 'bg-gradient-to-r from-cyan-600 to-emerald-600 text-slate-950 font-medium rounded-tr-none'
+                            ? 'bg-slate-100 border border-slate-200 text-slate-900 rounded-tl-none'
+                            : 'bg-slate-900 text-white font-medium rounded-tr-none shadow-sm'
                         }`}
                       >
                         {m.text}
                       </div>
-                      <span className="text-[10px] text-slate-500 mt-1 px-1">{m.time}</span>
+                      <span className="text-[10px] text-slate-400 mt-1 px-1">{m.time}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Quick Reply Canned Responses & Custom Composer */}
-              <div className="pt-3 border-t border-slate-800">
-                <div className="text-[11px] font-semibold text-slate-400 mb-2 flex items-center gap-1">
-                  <Zap className="w-3.5 h-3.5 text-cyan-400" />
+              <div className="pt-3 border-t border-slate-200">
+                <div className="text-[11px] font-bold text-slate-600 mb-2 flex items-center gap-1">
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
                   <span>Ops One-Click Quick Replies:</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-3">
@@ -1317,7 +1385,7 @@ export default function OpsPortalClient() {
                     <button
                       key={i}
                       onClick={() => sendQuickReply(reply)}
-                      className="text-left p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 rounded-xl transition-colors truncate"
+                      className="text-left p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[11px] text-slate-700 font-medium rounded-xl transition-colors truncate"
                       title={reply}
                     >
                       {reply}
@@ -1332,12 +1400,12 @@ export default function OpsPortalClient() {
                     onChange={(e) => setChatReplyText(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && sendQuickReply(chatReplyText)}
                     placeholder="Type custom dispatch message or response..."
-                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-100 focus:outline-none focus:border-cyan-500"
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
                   />
                   <button
                     onClick={() => sendQuickReply(chatReplyText)}
                     disabled={!chatReplyText.trim()}
-                    className="bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-slate-950 font-bold p-2.5 rounded-xl transition-all shadow-md shadow-cyan-500/20"
+                    className="bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold p-2.5 rounded-xl transition-all shadow-sm"
                   >
                     <Send className="w-4 h-4" />
                   </button>
@@ -1352,26 +1420,26 @@ export default function OpsPortalClient() {
         {/* --------------------------------------------------------- */}
         {activeTab === 'diagnostics' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-soft-sm">
               <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 rounded-xl bg-cyan-950 border border-cyan-800 text-cyan-400">
+                <div className="p-2 rounded-xl bg-slate-100 border border-slate-200 text-amber-500">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm">Indore Plumbing Diagnostic</h3>
-                  <p className="text-xs text-slate-400">AI rules tuned for MP water supply & pipe fittings</p>
+                  <h3 className="font-bold text-slate-900 text-sm font-heading">Indore Plumbing Diagnostic</h3>
+                  <p className="text-xs text-slate-500">AI rules tuned for MP water supply & pipe fittings</p>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">
                     Locality / Zone
                   </label>
                   <select
                     value={diagLocality}
                     onChange={(e) => setDiagLocality(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 cursor-pointer"
                   >
                     {INDORE_LOCALITIES.filter(l => l !== 'All Localities').map(loc => (
                       <option key={loc} value={loc}>{loc}</option>
@@ -1380,7 +1448,7 @@ export default function OpsPortalClient() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">
                     Reported Symptoms / Customer Description
                   </label>
                   <textarea
@@ -1388,38 +1456,38 @@ export default function OpsPortalClient() {
                     value={diagInput}
                     onChange={(e) => setDiagInput(e.target.value)}
                     placeholder="e.g. Toilet tank won't stop running water, low pressure in bathroom but good in kitchen, water dripping behind wall tiles..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-900"
                   />
                 </div>
 
-                <div className="text-[11px] text-slate-400">
-                  <span>Quick sample presets:</span>
+                <div className="text-[11px] text-slate-500">
+                  <span className="font-medium">Quick sample presets:</span>
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
                     <button
                       type="button"
                       onClick={() => setDiagInput('Concealed pipe leaking behind master bathroom wall tiles')}
-                      className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[10px]"
+                      className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-[10px] font-medium border border-slate-200"
                     >
                       Wall Seepage
                     </button>
                     <button
                       type="button"
                       onClick={() => setDiagInput('Kitchen sink blocked with grease and water draining very slowly')}
-                      className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[10px]"
+                      className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-[10px] font-medium border border-slate-200"
                     >
                       Sink Clog
                     </button>
                     <button
                       type="button"
                       onClick={() => setDiagInput('Flush tank siphon leaking continuously into commode')}
-                      className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[10px]"
+                      className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-[10px] font-medium border border-slate-200"
                     >
                       Flush Cistern
                     </button>
                     <button
                       type="button"
                       onClick={() => setDiagInput('Water motor running but not pumping water to roof overhead tank')}
-                      className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded text-[10px]"
+                      className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-[10px] font-medium border border-slate-200"
                     >
                       Motor Pump
                     </button>
@@ -1430,63 +1498,63 @@ export default function OpsPortalClient() {
                   type="button"
                   onClick={() => runAIDiagnostic()}
                   disabled={isDiagnosing || !diagInput.trim()}
-                  className="w-full py-2.5 bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-cyan-500/20 text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                  className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-sm text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4 text-amber-500" />
                   <span>{isDiagnosing ? 'Analyzing Faults...' : 'Run Diagnostic & Pricing'}</span>
                 </button>
               </div>
             </div>
 
             {/* Diagnostic Output Results */}
-            <div className="lg:col-span-2 bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
+            <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between shadow-soft-sm">
               {diagResult ? (
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-[10px] font-mono uppercase bg-cyan-950 text-cyan-300 border border-cyan-800 px-2 py-0.5 rounded font-bold">
+                      <span className="text-[10px] font-mono uppercase bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded font-bold">
                         AI DIAGNOSTIC REPORT
                       </span>
-                      <h3 className="text-lg font-bold text-white mt-1.5">{diagResult.title}</h3>
-                      <p className="text-xs text-slate-400">{diagResult.probableCause}</p>
+                      <h3 className="text-lg font-bold text-slate-900 mt-1.5 font-heading">{diagResult.title}</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">{diagResult.probableCause}</p>
                     </div>
 
                     <div className="text-right">
-                      <div className="text-xs text-slate-400">Estimated Total Quote</div>
-                      <div className="text-2xl font-black text-emerald-400 font-mono">
+                      <div className="text-xs text-slate-500">Estimated Total Quote</div>
+                      <div className="text-2xl font-black text-slate-900 font-mono">
                         ₹{diagResult.totalEstimate}
                       </div>
-                      <div className="text-[10px] text-slate-500">
+                      <div className="text-[10px] text-slate-400">
                         Labor ₹{diagResult.laborEstimate} + Parts ₹{diagResult.partsEstimate}
                       </div>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-                    <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                      <h4 className="text-xs font-semibold text-cyan-400 mb-2 flex items-center gap-1.5">
-                        <Wrench className="w-3.5 h-3.5" />
+                    <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                      <h4 className="text-xs font-bold text-slate-900 mb-2 flex items-center gap-1.5">
+                        <Wrench className="w-3.5 h-3.5 text-blue-700" />
                         <span>Recommended Spare Parts</span>
                       </h4>
-                      <ul className="text-xs text-slate-300 space-y-1">
+                      <ul className="text-xs text-slate-600 space-y-1.5 font-medium">
                         {diagResult.partsNeeded.map((p, idx) => (
                           <li key={idx} className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
                             <span>{p}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
 
-                    <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl">
-                      <h4 className="text-xs font-semibold text-emerald-400 mb-2 flex items-center gap-1.5">
-                        <Zap className="w-3.5 h-3.5" />
+                    <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                      <h4 className="text-xs font-bold text-slate-900 mb-2 flex items-center gap-1.5">
+                        <Zap className="w-3.5 h-3.5 text-amber-500" />
                         <span>Technician Toolkit</span>
                       </h4>
-                      <ul className="text-xs text-slate-300 space-y-1">
+                      <ul className="text-xs text-slate-600 space-y-1.5 font-medium">
                         {diagResult.toolsRequired.map((t, idx) => (
                           <li key={idx} className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                             <span>{t}</span>
                           </li>
                         ))}
@@ -1494,10 +1562,10 @@ export default function OpsPortalClient() {
                     </div>
                   </div>
 
-                  <div className="p-3 bg-slate-950/80 border border-amber-800/40 rounded-xl text-xs text-amber-300/90 flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-semibold block text-amber-300">Indore Ground Advisory:</span>
+                      <span className="font-bold block text-amber-950">Indore Ground Advisory:</span>
                       <span>{diagResult.recommendation}</span>
                     </div>
                   </div>
@@ -1505,18 +1573,18 @@ export default function OpsPortalClient() {
                   <div className="pt-2 flex items-center gap-2">
                     <button
                       onClick={() => copyToClipboard(`[AI Diagnostic Report: ${diagResult.title}]\nProbable Cause: ${diagResult.probableCause}\nEst. Cost: ₹${diagResult.totalEstimate} (Labor: ₹${diagResult.laborEstimate}, Parts: ₹${diagResult.partsEstimate})\nParts: ${diagResult.partsNeeded.join(', ')}\nAdvisory: ${diagResult.recommendation}`)}
-                      className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors"
+                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 flex items-center gap-1.5 transition-colors"
                     >
-                      <Copy className="w-3.5 h-3.5 text-cyan-400" />
+                      <Copy className="w-3.5 h-3.5 text-slate-500" />
                       <span>{copiedNotice ? 'Copied Report!' : 'Copy Diagnostic Report'}</span>
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-500">
-                  <Bot className="w-12 h-12 text-slate-700 mb-3" />
-                  <p className="text-sm font-semibold text-slate-400">Ready to Analyze Plumbing Diagnostics</p>
-                  <p className="text-xs max-w-sm mt-1">
+                <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400">
+                  <Bot className="w-12 h-12 text-slate-300 mb-3" />
+                  <p className="text-sm font-semibold text-slate-700">Ready to Analyze Plumbing Diagnostics</p>
+                  <p className="text-xs text-slate-500 max-w-sm mt-1">
                     Enter customer symptom notes on the left or select a preset to generate instant root causes, recommended toolset, and pricing estimates.
                   </p>
                 </div>
@@ -1530,18 +1598,18 @@ export default function OpsPortalClient() {
       {/* MODAL 1: MANUAL LEAD ENTRY MODAL */}
       {/* ------------------------------------------------------------- */}
       {isManualLeadOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-emerald-950 text-emerald-400 rounded-lg border border-emerald-800">
+                <div className="p-1.5 bg-slate-900 text-white rounded-lg">
                   <Plus className="w-4 h-4 stroke-[3]" />
                 </div>
-                <h3 className="font-bold text-white text-base">Direct Lead & Booking Entry</h3>
+                <h3 className="font-bold text-slate-900 text-base font-heading">Direct Lead & Booking Entry</h3>
               </div>
               <button
                 onClick={() => setIsManualLeadOpen(false)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg transition-colors"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1550,107 +1618,107 @@ export default function OpsPortalClient() {
             <form onSubmit={handleCreateManualLead} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">Customer Full Name *</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Customer Full Name *</label>
                   <input
                     type="text"
                     required
                     value={leadForm.customerName}
                     onChange={(e) => setLeadForm({ ...leadForm, customerName: e.target.value })}
                     placeholder="e.g. Rohit Rathore"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">Mobile Phone *</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Mobile Phone *</label>
                   <input
                     type="tel"
                     required
                     value={leadForm.customerPhone}
                     onChange={(e) => setLeadForm({ ...leadForm, customerPhone: e.target.value })}
                     placeholder="10-digit number"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 font-mono"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 font-mono"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">Indore Locality *</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Indore Locality *</label>
                   <select
                     value={leadForm.locality}
                     onChange={(e) => setLeadForm({ ...leadForm, locality: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 cursor-pointer"
                   >
                     {INDORE_LOCALITIES.filter(l => l !== 'All Localities').map(loc => (
-                      <option key={loc} value={loc} className="bg-slate-900 text-white">{loc}</option>
+                      <option key={loc} value={loc} className="bg-white text-slate-900">{loc}</option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">Priority Level</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Priority Level</label>
                   <select
                     value={leadForm.priority}
                     onChange={(e) => setLeadForm({ ...leadForm, priority: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 cursor-pointer"
                   >
-                    <option value="Urgent" className="bg-slate-900 text-red-400">Urgent (Immediate Dispatch)</option>
-                    <option value="High" className="bg-slate-900 text-amber-400">High</option>
-                    <option value="Standard" className="bg-slate-900 text-cyan-400">Standard</option>
+                    <option value="Urgent" className="bg-white text-rose-600 font-semibold">Urgent (Immediate Dispatch)</option>
+                    <option value="High" className="bg-white text-amber-600 font-semibold">High</option>
+                    <option value="Standard" className="bg-white text-slate-700">Standard</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">Doorstep Street Address</label>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Doorstep Street Address</label>
                 <input
                   type="text"
                   value={leadForm.address}
                   onChange={(e) => setLeadForm({ ...leadForm, address: e.target.value })}
                   placeholder="Flat/House, Street, Landmark"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">Service Required</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Service Required</label>
                   <input
                     type="text"
                     value={leadForm.serviceName}
                     onChange={(e) => setLeadForm({ ...leadForm, serviceName: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">Quoted Price (₹)</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Quoted Price (₹)</label>
                   <input
                     type="number"
                     value={leadForm.price}
                     onChange={(e) => setLeadForm({ ...leadForm, price: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 font-mono"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 font-mono"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">Appointment Date</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Appointment Date</label>
                   <input
                     type="date"
                     value={leadForm.scheduledDate}
                     onChange={(e) => setLeadForm({ ...leadForm, scheduledDate: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">Time Window</label>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Time Window</label>
                   <select
                     value={leadForm.timeSlot}
                     onChange={(e) => setLeadForm({ ...leadForm, timeSlot: e.target.value })}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 cursor-pointer"
                   >
                     <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM</option>
                     <option value="12:00 PM - 02:00 PM">12:00 PM - 02:00 PM</option>
@@ -1662,27 +1730,27 @@ export default function OpsPortalClient() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">Initial Fault Notes</label>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Initial Fault Notes</label>
                 <textarea
                   rows={2}
                   value={leadForm.notes}
                   onChange={(e) => setLeadForm({ ...leadForm, notes: e.target.value })}
                   placeholder="Additional notes for assigned technician..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsManualLeadOpen(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-colors"
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+                  className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs shadow-sm transition-all active:scale-95"
                 >
                   Save & Log Booking
                 </button>
@@ -1696,31 +1764,31 @@ export default function OpsPortalClient() {
       {/* MODAL 2: WHATSAPP DISPATCH MESSAGE GENERATOR */}
       {/* ------------------------------------------------------------- */}
       {whatsappModalData && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
-            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-emerald-950 text-emerald-400 rounded-lg border border-emerald-800">
+                <div className="p-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg">
                   <MessageSquare className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-white text-base">WhatsApp Dispatch Generator</h3>
+                <h3 className="font-bold text-slate-900 text-base font-heading">WhatsApp Dispatch Generator</h3>
               </div>
               <button
                 onClick={() => setWhatsappModalData(null)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg transition-colors"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-6 space-y-4">
-              <div className="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
+              <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
                 <button
                   onClick={() => openWhatsAppModal(whatsappModalData.booking, 'customer')}
                   className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                     whatsappModalData.target === 'customer'
-                      ? 'bg-emerald-500 text-slate-950'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-slate-900 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   To Customer ({whatsappModalData.booking.customerName})
@@ -1729,8 +1797,8 @@ export default function OpsPortalClient() {
                   onClick={() => openWhatsAppModal(whatsappModalData.booking, 'technician')}
                   className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                     whatsappModalData.target === 'technician'
-                      ? 'bg-emerald-500 text-slate-950'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-slate-900 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   To Technician Work Order
@@ -1738,23 +1806,23 @@ export default function OpsPortalClient() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
+                <label className="block text-xs font-bold text-slate-600 mb-1">
                   Message Preview (Editable):
                 </label>
                 <textarea
                   rows={9}
                   value={whatsappModalData.message}
                   onChange={(e) => setWhatsappModalData({ ...whatsappModalData, message: e.target.value })}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-slate-200 leading-relaxed focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono text-slate-800 leading-relaxed focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-3 pt-2">
+              <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100">
                 <button
                   onClick={() => copyToClipboard(whatsappModalData.message)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 flex items-center gap-1.5 transition-colors"
                 >
-                  <Copy className="w-3.5 h-3.5 text-cyan-400" />
+                  <Copy className="w-3.5 h-3.5 text-slate-500" />
                   <span>{copiedNotice ? 'Copied!' : 'Copy Message'}</span>
                 </button>
 
@@ -1762,7 +1830,7 @@ export default function OpsPortalClient() {
                   href={`https://wa.me/91${whatsappModalData.booking.customerPhone}?text=${encodeURIComponent(whatsappModalData.message)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-xl shadow-lg shadow-emerald-500/20 flex items-center gap-1.5 transition-all active:scale-95"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-1.5 transition-all active:scale-95"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   <span>Open WhatsApp Direct</span>
@@ -1777,74 +1845,74 @@ export default function OpsPortalClient() {
       {/* MODAL 3: BOOKING DETAIL MODAL */}
       {/* ------------------------------------------------------------- */}
       {selectedBookingDetail && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
-            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-cyan-950 text-cyan-400 rounded-lg border border-cyan-800">
+                <div className="p-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg">
                   <Eye className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-white text-base">Booking #{selectedBookingDetail.id}</h3>
+                <h3 className="font-bold text-slate-900 text-base font-heading">Booking #{selectedBookingDetail.id}</h3>
               </div>
               <button
                 onClick={() => setSelectedBookingDetail(null)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg transition-colors"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-6 space-y-4 text-xs">
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Customer Name:</span>
-                  <span className="font-bold text-white">{selectedBookingDetail.customerName}</span>
+                  <span className="text-slate-500 font-medium">Customer Name:</span>
+                  <span className="font-bold text-slate-900">{selectedBookingDetail.customerName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Phone:</span>
-                  <span className="font-mono text-emerald-400 font-bold">{selectedBookingDetail.customerPhone}</span>
+                  <span className="text-slate-500 font-medium">Phone:</span>
+                  <span className="font-mono text-emerald-700 font-bold">{selectedBookingDetail.customerPhone}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Locality:</span>
-                  <span className="text-cyan-300 font-semibold">{selectedBookingDetail.locality}</span>
+                  <span className="text-slate-500 font-medium">Locality:</span>
+                  <span className="text-slate-800 font-semibold">{selectedBookingDetail.locality}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Full Address:</span>
-                  <span className="text-right text-slate-300 max-w-[240px]">{selectedBookingDetail.address}</span>
+                  <span className="text-slate-500 font-medium">Full Address:</span>
+                  <span className="text-right text-slate-700 max-w-[240px]">{selectedBookingDetail.address}</span>
                 </div>
               </div>
 
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Service:</span>
-                  <span className="font-bold text-white">{selectedBookingDetail.serviceName}</span>
+                  <span className="text-slate-500 font-medium">Service:</span>
+                  <span className="font-bold text-slate-900">{selectedBookingDetail.serviceName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Package:</span>
-                  <span className="text-slate-300">{selectedBookingDetail.packageTitle}</span>
+                  <span className="text-slate-500 font-medium">Package:</span>
+                  <span className="text-slate-700">{selectedBookingDetail.packageTitle}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Scheduled Date & Slot:</span>
-                  <span className="text-amber-400 font-bold">{selectedBookingDetail.scheduledDate}, {selectedBookingDetail.timeSlot}</span>
+                  <span className="text-slate-500 font-medium">Scheduled Date & Slot:</span>
+                  <span className="text-amber-700 font-bold">{selectedBookingDetail.scheduledDate}, {selectedBookingDetail.timeSlot}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Total Price:</span>
-                  <span className="font-mono text-emerald-400 font-bold text-sm">₹{selectedBookingDetail.price}</span>
+                  <span className="text-slate-500 font-medium">Total Price:</span>
+                  <span className="font-mono text-slate-900 font-bold text-sm">₹{selectedBookingDetail.price}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Assigned Technician:</span>
-                  <span className="text-white font-medium">{selectedBookingDetail.assignedTechnician || 'Unassigned'}</span>
+                  <span className="text-slate-500 font-medium">Assigned Technician:</span>
+                  <span className="text-slate-800 font-medium">{selectedBookingDetail.assignedTechnician || 'Unassigned'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Problem Notes:</span>
-                  <span className="text-right text-slate-300 max-w-[240px]">{selectedBookingDetail.notes || 'None'}</span>
+                  <span className="text-slate-500 font-medium">Problem Notes:</span>
+                  <span className="text-right text-slate-700 max-w-[240px]">{selectedBookingDetail.notes || 'None'}</span>
                 </div>
               </div>
 
               <div className="pt-2 flex justify-end">
                 <button
                   onClick={() => setSelectedBookingDetail(null)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold"
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold"
                 >
                   Close
                 </button>
