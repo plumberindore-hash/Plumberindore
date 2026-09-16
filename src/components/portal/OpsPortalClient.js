@@ -9,7 +9,7 @@ import {
   TrendingUp, CheckCircle2, ChevronRight, X, ExternalLink, Copy,
   CheckCircle, ArrowUpRight, DollarSign, Activity, SlidersHorizontal,
   User, Briefcase, Zap, Shield, HelpCircle, RotateCcw, ArrowRight,
-  MessageCircle, Layers
+  MessageCircle, Layers, FileText, Receipt, Printer, Trash2
 } from 'lucide-react';
 
 // Hardcoded Master Auth Credentials
@@ -195,6 +195,19 @@ function normalizeBookingRecord(b) {
   };
 }
 
+
+// Common Indore Spare Parts & Material Presets for Quick Invoice Billing
+const INDORE_COMMON_PARTS = [
+  { name: 'Tap Spindle / Valve Core', rate: 150, category: 'Plumbing' },
+  { name: 'Angle Valve (Brass / Chrome)', rate: 250, category: 'Plumbing' },
+  { name: 'Flexible Waste Pipe (PVC)', rate: 120, category: 'Plumbing' },
+  { name: 'Teflon Tape & Sealant Pack', rate: 50, category: 'Hardware' },
+  { name: 'Flush Tank Syphon / Ball Valve', rate: 350, category: 'Sanitary' },
+  { name: 'Modular Switch / 16A Socket', rate: 120, category: 'Electrical' },
+  { name: 'Ceiling Fan Capacitor (2.5uF)', rate: 140, category: 'Electrical' },
+  { name: 'MCB Single Pole (16A/32A)', rate: 220, category: 'Electrical' }
+];
+
 export default function OpsPortalClient() {
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -224,6 +237,20 @@ export default function OpsPortalClient() {
   const [isManualLeadOpen, setIsManualLeadOpen] = useState(false);
   const [whatsappModalData, setWhatsappModalData] = useState(null);
   const [selectedBookingDetail, setSelectedBookingDetail] = useState(null);
+  // Tax Invoice Generator Modal State
+  const [invoiceModalBooking, setInvoiceModalBooking] = useState(null);
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [invoiceDate, setInvoiceDate] = useState('');
+  const [invoiceItems, setInvoiceItems] = useState([]);
+  const [invoiceDiscount, setInvoiceDiscount] = useState(0);
+  const [invoicePaymentStatus, setInvoicePaymentStatus] = useState('Paid');
+  const [invoicePaymentMethod, setInvoicePaymentMethod] = useState('UPI / Doorstep Verified');
+  const [newPartName, setNewPartName] = useState('');
+  const [newPartQty, setNewPartQty] = useState(1);
+  const [newPartRate, setNewPartRate] = useState('');
+  const [copiedUpi, setCopiedUpi] = useState(false);
+  const [copiedInvoiceNotice, setCopiedInvoiceNotice] = useState(false);
+
   const [copiedNotice, setCopiedNotice] = useState(false);
   const [actionNotice, setActionNotice] = useState('');
 
@@ -371,6 +398,288 @@ export default function OpsPortalClient() {
       }
     };
   }, [isAuthenticated]);
+
+
+  // Open Tax Invoice Modal with booking defaults
+  const openInvoiceModal = (booking) => {
+    if (!booking) return;
+    const bId = booking.id || booking.booking_number || `IND-${Math.floor(10000 + Math.random() * 90000)}`;
+    const basePrice = Number(booking.price ?? booking.amount ?? booking.total_amount ?? 199);
+    const serviceTitle = booking.serviceName || booking.service_name || booking.service || 'Doorstep Service';
+    const packageTitle = booking.packageTitle || booking.package_title || booking.package || 'Standard Service Package';
+    
+    setInvoiceModalBooking(booking);
+    setInvoiceNumber(`INV-2026-${bId.toString().replace('IND-', '')}`);
+    const today = new Date();
+    setInvoiceDate(today.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }));
+    
+    setInvoiceItems([
+      {
+        id: 'base-service',
+        name: serviceTitle,
+        description: packageTitle,
+        quantity: 1,
+        rate: basePrice,
+        isBase: true
+      }
+    ]);
+    setInvoiceDiscount(0);
+    const isPaid = (booking.paymentStatus || booking.payment_status || '').toLowerCase().includes('paid');
+    setInvoicePaymentStatus(isPaid ? 'Paid' : 'Pending (Pay on Completion)');
+    setInvoicePaymentMethod(booking.paymentMethod || booking.payment_method || 'UPI / Doorstep Verified');
+    setNewPartName('');
+    setNewPartQty(1);
+    setNewPartRate('');
+  };
+
+  // Add Item to Invoice
+  const addInvoiceItem = (name = newPartName, qty = newPartQty, rate = newPartRate, desc = 'Replacement Part / Material') => {
+    if (!name || !name.toString().trim()) {
+      showNotice('Please enter item or spare part description');
+      return;
+    }
+    const numQty = Math.max(1, Number(qty) || 1);
+    const numRate = Math.max(0, Number(rate) || 0);
+    const newItem = {
+      id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      name: name.toString().trim(),
+      description: desc,
+      quantity: numQty,
+      rate: numRate,
+      isBase: false
+    };
+    setInvoiceItems(prev => [...prev, newItem]);
+    setNewPartName('');
+    setNewPartQty(1);
+    setNewPartRate('');
+    showNotice(`Added "${newItem.name}" (₹${numQty * numRate}) to invoice`);
+  };
+
+  // Remove Item from Invoice
+  const removeInvoiceItem = (itemId) => {
+    setInvoiceItems(prev => prev.filter(item => item.id !== itemId));
+    showNotice('Item removed from invoice');
+  };
+
+  // Calculations for Invoice
+  const invoiceSubtotal = useMemo(() => {
+    return invoiceItems.reduce((acc, item) => acc + (Number(item.quantity) || 1) * (Number(item.rate) || 0), 0);
+  }, [invoiceItems]);
+
+  const invoiceGrandTotal = useMemo(() => {
+    return Math.max(0, invoiceSubtotal - (Number(invoiceDiscount) || 0));
+  }, [invoiceSubtotal, invoiceDiscount]);
+
+  // Dynamic UPI Payment URI & QR Code
+  const upiId = '9174934135@yescred';
+  const upiPayee = 'sarthak patidar';
+  const upiPaymentUri = useMemo(() => {
+    const encodedPayee = encodeURIComponent(upiPayee);
+    const encodedNote = encodeURIComponent(`PlumberIndore-${invoiceNumber || 'Bill'}`);
+    return `upi://pay?pa=${upiId}&pn=${encodedPayee}&am=${invoiceGrandTotal}&cu=INR&tn=${encodedNote}`;
+  }, [invoiceGrandTotal, invoiceNumber]);
+
+  const upiQrImageUrl = useMemo(() => {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiPaymentUri)}`;
+  }, [upiPaymentUri]);
+
+  // Print Invoice
+  const handlePrintInvoice = () => {
+    window.print();
+  };
+
+  // Download Standalone Self-Contained HTML Bill
+  const handleDownloadInvoiceHtml = () => {
+    if (!invoiceModalBooking) return;
+    const b = invoiceModalBooking;
+    const custName = b.customerName || b.customer_name || 'Customer';
+    const custPhone = b.customerPhone || b.phone || b.mobile_number || '';
+    const custAddr = b.address || b.service_address || 'Indore';
+    const custLoc = b.locality || b.area || 'Indore';
+
+    const itemsRowsHtml = invoiceItems.map((item, i) => `
+      <tr>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #1e293b;">
+          <strong>${item.name}</strong>${item.description ? `<br><span style="font-size: 11px; color: #64748b;">${item.description}</span>` : ''}
+        </td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; text-align: center; color: #1e293b;">${item.quantity}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; text-align: right; color: #1e293b; font-family: monospace;">₹${item.rate}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 13px; text-align: right; font-weight: bold; color: #0f172a; font-family: monospace;">₹${item.quantity * item.rate}</td>
+      </tr>
+    `).join('');
+
+    const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tax Invoice - ${invoiceNumber} | PlumberIndore</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 30px; color: #0f172a; background: #f8fafc; }
+    .invoice-card { max-width: 760px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 24px; }
+    .logo-text { font-size: 24px; font-weight: 800; color: #0f172a; }
+    .logo-text span { color: #f59e0b; }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; background: ${invoicePaymentStatus === 'Paid' ? '#ecfdf5' : '#fffbeb'}; color: ${invoicePaymentStatus === 'Paid' ? '#059669' : '#b45309'}; border: 1px solid ${invoicePaymentStatus === 'Paid' ? '#a7f3d0' : '#fde68a'}; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0; }
+    .info-box { background: #f8fafc; padding: 14px 18px; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 13px; line-height: 1.6; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th { background: #f1f5f9; padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; border-bottom: 2px solid #cbd5e1; }
+    .totals { margin-top: 20px; border-top: 2px solid #e2e8f0; padding-top: 14px; }
+    .total-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; color: #475569; }
+    .grand-total { display: flex; justify-content: space-between; padding: 10px 0; font-size: 18px; font-weight: 800; color: #0f172a; border-top: 2px solid #0f172a; margin-top: 6px; }
+    .upi-box { margin-top: 28px; padding: 18px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .footer { margin-top: 36px; padding-top: 18px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #64748b; line-height: 1.6; }
+    @media print {
+      body { background: white; padding: 0; }
+      .invoice-card { border: none; box-shadow: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-card">
+    <div class="header">
+      <div>
+        <div class="logo-text">Plumber<span>Indore</span></div>
+        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Indore's #1 Doorstep Home Services • Certified Operations</div>
+        <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Support: +91 91749 34135 • www.plumberindore.in</div>
+      </div>
+      <div style="text-align: right;">
+        <div class="badge">${invoicePaymentStatus === 'Paid' ? 'TAX INVOICE - PAID' : 'TAX INVOICE - PAYMENT DUE'}</div>
+        <div style="font-size: 16px; font-weight: 800; font-family: monospace; margin-top: 8px; color: #0f172a;">#${invoiceNumber}</div>
+        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Date: ${invoiceDate}</div>
+        <div style="font-size: 11px; color: #64748b;">Booking Ref: <strong>#${b.id || b.booking_number}</strong></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="info-box">
+        <strong style="color: #0f172a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Billed To (Customer):</strong><br>
+        <strong>${custName}</strong><br>
+        Phone: <strong>${custPhone}</strong><br>
+        Locality: <strong>${custLoc}</strong>, Indore<br>
+        Address: ${custAddr}
+      </div>
+      <div class="info-box">
+        <strong style="color: #0f172a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Service & Dispatch Details:</strong><br>
+        Service: <strong>${b.serviceName || 'Home Repair'}</strong><br>
+        Technician: <strong>${b.assignedTechnician || 'Doorstep Certified Expert'}</strong><br>
+        Slot: ${b.scheduledDate || 'Today'} (${b.timeSlot || 'Standard Slot'})<br>
+        Payment Mode: <strong>${invoicePaymentMethod}</strong>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Service / Spare Part Description</th>
+          <th style="text-align: center;">Qty</th>
+          <th style="text-align: right;">Unit Rate</th>
+          <th style="text-align: right;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsRowsHtml}
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <div class="total-row">
+        <span>Subtotal:</span>
+        <span style="font-family: monospace;">₹${invoiceSubtotal}</span>
+      </div>
+      ${invoiceDiscount > 0 ? `
+      <div class="total-row" style="color: #059669;">
+        <span>Promotional Discount:</span>
+        <span style="font-family: monospace;">-₹${invoiceDiscount}</span>
+      </div>` : ''}
+      <div class="grand-total">
+        <span>Total Payable:</span>
+        <span style="color: #059669; font-family: monospace;">₹${invoiceGrandTotal}</span>
+      </div>
+    </div>
+
+    <div class="upi-box">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <img src="${upiQrImageUrl}" alt="Scan to Pay" style="width: 100px; height: 100px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; padding: 4px;" />
+        <div>
+          <span style="font-size: 10px; font-weight: 800; background: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">Instant UPI Scan & Pay</span>
+          <div style="font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 6px;">
+            UPI ID: <span style="font-family: monospace; color: #059669;">${upiId}</span>
+          </div>
+          <div style="font-size: 12px; color: #475569; margin-top: 2px;">
+            Payee: <strong>${upiPayee}</strong> (PlumberIndore)
+          </div>
+          <div style="font-size: 11px; color: #64748b; margin-top: 4px;">
+            Supports Google Pay, PhonePe, Paytm, BHIM, Cred & Banking UPI
+          </div>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-size: 11px; color: #64748b;">Amount Due</div>
+        <div style="font-size: 22px; font-weight: 900; color: #059669; font-family: monospace;">₹${invoiceGrandTotal}</div>
+        <div style="font-size: 10px; color: #166534; font-weight: 700; margin-top: 2px;">${invoicePaymentStatus === 'Paid' ? '✓ Payment Received' : 'Pay On Completion'}</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <strong>30-Day Post Service Warranty:</strong> All repair work and installed parts are protected under PlumberIndore standard warranty.<br>
+      This is a certified digital tax invoice generated by PlumberIndore Operations Center.<br>
+      Regd. Address: Indore, Madhya Pradesh • Helpline: +91 91749 34135 • https://www.plumberindore.in
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `PlumberIndore_Invoice_${invoiceNumber}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showNotice(`Downloaded Invoice ${invoiceNumber}.html`);
+  };
+
+  // WhatsApp Bill Dispatch
+  const handleSendInvoiceWhatsApp = () => {
+    if (!invoiceModalBooking) return;
+    const b = invoiceModalBooking;
+    const custPhone = (b.customerPhone || b.phone || b.mobile_number || '').replace(/[^0-9]/g, '');
+    const custName = b.customerName || b.customer_name || 'Customer';
+
+    const itemsSummary = invoiceItems.map(it => `• ${it.name} (x${it.quantity}): ₹${it.quantity * it.rate}`).join('\n');
+    
+    const text = 
+`*PLUMBERINDORE TAX INVOICE & SERVICE BILL*\n` +
+`--------------------------------------\n` +
+`*Invoice No:* #${invoiceNumber}\n` +
+`*Date:* ${invoiceDate}\n` +
+`*Booking Ref:* #${b.id || b.booking_number}\n` +
+`*Customer:* ${custName}\n` +
+`*Locality:* ${b.locality || b.area || 'Indore'}\n` +
+`--------------------------------------\n` +
+`*SERVICE & CHARGES BREAKDOWN:*\n` +
+`${itemsSummary}\n` +
+`--------------------------------------\n` +
+`*Subtotal:* ₹${invoiceSubtotal}\n` +
+(invoiceDiscount > 0 ? `*Discount:* -₹${invoiceDiscount}\n` : '') +
+`*TOTAL AMOUNT:* ₹${invoiceGrandTotal}\n` +
+`*Payment Status:* ${invoicePaymentStatus}\n` +
+`--------------------------------------\n` +
+`*PAY VIA UPI:*\n` +
+`UPI ID: ${upiId} (sarthak patidar)\n` +
+`Payment Link: ${upiPaymentUri}\n` +
+`--------------------------------------\n` +
+`🛡️ *30-Day Doorstep Service Warranty Included*\n` +
+`Helpline: +91 91749 34135\n` +
+`Website: https://www.plumberindore.in`;
+
+    const encoded = encodeURIComponent(text);
+    const waUrl = custPhone ? `https://api.whatsapp.com/send?phone=91${custPhone.slice(-10)}&text=${encoded}` : `https://api.whatsapp.com/send?text=${encoded}`;
+    window.open(waUrl, '_blank');
+    showNotice(`Opened WhatsApp with Invoice #${invoiceNumber}`);
+  };
 
   // Periodic Auto-Sync Every 15 seconds
   useEffect(() => {
@@ -1717,18 +2026,13 @@ export default function OpsPortalClient() {
                                   <MessageSquare className="w-3.5 h-3.5" />
                                 </button>
 
-                                {/* AI Diagnostic Trigger */}
+                                {/* Tax Invoice & Bill Generator Trigger */}
                                 <button
-                                  onClick={() => {
-                                    setDiagInput(`${b.serviceName}. ${b.notes || ''}`);
-                                    setDiagLocality(b.locality);
-                                    setActiveTab('diagnostics');
-                                    runAIDiagnostic(`${b.serviceName}. ${b.notes || ''}`, b);
-                                  }}
-                                  title="Analyze with AI Diagnostic"
-                                  className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg transition-colors"
+                                  onClick={() => openInvoiceModal(b)}
+                                  title="Generate Tax Invoice & Bill"
+                                  className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg transition-colors"
                                 >
-                                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                                  <Receipt className="w-3.5 h-3.5 text-indigo-600" />
                                 </button>
 
                                 {/* View Detail Drawer */}
@@ -2573,6 +2877,462 @@ export default function OpsPortalClient() {
         </div>
       )}
 
+
+      {/* ------------------------------------------------------------- */}
+      {/* MODAL 4: INTERACTIVE TAX INVOICE & BILL GENERATOR */}
+      {/* ------------------------------------------------------------- */}
+      {invoiceModalBooking && (
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl my-auto max-h-[92vh] flex flex-col">
+            
+            {/* Modal Navigation & Action Top Bar (Hidden on Print) */}
+            <div className="px-6 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/90 shrink-0 no-print">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg">
+                  <Receipt className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm font-heading">
+                    Tax Invoice & Bill Generator
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Booking Ref #{invoiceModalBooking.id || invoiceModalBooking.booking_number} • Live Recalculation & UPI
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrintInvoice}
+                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+                  title="Print or Save as PDF"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Print / Save PDF</span>
+                </button>
+
+                <button
+                  onClick={handleDownloadInvoiceHtml}
+                  className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  title="Download Standalone HTML Bill"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Download HTML</span>
+                </button>
+
+                <button
+                  onClick={() => setInvoiceModalBooking(null)}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Modal Content */}
+            <div className="overflow-y-auto flex-1 p-6 space-y-6 text-xs">
+              
+              {/* Dynamic Spare Parts & Charges Editor (Hidden on Print) */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 no-print">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                    <Wrench className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Add Extra Charges or Replacement Spare Parts</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500">Recalculates subtotal & dynamic UPI QR code</span>
+                </div>
+
+                {/* Quick Add Presets Chips */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
+                    Quick Add Common Indore Parts:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {INDORE_COMMON_PARTS.map((part) => (
+                      <button
+                        key={part.name}
+                        onClick={() => addInvoiceItem(part.name, 1, part.rate, `${part.category} Spare Part`)}
+                        className="px-2.5 py-1 bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 hover:border-amber-300 rounded-lg text-[11px] font-medium transition-colors flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3 text-amber-600" />
+                        <span>{part.name} (₹{part.rate})</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom Item Entry Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-2 border-t border-slate-200">
+                  <div className="sm:col-span-6">
+                    <input
+                      type="text"
+                      placeholder="Part Name / Extra Charge Description (e.g. Angle Valve)"
+                      value={newPartName}
+                      onChange={(e) => setNewPartName(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-slate-900"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Qty"
+                      value={newPartQty}
+                      onChange={(e) => setNewPartQty(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-slate-900 text-center font-mono"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-2 text-slate-400 font-mono">₹</span>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Rate"
+                        value={newPartRate}
+                        onChange={(e) => setNewPartRate(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-xl pl-6 pr-2 py-2 text-xs text-slate-900 focus:outline-none focus:border-slate-900 font-mono"
+                      />
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <button
+                      onClick={() => addInvoiceItem()}
+                      className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Status & Discount Controls */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Payment Status</label>
+                    <select
+                      value={invoicePaymentStatus}
+                      onChange={(e) => setInvoicePaymentStatus(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 font-semibold focus:outline-none"
+                    >
+                      <option value="Paid">Paid (Cash / UPI Received)</option>
+                      <option value="Pending (Pay on Completion)">Pending (Pay on Completion)</option>
+                      <option value="Partially Paid">Partially Paid</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Payment Method</label>
+                    <select
+                      value={invoicePaymentMethod}
+                      onChange={(e) => setInvoicePaymentMethod(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 font-semibold focus:outline-none"
+                    >
+                      <option value="UPI / Doorstep Verified">UPI / QR Code Scan</option>
+                      <option value="Cash on Doorstep">Cash on Doorstep</option>
+                      <option value="Online NetBanking / Card">Online NetBanking / Card</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Discount (₹)</label>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-1.5 text-slate-400 font-mono">₹</span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={invoiceDiscount}
+                        onChange={(e) => setInvoiceDiscount(Number(e.target.value) || 0)}
+                        className="w-full bg-white border border-slate-200 rounded-xl pl-6 pr-2 py-1.5 text-xs text-slate-900 font-mono focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ----------------------------------------------------------- */}
+              {/* THE OFFICIAL TAX INVOICE TEMPLATE (PRINTABLE REGION) */}
+              {/* ----------------------------------------------------------- */}
+              <div 
+                id="printable-tax-invoice" 
+                className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm"
+              >
+                {/* Official Invoice Header */}
+                <div className="flex items-start justify-between border-b-2 border-slate-900 pb-5">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2.5">
+                      <img src="/logo.png" alt="PlumberIndore Logo" className="w-10 h-10 object-contain" />
+                      <div>
+                        <div className="text-xl font-extrabold text-slate-900 tracking-tight font-heading">
+                          Plumber<span className="text-amber-500">Indore</span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 font-semibold tracking-wide">
+                          Indore's #1 Doorstep Home Services
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 pt-1">
+                      Certified Operations • Helpline: +91 91749 34135 • www.plumberindore.in
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                      invoicePaymentStatus === 'Paid'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-amber-50 text-amber-800 border-amber-200'
+                    }`}>
+                      {invoicePaymentStatus === 'Paid' ? 'PAID TAX INVOICE' : 'TAX INVOICE - PAYMENT DUE'}
+                    </span>
+                    <div className="text-base font-black font-mono text-slate-900 mt-2">
+                      #{invoiceNumber}
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">
+                      Date: <strong className="text-slate-800">{invoiceDate}</strong>
+                    </div>
+                    <div className="text-[10px] text-slate-500">
+                      Booking Ref: <span className="font-mono font-bold text-slate-900">#{invoiceModalBooking.id || invoiceModalBooking.booking_number}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer & Service Info Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1.5">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                      Billed To (Customer Details)
+                    </span>
+                    <div className="font-bold text-slate-900 text-sm">
+                      {invoiceModalBooking.customerName || invoiceModalBooking.customer_name || 'Customer'}
+                    </div>
+                    <div className="text-slate-600 flex items-center gap-1 font-mono">
+                      <Phone className="w-3 h-3 text-emerald-600 shrink-0" />
+                      <span>{invoiceModalBooking.customerPhone || invoiceModalBooking.phone || invoiceModalBooking.mobile_number || 'Not provided'}</span>
+                    </div>
+                    <div className="text-slate-600 flex items-start gap-1">
+                      <MapPin className="w-3 h-3 text-rose-500 shrink-0 mt-0.5" />
+                      <span>
+                        {invoiceModalBooking.address || invoiceModalBooking.service_address || 'Indore'}, <strong>{invoiceModalBooking.locality || invoiceModalBooking.area || 'Indore'}</strong> {invoiceModalBooking.pincode ? `(${invoiceModalBooking.pincode})` : ''}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1.5">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                      Service & Dispatch Details
+                    </span>
+                    <div className="font-bold text-slate-900 text-sm">
+                      {invoiceModalBooking.serviceName || invoiceModalBooking.service_name || 'Home Repair'}
+                    </div>
+                    <div className="text-slate-600">
+                      Package: <span className="font-semibold text-slate-800">{invoiceModalBooking.packageTitle || invoiceModalBooking.package_title || 'Standard Package'}</span>
+                    </div>
+                    <div className="text-slate-600">
+                      Slot: <span className="text-amber-700 font-semibold">{invoiceModalBooking.scheduledDate || 'Today'} ({invoiceModalBooking.timeSlot || 'Standard Slot'})</span>
+                    </div>
+                    <div className="text-slate-600">
+                      Technician: <strong className="text-slate-900">{invoiceModalBooking.assignedTechnician || invoiceModalBooking.technician || 'Doorstep Certified Expert'}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Line Items Table */}
+                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  <table className="w-full text-left">
+                    <thead className="bg-slate-100 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+                      <tr>
+                        <th className="py-2.5 px-4 w-12">#</th>
+                        <th className="py-2.5 px-4">Description / Spare Part</th>
+                        <th className="py-2.5 px-3 text-center w-20">Qty</th>
+                        <th className="py-2.5 px-4 text-right w-24">Rate (₹)</th>
+                        <th className="py-2.5 px-4 text-right w-28">Amount (₹)</th>
+                        <th className="py-2.5 px-3 text-center w-12 no-print">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {invoiceItems.map((item, idx) => (
+                        <tr key={item.id} className="hover:bg-slate-50/50">
+                          <td className="py-3 px-4 text-slate-400 font-mono">{idx + 1}</td>
+                          <td className="py-3 px-4">
+                            <span className="font-bold text-slate-900 block">{item.name}</span>
+                            {item.description && (
+                              <span className="text-[11px] text-slate-500 block">{item.description}</span>
+                            )}
+                            {item.isBase && (
+                              <span className="inline-block mt-0.5 px-1.5 py-0.2 bg-blue-50 text-blue-700 border border-blue-200 rounded text-[9px] font-semibold">
+                                Base Booking Service
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-3 text-center font-mono font-semibold text-slate-800">
+                            {item.quantity}
+                          </td>
+                          <td className="py-3 px-4 text-right font-mono text-slate-700">
+                            ₹{item.rate}
+                          </td>
+                          <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
+                            ₹{item.quantity * item.rate}
+                          </td>
+                          <td className="py-3 px-3 text-center no-print">
+                            {!item.isBase ? (
+                              <button
+                                onClick={() => removeInvoiceItem(item.id)}
+                                className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
+                                title="Remove spare part"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            ) : (
+                              <span className="text-[10px] text-slate-300 font-mono">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Subtotals & Grand Total Breakdown */}
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pt-2">
+                  <div className="space-y-1 text-slate-500 max-w-sm">
+                    <p className="font-semibold text-slate-700">Terms & Payment Info:</p>
+                    <p className="text-[11px]">
+                      Mode: <strong className="text-slate-900">{invoicePaymentMethod}</strong> • Status: <strong className="text-emerald-700">{invoicePaymentStatus}</strong>
+                    </p>
+                    <p className="text-[11px]">
+                      Doorstep verified service completed by certified PlumberIndore technician.
+                    </p>
+                  </div>
+
+                  <div className="w-full sm:w-72 bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                    <div className="flex justify-between text-slate-600">
+                      <span>Service Subtotal:</span>
+                      <span className="font-mono font-semibold text-slate-900">₹{invoiceSubtotal}</span>
+                    </div>
+                    {invoiceDiscount > 0 && (
+                      <div className="flex justify-between text-emerald-700">
+                        <span>Discount Applied:</span>
+                        <span className="font-mono font-semibold">-₹{invoiceDiscount}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-slate-500 text-[11px]">
+                      <span>GST / Taxes:</span>
+                      <span className="font-mono">Included</span>
+                    </div>
+                    <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t-2 border-slate-900">
+                      <span>Total Amount:</span>
+                      <span className="text-emerald-700 font-mono text-lg">₹{invoiceGrandTotal}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dynamic Instant UPI QR Code & Scan-to-Pay Box */}
+                <div className="bg-gradient-to-r from-emerald-50/60 to-slate-50 p-4 rounded-xl border border-emerald-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-24 h-24 bg-white p-1.5 rounded-xl border border-emerald-300 shadow-sm shrink-0 flex items-center justify-center">
+                      <img 
+                        src={upiQrImageUrl} 
+                        alt="Dynamic UPI QR Code" 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="inline-block px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-black text-[9px] uppercase tracking-wider">
+                        Quick Scan & Pay via UPI
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900">UPI ID:</span>
+                        <span className="font-mono font-bold text-emerald-700 text-xs bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          {upiId}
+                        </span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(upiId);
+                            setCopiedUpi(true);
+                            setTimeout(() => setCopiedUpi(false), 2000);
+                          }}
+                          className="text-[10px] text-slate-500 hover:text-slate-800 underline no-print"
+                        >
+                          {copiedUpi ? 'Copied!' : 'Copy'}
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-slate-600">
+                        Payee: <strong>{upiPayee}</strong> (PlumberIndore Ops)
+                      </p>
+                      <p className="text-[10px] text-slate-500">
+                        Accepts Google Pay, PhonePe, Paytm, BHIM, Cred, and Mobile Banking
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-center sm:text-right shrink-0">
+                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Payable Balance</div>
+                    <div className="text-2xl font-black text-emerald-700 font-mono">
+                      ₹{invoiceGrandTotal}
+                    </div>
+                    <div className="text-[10px] font-bold text-slate-700 mt-0.5">
+                      {invoicePaymentStatus === 'Paid' ? '✓ Paid & Settled' : 'Payment on Service Delivery'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Guarantee & Certified Service Footer */}
+                <div className="pt-4 border-t border-slate-200 text-center space-y-1 text-slate-500 text-[11px]">
+                  <p className="font-semibold text-slate-700 flex items-center justify-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-blue-600" />
+                    <span>30-Day Post-Service Warranty Guaranteed on All Completed Doorstep Works</span>
+                  </p>
+                  <p>
+                    For queries or follow-up service, contact PlumberIndore 24/7 Helpline: <strong>+91 91749 34135</strong> • support@plumberindore.in
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    This is a computer-generated tax invoice issued by PlumberIndore Operations Console.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Modal Action Footer (Hidden on Print) */}
+            <div className="px-6 py-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-slate-50/80 shrink-0 no-print">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSendInvoiceWhatsApp}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+                  title="Send itemized invoice details directly to customer via WhatsApp"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Send via WhatsApp</span>
+                </button>
+
+                <button
+                  onClick={handleDownloadInvoiceHtml}
+                  className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download HTML Bill</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrintInvoice}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print Bill</span>
+                </button>
+
+                <button
+                  onClick={() => setInvoiceModalBooking(null)}
+                  className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* ------------------------------------------------------------- */}
       {/* MODAL 3: BOOKING DETAIL MODAL */}
       {/* ------------------------------------------------------------- */}
@@ -2702,22 +3462,37 @@ export default function OpsPortalClient() {
               </div>
 
               <div className="pt-2 flex items-center justify-between">
-                <button
-                  onClick={() => {
-                    const b = selectedBookingDetail;
-                    setSelectedBookingDetail(null);
-                    openOrCreateChatForCustomer(
-                      b.customerName || b.customer_name || 'Customer',
-                      b.customerPhone || b.phone || b.mobile_number || '',
-                      b.locality || b.area || 'Indore',
-                      `Namaste ${b.customerName || b.customer_name || 'Customer'} ji! Discussing booking #${b.id || b.booking_number}.`
-                    );
-                  }}
-                  className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  <span>Open Customer Chat</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const b = selectedBookingDetail;
+                      setSelectedBookingDetail(null);
+                      openInvoiceModal(b);
+                    }}
+                    className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                    title="Generate Tax Invoice for this booking"
+                  >
+                    <Receipt className="w-3.5 h-3.5" />
+                    <span>Tax Invoice</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      const b = selectedBookingDetail;
+                      setSelectedBookingDetail(null);
+                      openOrCreateChatForCustomer(
+                        b.customerName || b.customer_name || 'Customer',
+                        b.customerPhone || b.phone || b.mobile_number || '',
+                        b.locality || b.area || 'Indore',
+                        `Namaste ${b.customerName || b.customer_name || 'Customer'} ji! Discussing booking #${b.id || b.booking_number}.`
+                      );
+                    }}
+                    className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>Open Chat</span>
+                  </button>
+                </div>
 
                 <button
                   onClick={() => setSelectedBookingDetail(null)}
