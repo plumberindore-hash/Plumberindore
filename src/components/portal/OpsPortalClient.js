@@ -1,5 +1,6 @@
 'use client';
 
+import { createClient } from '@supabase/supabase-js';
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Lock, LogOut, Search, Filter, Download, 
@@ -87,6 +88,113 @@ function OfficialBrandLogo({ size = 'md', isDarkBg = false, showTagline = true }
   );
 }
 
+
+// Helper: Extract Indore Locality with safe fallbacks
+function extractLocality(address = '', pincode = '') {
+  const addr = (address || '').toLowerCase();
+  if (addr.includes('vijay nagar')) return 'Vijay Nagar';
+  if (addr.includes('palasia')) return 'Palasia';
+  if (addr.includes('bhawarkua') || addr.includes('bhanwarkuan')) return 'Bhawarkua';
+  if (addr.includes('rau')) return 'Rau';
+  if (addr.includes('bicholi') || addr.includes('mardana')) return 'Bicholi Mardana';
+  if (addr.includes('khandwa')) return 'Khandwa Road';
+  if (addr.includes('rajendra')) return 'Rajendra Nagar';
+  if (addr.includes('annapurna')) return 'Annapurna';
+  if (addr.includes('sudama')) return 'Sudama Nagar';
+  if (addr.includes('nipania')) return 'Nipania';
+  if (addr.includes('kanadia')) return 'Kanadia Road';
+  if (addr.includes('mahalaxmi')) return 'Mahalaxmi Nagar';
+
+  if (pincode === '452010') return 'Vijay Nagar';
+  if (pincode === '452001') return 'Palasia';
+  if (pincode === '452014') return 'Bhawarkua';
+  if (pincode === '453331') return 'Rau';
+  if (pincode === '452016') return 'Bicholi Mardana';
+
+  if (address && address.includes(',')) {
+    return address.split(',')[0].trim();
+  }
+  return address || 'Indore';
+}
+
+// Helper: Normalize any raw database booking record into uniform frontend format with safe fallback keys
+function normalizeBookingRecord(b) {
+  if (!b) return null;
+  const bId = b.booking_number || b.id || `IND-${Math.floor(10000 + Math.random() * 90000)}`;
+  const customerName = b.customerName || b.customer_name || b.name || 'Customer';
+  const customerPhone = b.customerPhone || b.customer_phone || b.mobile_number || b.phone || '';
+  const customerEmail = b.customerEmail || b.customer_email || b.email || '';
+  const address = b.address || b.service_address || 'Indore';
+  const pincode = b.pincode || '452010';
+  const locality = b.locality || b.area || extractLocality(address, pincode);
+  const serviceName = b.serviceName || b.service_name || b.service || 'Home Repair';
+  const packageTitle = b.packageTitle || b.package_title || b.package || 'Standard Package';
+  const price = Number(b.price ?? b.amount ?? b.total_amount ?? b.subtotal ?? 499);
+  const scheduledDate = b.scheduledDate || b.scheduled_date || b.booking_date || (b.createdAt ? b.createdAt.split('T')[0] : (b.created_at ? b.created_at.split('T')[0] : 'Today'));
+  const timeSlot = b.timeSlot || b.time_slot || b.booking_slot || (b.time?.includes(',') ? b.time.split(',')[1]?.trim() : (b.time || 'Standard Slot'));
+  const status = b.status || 'Technician Assigned';
+  const notes = b.notes || b.description || '';
+  const priority = b.priority || (notes?.toLowerCase().includes('urgent') ? 'Urgent' : 'High');
+  const assignedTechnician = b.assignedTechnician || b.technician || (notes?.includes('Tech:') ? notes.split('Tech:')[1]?.trim() : (status === 'In Progress' ? 'Ramesh Sharma' : 'Pending Allocation'));
+  const paymentStatus = b.paymentStatus || b.payment_status || 'Pending (Pay on Completion)';
+  const paymentMethod = b.paymentMethod || b.payment_method || 'Cash / UPI on Doorstep';
+  const paymentRef = b.paymentRef || b.payment_ref || null;
+  const source = b.source || (bId.startsWith('IND-') ? 'Website Booking' : 'Portal Lead');
+  const linkedInquiryId = b.linkedInquiryId || notes?.match(/INQ-[A-Za-z0-9-]+/)?.[0] || null;
+  const linkedChatId = b.linkedChatId || notes?.match(/CHAT-[A-Za-z0-9-]+/)?.[0] || null;
+  const createdAt = b.createdAt || b.created_at || new Date().toISOString();
+
+  return {
+    id: bId,
+    dbId: b.dbId || b.id,
+    booking_number: bId,
+    customerName,
+    customer_name: customerName,
+    name: customerName,
+    customerPhone,
+    customer_phone: customerPhone,
+    mobile_number: customerPhone,
+    phone: customerPhone,
+    customerEmail,
+    customer_email: customerEmail,
+    email: customerEmail,
+    locality,
+    area: locality,
+    address,
+    service_address: address,
+    pincode,
+    serviceName,
+    service_name: serviceName,
+    service: serviceName,
+    packageTitle,
+    package_title: packageTitle,
+    price,
+    amount: price,
+    total_amount: price,
+    scheduledDate,
+    scheduled_date: scheduledDate,
+    booking_date: scheduledDate,
+    timeSlot,
+    time_slot: timeSlot,
+    booking_slot: timeSlot,
+    time: `${scheduledDate}, ${timeSlot}`,
+    status,
+    priority,
+    assignedTechnician,
+    technician: assignedTechnician,
+    notes,
+    paymentStatus,
+    payment_status: paymentStatus,
+    paymentMethod,
+    payment_method: paymentMethod,
+    paymentRef,
+    source,
+    linkedInquiryId,
+    linkedChatId,
+    createdAt
+  };
+}
+
 export default function OpsPortalClient() {
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -100,6 +208,7 @@ export default function OpsPortalClient() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSynced, setLastSynced] = useState(null);
   const [liveConnected, setLiveConnected] = useState(true);
+  const [realtimeActive, setRealtimeActive] = useState(false);
   const [bookings, setBookings] = useState(INITIAL_BOOKINGS);
   const [inquiries, setInquiries] = useState(INITIAL_INQUIRIES);
   const [chats, setChats] = useState(INITIAL_CHATS);
@@ -155,7 +264,8 @@ export default function OpsPortalClient() {
         const data = await res.json();
         if (data.success) {
           if (Array.isArray(data.bookings)) {
-            setBookings(data.bookings);
+            const normalized = data.bookings.map(normalizeBookingRecord);
+            setBookings(normalized);
           }
           if (Array.isArray(data.inquiries)) {
             setInquiries(data.inquiries);
@@ -179,6 +289,88 @@ export default function OpsPortalClient() {
       setIsSyncing(false);
     }
   };
+
+
+  // Supabase Realtime Active Channel Subscription
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://hnawwvxvfdnkmwtytwre.supabase.co';
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_BT_qk2dmGPrd82h-FWZ-VA_ONM7HKJO';
+    
+    let client = null;
+    let channel = null;
+
+    try {
+      client = createClient(supabaseUrl, supabaseKey);
+
+      channel = client
+        .channel('realtime-portal-sync')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'bookings' },
+          (payload) => {
+            console.log('[Realtime Booking Event]:', payload.eventType, payload.new || payload.old);
+            if (payload.eventType === 'INSERT') {
+              const normalized = normalizeBookingRecord(payload.new);
+              setBookings((prev) => {
+                const exists = prev.some(b => b.id === normalized.id || (normalized.dbId && b.dbId === normalized.dbId));
+                if (exists) return prev;
+                return [normalized, ...prev];
+              });
+              showNotice(`⚡ Realtime: New Booking #${normalized.id} (${normalized.customerName}) received!`);
+            } else if (payload.eventType === 'UPDATE') {
+              const normalized = normalizeBookingRecord(payload.new);
+              setBookings((prev) =>
+                prev.map(b => (b.dbId === normalized.dbId || b.id === normalized.id) ? { ...b, ...normalized } : b)
+              );
+              setSelectedBookingDetail(curr => (curr && (curr.id === normalized.id || curr.dbId === normalized.dbId)) ? { ...curr, ...normalized } : curr);
+              showNotice(`⚡ Realtime: Booking #${normalized.id} updated!`);
+            } else if (payload.eventType === 'DELETE') {
+              setBookings((prev) =>
+                prev.filter(b => b.dbId !== payload.old?.id && b.id !== payload.old?.booking_number)
+              );
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'leads' },
+          () => {
+            fetchLivePortalData();
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'quote_requests' },
+          () => {
+            fetchLivePortalData();
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'contact_messages' },
+          () => {
+            fetchLivePortalData();
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            setRealtimeActive(true);
+          } else {
+            setRealtimeActive(false);
+          }
+        });
+    } catch (err) {
+      console.warn('Realtime subscription init notice:', err);
+    }
+
+    return () => {
+      if (client && channel) {
+        client.removeChannel(channel);
+      }
+    };
+  }, [isAuthenticated]);
 
   // Periodic Auto-Sync Every 15 seconds
   useEffect(() => {
@@ -392,24 +584,24 @@ export default function OpsPortalClient() {
     ];
 
     const rows = filteredBookings.map(b => [
-      `"${b.id}"`,
-      `"${b.customerName}"`,
-      `"${b.customerPhone}"`,
-      `"${b.customerEmail || ''}"`,
-      `"${b.locality || ''}"`,
-      `"${(b.address || '').replace(/"/g, '""')}"`,
-      `"${(b.serviceName || '').replace(/"/g, '""')}"`,
-      `"${(b.packageTitle || '').replace(/"/g, '""')}"`,
-      b.price,
-      `"${b.status}"`,
-      `"${b.paymentStatus}"`,
-      `"${b.paymentMethod || ''}"`,
-      `"${b.scheduledDate}"`,
-      `"${b.timeSlot}"`,
-      `"${b.assignedTechnician || 'Unassigned'}"`,
+      `"${b.id || b.booking_number || ''}"`,
+      `"${b.customerName || b.customer_name || ''}"`,
+      `"${b.customerPhone || b.phone || b.mobile_number || ''}"`,
+      `"${b.customerEmail || b.customer_email || b.email || ''}"`,
+      `"${b.locality || b.area || ''}"`,
+      `"${(b.address || b.service_address || '').replace(/"/g, '""')}"`,
+      `"${(b.serviceName || b.service_name || b.service || '').replace(/"/g, '""')}"`,
+      `"${(b.packageTitle || b.package_title || b.package || '').replace(/"/g, '""')}"`,
+      b.price ?? b.amount ?? b.total_amount ?? 0,
+      `"${b.status || 'Technician Assigned'}"`,
+      `"${b.paymentStatus || b.payment_status || 'Pending'}"`,
+      `"${b.paymentMethod || b.payment_method || ''}"`,
+      `"${b.scheduledDate || b.scheduled_date || ''}"`,
+      `"${b.timeSlot || b.time_slot || ''}"`,
+      `"${b.assignedTechnician || b.technician || 'Unassigned'}"`,
       `"${b.linkedInquiryId || ''}"`,
       `"${b.linkedChatId || ''}"`,
-      `"${b.createdAt}"`
+      `"${b.createdAt || b.created_at || ''}"`
     ]);
 
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -709,14 +901,14 @@ export default function OpsPortalClient() {
     } else {
       text = `*🚨 PLUMBER INDORE - TECHNICIAN DISPATCH ORDER*\n\n` +
         `*Order:* #${booking.id} (${booking.priority.toUpperCase()} PRIORITY)\n` +
-        `*Customer:* ${booking.customerName}\n` +
-        `*Contact:* ${booking.customerPhone}\n` +
-        `*Locality:* ${booking.locality}\n` +
-        `*Address:* ${booking.address}\n` +
-        `*Service Required:* ${booking.serviceName}\n` +
-        `*Problem Notes:* ${booking.notes || 'Check and repair'}\n` +
-        `*Scheduled Time:* ${booking.timeSlot}\n` +
-        `*Collect Amount:* ₹${booking.price}\n\n` +
+        `*Customer:* ${booking.customerName || booking.customer_name || 'Customer'}\n` +
+        `*Contact:* ${booking.customerPhone || booking.phone || booking.mobile_number || 'Not provided'}\n` +
+        `*Locality:* ${booking.locality || booking.area || 'Indore'}\n` +
+        `*Address:* ${booking.address || booking.service_address || 'Indore'}\n` +
+        `*Service Required:* ${booking.serviceName || booking.service_name || 'Home Repair'}\n` +
+        `*Problem Notes:* ${booking.notes || booking.description || 'Check and repair'}\n` +
+        `*Scheduled Time:* ${booking.scheduledDate || booking.scheduled_date || 'Today'} (${booking.timeSlot || booking.time_slot || 'Slot'})\n` +
+        `*Collect Amount:* ₹${booking.price ?? booking.amount ?? booking.total_amount ?? 0}\n\n` +
         `📌 *Google Maps:* https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(booking.address)}\n\n` +
         `_Report status back to Indore Ops Console after arrival._`;
     }
@@ -978,8 +1170,8 @@ export default function OpsPortalClient() {
             {/* Live Database Status Indicator */}
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold shadow-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="hidden md:inline">Live Supabase Connected</span>
-              <span className="md:hidden">Live DB</span>
+              <span className="hidden md:inline">{realtimeActive ? '⚡ Realtime Live Active' : 'Live Supabase Connected'}</span>
+              <span className="md:hidden">{realtimeActive ? '⚡ Realtime' : 'Live DB'}</span>
               {lastSynced && <span className="text-[10px] text-emerald-600 font-normal hidden lg:inline">({lastSynced})</span>}
               <button
                 type="button"
@@ -1403,12 +1595,14 @@ export default function OpsPortalClient() {
                           <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
                             <td className="py-4 px-4 font-mono font-bold text-slate-900 whitespace-nowrap">
                               <div className="flex items-center gap-1.5">
-                                <span>#{b.id}</span>
-                                {b.priority === 'Urgent' && (
+                                <span>#{b.id || b.booking_number}</span>
+                                {(b.priority === 'Urgent' || b.notes?.toLowerCase().includes('urgent')) && (
                                   <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" title="Urgent Lead" />
                                 )}
                               </div>
-                              <span className="text-[10px] text-slate-500 block font-sans font-normal">{b.scheduledDate}</span>
+                              <span className="text-[10px] text-slate-500 block font-sans font-normal">
+                                {b.scheduledDate || b.scheduled_date || (b.time ? b.time.split(',')[0] : 'Today')}
+                              </span>
                               
                               {/* Cross-Link Badges to Source Inquiry / Chat */}
                               <div className="flex flex-wrap gap-1 mt-1 font-sans">
@@ -1444,41 +1638,41 @@ export default function OpsPortalClient() {
 
                             <td className="py-4 px-4">
                               <div className="font-bold text-slate-900 flex items-center gap-1">
-                                <span>{b.customerName}</span>
+                                <span>{b.customerName || b.customer_name || 'Customer'}</span>
                               </div>
                               <div className="flex items-center gap-1 text-slate-500 text-xs mt-0.5">
                                 <Phone className="w-3 h-3 text-emerald-600" />
-                                <a href={`tel:${b.customerPhone}`} className="hover:text-emerald-700 font-mono transition-colors font-medium">
-                                  {b.customerPhone}
+                                <a href={`tel:${b.customerPhone || b.phone || b.mobile_number}`} className="hover:text-emerald-700 font-mono transition-colors font-medium">
+                                  {b.customerPhone || b.phone || b.mobile_number || 'Not provided'}
                                 </a>
                               </div>
                             </td>
 
                             <td className="py-4 px-4 max-w-xs">
                               <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-800 rounded font-semibold text-[11px] mb-1">
-                                📍 {b.locality}
+                                📍 {b.locality || b.area || 'Indore'}
                               </span>
-                              <p className="text-slate-600 text-xs line-clamp-1" title={b.address}>
-                                {b.address}
+                              <p className="text-slate-600 text-xs line-clamp-1" title={b.address || b.service_address}>
+                                {b.address || b.service_address || 'Doorstep Address'}
                               </p>
                             </td>
 
                             <td className="py-4 px-4 max-w-xs">
-                              <p className="font-semibold text-slate-900 line-clamp-1" title={b.serviceName}>
-                                {b.serviceName}
+                              <p className="font-semibold text-slate-900 line-clamp-1" title={b.serviceName || b.service_name || b.service}>
+                                {b.serviceName || b.service_name || b.service || 'Home Repair'}
                               </p>
                               <span className="text-[11px] text-slate-500 block">
-                                {b.packageTitle}
+                                {b.packageTitle || b.package_title || b.package || 'Standard Package'}
                               </span>
                             </td>
 
                             <td className="py-4 px-4 whitespace-nowrap">
                               <div className="font-bold text-slate-900 font-mono text-sm">
-                                ₹{b.price}
+                                ₹{b.price ?? b.amount ?? b.total_amount ?? 0}
                               </div>
                               <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
                                 <Clock className="w-3 h-3 text-slate-400" />
-                                <span>{b.timeSlot}</span>
+                                <span>{b.timeSlot || b.time_slot || (b.time ? b.time.split(',')[1] : 'Standard Slot')}</span>
                               </div>
                             </td>
 
@@ -1502,7 +1696,12 @@ export default function OpsPortalClient() {
                               <div className="flex items-center justify-end gap-1.5">
                                 {/* Cross-Link: Open/Create Live Customer Chat */}
                                 <button
-                                  onClick={() => openOrCreateChatForCustomer(b.customerName, b.customerPhone, b.locality, `Namaste ${b.customerName} ji, this is PlumberIndore regarding your Booking #${b.id} (${b.serviceName}). How can we assist you?`)}
+                                  onClick={() => openOrCreateChatForCustomer(
+                                    b.customerName || b.customer_name || 'Customer',
+                                    b.customerPhone || b.phone || b.mobile_number || '',
+                                    b.locality || b.area || 'Indore',
+                                    `Namaste ${b.customerName || b.customer_name || 'Customer'} ji, this is PlumberIndore regarding your Booking #${b.id || b.booking_number} (${b.serviceName || b.service_name || 'Home Repair'}). How can we assist you?`
+                                  )}
                                   title="Open / Start Live Chat with this customer"
                                   className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg transition-colors"
                                 >
@@ -2385,7 +2584,7 @@ export default function OpsPortalClient() {
                 <div className="p-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg">
                   <Eye className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-slate-900 text-base font-heading">Booking #{selectedBookingDetail.id}</h3>
+                <h3 className="font-bold text-slate-900 text-base font-heading">Booking #{selectedBookingDetail.id || selectedBookingDetail.booking_number}</h3>
               </div>
               <button
                 onClick={() => setSelectedBookingDetail(null)}
@@ -2399,19 +2598,28 @@ export default function OpsPortalClient() {
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-medium">Customer Name:</span>
-                  <span className="font-bold text-slate-900">{selectedBookingDetail.customerName}</span>
+                  <span className="font-bold text-slate-900">
+                    {selectedBookingDetail.customerName || selectedBookingDetail.customer_name || 'Customer'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-medium">Phone:</span>
-                  <span className="font-mono text-emerald-700 font-bold">{selectedBookingDetail.customerPhone}</span>
+                  <span className="font-mono text-emerald-700 font-bold">
+                    {selectedBookingDetail.customerPhone || selectedBookingDetail.phone || selectedBookingDetail.mobile_number || 'Not provided'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-medium">Locality:</span>
-                  <span className="text-slate-800 font-semibold">{selectedBookingDetail.locality}</span>
+                  <span className="text-slate-800 font-semibold">
+                    {selectedBookingDetail.locality || selectedBookingDetail.area || 'Indore'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-medium">Full Address:</span>
-                  <span className="text-right text-slate-700 max-w-[240px]">{selectedBookingDetail.address}</span>
+                  <span className="text-right text-slate-700 max-w-[240px]">
+                    {selectedBookingDetail.address || selectedBookingDetail.service_address || 'Indore'}
+                    {selectedBookingDetail.pincode ? ` (${selectedBookingDetail.pincode})` : ''}
+                  </span>
                 </div>
                 {selectedBookingDetail.linkedInquiryId && (
                   <div className="flex justify-between pt-1 border-t border-slate-200/60">
@@ -2450,28 +2658,46 @@ export default function OpsPortalClient() {
 
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2.5">
                 <div className="flex justify-between">
-                  <span className="text-slate-500 font-medium">Service:</span>
-                  <span className="font-bold text-slate-900">{selectedBookingDetail.serviceName}</span>
+                  <span className="text-slate-500 font-medium">Service Booked:</span>
+                  <span className="font-bold text-slate-900">
+                    {selectedBookingDetail.serviceName || selectedBookingDetail.service_name || selectedBookingDetail.service || 'Home Repair'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-medium">Package:</span>
-                  <span className="text-slate-700">{selectedBookingDetail.packageTitle}</span>
+                  <span className="text-slate-700">
+                    {selectedBookingDetail.packageTitle || selectedBookingDetail.package_title || selectedBookingDetail.package || 'Standard Package'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-medium">Scheduled Date & Slot:</span>
-                  <span className="text-amber-700 font-bold">{selectedBookingDetail.scheduledDate}, {selectedBookingDetail.timeSlot}</span>
+                  <span className="text-amber-700 font-bold">
+                    {selectedBookingDetail.scheduledDate || selectedBookingDetail.scheduled_date || (selectedBookingDetail.time ? selectedBookingDetail.time.split(',')[0] : 'Today')}, {selectedBookingDetail.timeSlot || selectedBookingDetail.time_slot || (selectedBookingDetail.time ? selectedBookingDetail.time.split(',')[1] : 'Standard Slot')}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-medium">Total Price:</span>
-                  <span className="font-mono text-slate-900 font-bold text-sm">₹{selectedBookingDetail.price}</span>
+                  <span className="font-mono text-slate-900 font-bold text-sm">
+                    ₹{selectedBookingDetail.price ?? selectedBookingDetail.amount ?? selectedBookingDetail.total_amount ?? 0}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 font-medium">Payment Status:</span>
+                  <span className="font-bold text-emerald-700">
+                    {selectedBookingDetail.paymentStatus || selectedBookingDetail.payment_status || 'Pending (Pay on Completion)'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-medium">Assigned Technician:</span>
-                  <span className="text-slate-800 font-medium">{selectedBookingDetail.assignedTechnician || 'Unassigned'}</span>
+                  <span className="text-slate-800 font-medium">
+                    {selectedBookingDetail.assignedTechnician || selectedBookingDetail.technician || 'Pending Allocation'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-medium">Problem Notes:</span>
-                  <span className="text-right text-slate-700 max-w-[240px]">{selectedBookingDetail.notes || 'None'}</span>
+                  <span className="text-right text-slate-700 max-w-[240px]">
+                    {selectedBookingDetail.notes || selectedBookingDetail.description || 'None'}
+                  </span>
                 </div>
               </div>
 
@@ -2480,7 +2706,12 @@ export default function OpsPortalClient() {
                   onClick={() => {
                     const b = selectedBookingDetail;
                     setSelectedBookingDetail(null);
-                    openOrCreateChatForCustomer(b.customerName, b.customerPhone, b.locality, `Namaste ${b.customerName} ji! Discussing booking #${b.id}.`);
+                    openOrCreateChatForCustomer(
+                      b.customerName || b.customer_name || 'Customer',
+                      b.customerPhone || b.phone || b.mobile_number || '',
+                      b.locality || b.area || 'Indore',
+                      `Namaste ${b.customerName || b.customer_name || 'Customer'} ji! Discussing booking #${b.id || b.booking_number}.`
+                    );
                   }}
                   className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
                 >

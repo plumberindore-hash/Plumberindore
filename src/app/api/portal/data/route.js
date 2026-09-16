@@ -58,25 +58,72 @@ export async function GET(request) {
 
     const bookings = (dbBookings || []).map((b) => {
       const bId = b.booking_number || b.id;
+      const scheduledDate = b.scheduled_date || b.booking_date || (b.created_at ? b.created_at.split('T')[0] : 'Today');
+      const timeSlot = b.time_slot || b.booking_slot || 'Standard Slot';
+      const locality = extractLocality(b.service_address || b.address, b.pincode);
+      const serviceName = b.service_name || 'Home Repair';
+      const packageTitle = b.package_title || 'Standard Package';
+      const price = Number(b.total_amount ?? b.price ?? b.subtotal ?? 0);
+      const customerPhone = b.customer_phone || b.mobile_number || '';
+      const customerName = b.customer_name || 'Customer';
+      const customerEmail = b.customer_email || '';
+      const address = b.service_address || b.address || 'Indore';
+      const assignedTech = b.notes?.includes('Tech:') 
+        ? b.notes.split('Tech:')[1]?.trim() 
+        : (b.status === 'In Progress' ? 'Ramesh Sharma' : 'Pending Allocation');
+      const notes = b.notes || '';
+      const priority = notes.toLowerCase().includes('urgent') ? 'Urgent' : 'High';
+
       return {
         id: bId,
         dbId: b.id,
-        customerName: b.customer_name || 'Customer',
-        phone: b.customer_phone || b.mobile_number || '',
-        area: extractLocality(b.service_address || b.address, b.pincode),
-        service: b.service_name || 'Home Repair',
-        amount: Number(b.total_amount || b.price || 0),
+        booking_number: bId,
+        customerName: customerName,
+        customer_name: customerName,
+        name: customerName,
+        customerPhone: customerPhone,
+        customer_phone: customerPhone,
+        mobile_number: customerPhone,
+        phone: customerPhone,
+        customerEmail: customerEmail,
+        customer_email: customerEmail,
+        email: customerEmail,
+        locality: locality,
+        area: locality,
+        address: address,
+        service_address: address,
+        pincode: b.pincode || '452010',
+        serviceName: serviceName,
+        service_name: serviceName,
+        service: serviceName,
+        packageTitle: packageTitle,
+        package_title: packageTitle,
+        price: price,
+        amount: price,
+        total_amount: price,
+        scheduledDate: scheduledDate,
+        scheduled_date: scheduledDate,
+        booking_date: scheduledDate,
+        timeSlot: timeSlot,
+        time_slot: timeSlot,
+        booking_slot: timeSlot,
+        time: `${scheduledDate}, ${timeSlot}`,
         status: b.status || 'Technician Assigned',
-        technician: b.notes?.includes('Tech:') ? b.notes.split('Tech:')[1]?.trim() : (b.status === 'In Progress' ? 'Ramesh Sharma' : 'Pending Allocation'),
-        time: `${b.scheduled_date || b.booking_date || 'Today'}, ${b.time_slot || b.booking_slot || 'Slot'}`,
+        priority: priority,
+        assignedTechnician: assignedTech,
+        technician: assignedTech,
+        notes: notes,
+        paymentStatus: b.payment_status || 'Pending (Pay on Completion)',
+        payment_status: b.payment_status || 'Pending (Pay on Completion)',
+        paymentMethod: b.payment_method || 'Cash / UPI on Doorstep',
+        payment_method: b.payment_method || 'Cash / UPI on Doorstep',
+        paymentRef: b.payment_ref || null,
         source: b.booking_number?.startsWith('IND-') ? 'Website Booking' : 'Portal Lead',
         linkedInquiryId: b.notes?.match(/INQ-[A-Za-z0-9-]+/)?.[0] || null,
         linkedChatId: b.notes?.match(/CHAT-[A-Za-z0-9-]+/)?.[0] || null,
-        paymentStatus: b.payment_status || 'Pending',
-        paymentMethod: b.payment_method || 'Cash / UPI on Doorstep',
-        address: b.service_address || b.address || 'Indore',
-        pincode: b.pincode || '452010',
-        createdAt: b.created_at
+        createdAt: b.created_at,
+        created_at: b.created_at,
+        updatedAt: b.updated_at || b.created_at
       };
     });
 
