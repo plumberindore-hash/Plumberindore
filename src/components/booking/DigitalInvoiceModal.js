@@ -252,7 +252,7 @@ export default function DigitalInvoiceModal({ isOpen, onClose, booking, onOpenPa
                     <tr key={idx}>
                       <td className="py-3 font-semibold">
                         <div>{item.serviceName} - {item.packageTitle}</div>
-                        <div className="text-[10px] text-slate-400">Includes 45-min doorstep arrival & verified service</div>
+                        <div className="text-[10px] text-slate-400">Includes verified doorstep service</div>
                       </td>
                       <td className="py-3 text-center">1</td>
                       <td className="py-3 text-right font-bold">₹{item.price}</td>
@@ -262,7 +262,7 @@ export default function DigitalInvoiceModal({ isOpen, onClose, booking, onOpenPa
                   <tr>
                     <td className="py-3 font-semibold">
                       <div>{booking.serviceName} - {booking.packageTitle || 'Doorstep Service'}</div>
-                      <div className="text-[10px] text-slate-400">Includes 45-min doorstep arrival, diagnostic inspection & labor</div>
+                      <div className="text-[10px] text-slate-400">Includes diagnostic inspection & labor</div>
                     </td>
                     <td className="py-3 text-center">1</td>
                     <td className="py-3 text-right font-bold">₹{booking.price}</td>

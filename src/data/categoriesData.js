@@ -13,9 +13,9 @@ export const MAIN_CATEGORIES = [
     startingPrice: 199,
     bannerImage: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=1200&q=80',
     description: 'Doorstep home appliance repair and maintenance services in Indore. AC repair & foam jet servicing, refrigerator cooling fix, washing machine drum repair, RO purifier filter change, geyser, microwave, chimney & cooler repairs by certified technicians.',
-    heroSubtitle: '45-Minute Doorstep Arrival | 30-Day Service Warranty | 100% Genuine OEM Spares',
-    metaTitle: 'Appliance Repair in Indore | 45-Min Doorstep Service | PlumberIndore',
-    metaDescription: 'Book certified doorstep appliance repair in Indore: AC repair, Refrigerator, Washing Machine, RO Purifier, Geyser, Microwave, Chimney & Coolers. 45-min arrival with 30-day warranty.',
+    heroSubtitle: 'Prompt Doorstep Service | 30-Day Service Warranty | 100% Genuine OEM Spares',
+    metaTitle: 'Appliance Repair in Indore | Prompt Doorstep Service | PlumberIndore',
+    metaDescription: 'Book certified doorstep appliance repair in Indore: AC repair, Refrigerator, Washing Machine, RO Purifier, Geyser, Microwave, Chimney & Coolers. prompt doorstep arrival with 30-day warranty.',
     subcategories: [
       {
         slug: 'ac-repair',
@@ -25,8 +25,8 @@ export const MAIN_CATEGORIES = [
         serviceId: 'ac-repair',
         bannerImage: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=800&q=80',
         description: 'Expert doorstep Air Conditioner repair, foam jet servicing, gas leak refill, and installation by certified HVAC technicians across Indore.',
-        metaTitle: 'AC Repair & Service in Indore | 45-Min Doorstep AC Gas Refill & Service',
-        metaDescription: 'Book certified split & window AC repair in Indore. Power foam jet service, R32/R410 gas refill, PCB repair, and 45-minute arrival across Vijay Nagar, Palasia & all sectors.'
+        metaTitle: 'AC Repair & Service in Indore | Doorstep AC Gas Refill & Service',
+        metaDescription: 'Book certified split & window AC repair in Indore. Power foam jet service, R32/R410 gas refill, PCB repair, and prompt doorstep arrival across Vijay Nagar, Palasia & all sectors.'
       },
       {
         slug: 'refrigerator',
@@ -37,7 +37,7 @@ export const MAIN_CATEGORIES = [
         bannerImage: 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=800&q=80',
         description: 'Single door, double door, and side-by-side refrigerator repair in Indore. Cooling coil fix, compressor relay, defrost heater & gas charging.',
         metaTitle: 'Refrigerator Repair in Indore | Single & Double Door Fridge Service',
-        metaDescription: 'Doorstep refrigerator repair in Indore. LG, Samsung, Whirlpool fridge cooling fix, gas charging, defrost thermostat repair with 45-minute arrival.'
+        metaDescription: 'Doorstep refrigerator repair in Indore. LG, Samsung, Whirlpool fridge cooling fix, gas charging, defrost thermostat repair with prompt doorstep arrival.'
       },
       {
         slug: 'washing-machine',
@@ -59,7 +59,7 @@ export const MAIN_CATEGORIES = [
         bannerImage: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4e?auto=format&fit=crop&w=800&q=80',
         description: 'RO water purifier filter change, high TDS membrane replacement, booster pump repair, and UV/UF servicing in Indore.',
         metaTitle: 'RO Purifier Repair & Service in Indore | Filter Change & Membrane',
-        metaDescription: 'Doorstep RO purifier repair in Indore. Kent, Aquaguard filter kit change, membrane replacement, and TDS balancing with 45-min technician arrival.'
+        metaDescription: 'Doorstep RO purifier repair in Indore. Kent, Aquaguard filter kit change, membrane replacement, and TDS balancing with prompt doorstep technician arrival.'
       },
       {
         slug: 'geyser',
@@ -70,7 +70,7 @@ export const MAIN_CATEGORIES = [
         bannerImage: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80',
         description: 'Electric and gas geyser repair, heating element replacement, thermostat repair, and tank leakage fix in Indore.',
         metaTitle: 'Geyser Repair & Service in Indore | Water Heater Heating Element Fix',
-        metaDescription: 'Instant & storage geyser repair in Indore. Heating coil change, thermostat test, and safety valve fitting with guaranteed 45-minute arrival.'
+        metaDescription: 'Instant & storage geyser repair in Indore. Heating coil change, thermostat test, and safety valve fitting with prompt doorstep service.'
       },
       {
         slug: 'microwave',
@@ -114,7 +114,7 @@ export const MAIN_CATEGORIES = [
         bannerImage: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=800&q=80',
         description: 'Inverter PCB repair, charging circuit diagnostics, battery gravity test, and distilled water acid top-up in Indore.',
         metaTitle: 'Inverter & Battery Repair in Indore | Microtek & Luminous Service',
-        metaDescription: 'Doorstep inverter repair and battery maintenance in Indore. Fast PCB repair, charging fault correction, and 45-min arrival across all sectors.'
+        metaDescription: 'Doorstep inverter repair and battery maintenance in Indore. Fast PCB repair, charging fault correction, and prompt doorstep arrival across all sectors.'
       },
       {
         slug: 'atta-chakki',
@@ -141,9 +141,9 @@ export const MAIN_CATEGORIES = [
     startingPrice: 69,
     bannerImage: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&w=1200&q=80',
     description: 'Expert doorstep plumbing services in Indore. Tap & mixer repair, toilet flush tank fix, sink & drain blockage removal, overhead water tank cleaning, bathroom fittings, and concealed pipe seepage inspection.',
-    heroSubtitle: 'Master Plumbers | Leakage & Blockage Specialists | 45-Min Doorstep Arrival',
-    metaTitle: 'Plumber in Indore | 45-Min Doorstep Plumbing Services | PlumberIndore',
-    metaDescription: 'Book certified plumbers in Indore. Tap leakage, toilet flush tank repair, drain blockage removal, water tank cleaning, and bathroom fittings with 45-min arrival.',
+    heroSubtitle: 'Master Plumbers | Leakage & Blockage Specialists | Prompt Doorstep Service',
+    metaTitle: 'Plumber in Indore | Prompt Doorstep Plumbing Services | PlumberIndore',
+    metaDescription: 'Book certified plumbers in Indore. Tap leakage, toilet flush tank repair, drain blockage removal, water tank cleaning, and bathroom fittings with prompt doorstep arrival.',
     subcategories: [
       {
         slug: 'tap-mixer-repair',
@@ -154,7 +154,7 @@ export const MAIN_CATEGORIES = [
         bannerImage: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&w=800&q=80',
         description: 'Dripping tap repair, ceramic spindle replacement, washer gasket renewal, and single lever basin wall mixer repair in Indore.',
         metaTitle: 'Tap & Wall Mixer Repair in Indore | Spindle Change & Leak Fix',
-        metaDescription: 'Fix leaking taps and basin wall mixers in Indore. Ceramic spindle replacement, rubber washers, and Jaquar/Hindware fittings with 45-min arrival.'
+        metaDescription: 'Fix leaking taps and basin wall mixers in Indore. Ceramic spindle replacement, rubber washers, and Jaquar/Hindware fittings with prompt doorstep arrival.'
       },
       {
         slug: 'toilet-flush-repair',
@@ -176,7 +176,7 @@ export const MAIN_CATEGORIES = [
         bannerImage: 'https://images.unsplash.com/photo-1542013936693-884638332954?auto=format&fit=crop&w=800&q=80',
         description: 'Heavy-duty steel snake blockage clearing for clogged kitchen sinks, washbasins, bathroom floor traps, and main sewer drain lines in Indore.',
         metaTitle: 'Drain & Sink Blockage Removal in Indore | Heavy Duty Unclogging',
-        metaDescription: 'Unclog kitchen sinks, bathroom floor drains, and sewer pipes in Indore without breaking tiles. Fast electric drain snake cleaning with 45-min arrival.'
+        metaDescription: 'Unclog kitchen sinks, bathroom floor drains, and sewer pipes in Indore without breaking tiles. Fast electric drain snake cleaning with prompt doorstep arrival.'
       },
       {
         slug: 'water-tank-cleaning',
@@ -187,7 +187,7 @@ export const MAIN_CATEGORIES = [
         bannerImage: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
         description: 'Overhead water tank deep pressure wash (up to 1000L), automatic water level controller sensor wiring, and booster pump connection.',
         metaTitle: 'Water Tank Cleaning & Motor Pump Fitting in Indore | PlumberIndore',
-        metaDescription: 'Overhead water tank deep cleaning and automatic motor pump installation in Indore. Clean, hygienic water supply with 45-minute arrival.'
+        metaDescription: 'Overhead water tank deep cleaning and automatic motor pump installation in Indore. Clean, hygienic water supply with prompt doorstep arrival.'
       },
       {
         slug: 'bathroom-fittings',
@@ -214,9 +214,9 @@ export const MAIN_CATEGORIES = [
     startingPrice: 149,
     bannerImage: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=1200&q=80',
     description: 'Certified doorstep electrician services in Indore. Switchboard & power socket repair, ceiling fan installation, decorative light & chandelier mounting, MCB tripping fix, and concealed short circuit fault finding.',
-    heroSubtitle: 'Safety First | ITI-Certified Electricians | 45-Min Doorstep Arrival',
-    metaTitle: 'Electrician in Indore | 45-Min Doorstep Electrical Services | PlumberIndore',
-    metaDescription: 'Book certified electricians in Indore. Switchboard socket repair, ceiling fan installation, MCB tripping fix, chandelier mounting & house wiring with 45-min arrival.',
+    heroSubtitle: 'Safety First | ITI-Certified Electricians | Prompt Doorstep Service',
+    metaTitle: 'Electrician in Indore | Prompt Doorstep Electrical Services | PlumberIndore',
+    metaDescription: 'Book certified electricians in Indore. Switchboard socket repair, ceiling fan installation, MCB tripping fix, chandelier mounting & house wiring with prompt doorstep arrival.',
     subcategories: [
       {
         slug: 'switchboard-socket',
@@ -249,7 +249,7 @@ export const MAIN_CATEGORIES = [
         bannerImage: 'https://images.unsplash.com/photo-1565814636199-ae8133055c1c?auto=format&fit=crop&w=800&q=80',
         description: 'False ceiling LED cob lights, decorative chandelier assembly & balance hanging, wall battens, and cove profile strip lights in Indore.',
         metaTitle: 'Chandelier & LED Light Installation in Indore | False Ceiling Lights',
-        metaDescription: 'Chandelier assembly and LED lighting installation in Indore. Safe ceiling anchor fitting and aesthetic wiring with 45-min arrival.'
+        metaDescription: 'Chandelier assembly and LED lighting installation in Indore. Safe ceiling anchor fitting and aesthetic wiring with prompt doorstep arrival.'
       },
       {
         slug: 'mcb-db-box',
@@ -271,7 +271,7 @@ export const MAIN_CATEGORIES = [
         bannerImage: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=800&q=80',
         description: 'Emergency short circuit diagnosis with digital multimeters, concealed wire continuity testing, and house rewiring in Indore.',
         metaTitle: 'Short Circuit Repair & Home Wiring in Indore | Emergency Electrician',
-        metaDescription: 'Emergency short circuit fault finding and concealed copper wiring in Indore. ITI-certified electricians with 45-min doorstep arrival.'
+        metaDescription: 'Emergency short circuit fault finding and concealed copper wiring in Indore. ITI-certified electricians with prompt doorstep arrival.'
       }
     ]
   },
@@ -287,9 +287,9 @@ export const MAIN_CATEGORIES = [
     startingPrice: 499,
     bannerImage: 'https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1200&q=80',
     description: 'Certified doorstep Pest Control services in Indore. 100% odorless herbal cockroach control, anti-termite drill-and-inject wood treatment, bed bugs eradication, and comprehensive home pest shield protection.',
-    heroSubtitle: 'Hospital-Grade Sanitization | Odorless & Safe Chemicals | 45-Min Arrival',
+    heroSubtitle: 'Hospital-Grade Sanitization | Odorless & Safe Chemicals | Prompt Doorstep Service',
     metaTitle: 'Pest Control in Indore | Herbal & Odorless Pest Control | PlumberIndore',
-    metaDescription: 'Book certified pest control in Indore. Odorless cockroach control, anti-termite wood treatment, bed bugs eradication with up to 45-day warranty and 45-min arrival.',
+    metaDescription: 'Book certified pest control in Indore. Odorless cockroach control, anti-termite wood treatment, bed bugs eradication with up to 45-day warranty and prompt doorstep arrival.',
     subcategories: [
       {
         slug: 'cockroach-ants',
@@ -349,9 +349,9 @@ export const MAIN_CATEGORIES = [
     startingPrice: 199,
     bannerImage: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80',
     description: 'Professional doorstep carpenter and painting services in Indore. Door lock replacement, wardrobe hinge repair, furniture assembly, precision hammer drilling, dust-free wall painting, and wall dampness waterproofing.',
-    heroSubtitle: 'Master Carpenters & Painters | Mechanized Tools | 45-Min Arrival',
-    metaTitle: 'Carpenter & Painting in Indore | 45-Min Doorstep Service | PlumberIndore',
-    metaDescription: 'Book master carpenters and painters in Indore. Door locks, wardrobe hinges, furniture assembly, wall painting & waterproofing with 45-min arrival.',
+    heroSubtitle: 'Master Carpenters & Painters | Mechanized Tools | Prompt Doorstep Service',
+    metaTitle: 'Carpenter & Painting in Indore | Prompt Doorstep Service | PlumberIndore',
+    metaDescription: 'Book master carpenters and painters in Indore. Door locks, wardrobe hinges, furniture assembly, wall painting & waterproofing with prompt doorstep arrival.',
     subcategories: [
       {
         slug: 'carpenter',
@@ -362,7 +362,7 @@ export const MAIN_CATEGORIES = [
         bannerImage: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80',
         description: 'Door lock replacement, hydraulic cupboard hinge alignment, drawer channel repair, bed assembly, and wall drilling in Indore.',
         metaTitle: 'Carpenter in Indore | Door Locks, Hinges & Furniture Repair',
-        metaDescription: 'Expert doorstep carpenters in Indore. Door lock repair, wardrobe hinges, drawer channels, and precision drill work with 45-min arrival.'
+        metaDescription: 'Expert doorstep carpenters in Indore. Door lock repair, wardrobe hinges, drawer channels, and precision drill work with prompt doorstep arrival.'
       },
       {
         slug: 'painting-waterproofing',
@@ -395,7 +395,7 @@ export const MAIN_CATEGORIES = [
         bannerImage: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80',
         description: 'Flat-pack furniture assembly and dismantling for IKEA, Wakefit, Pepperfry, hydraulic beds, and modular wardrobes in Indore.',
         metaTitle: 'Furniture Assembly in Indore | IKEA, Wakefit & Hydraulic Bed Setup',
-        metaDescription: 'Professional flat-pack furniture assembly in Indore. Precision setup for beds, wardrobes, and modular study desks with 45-min arrival.'
+        metaDescription: 'Professional flat-pack furniture assembly in Indore. Precision setup for beds, wardrobes, and modular study desks with prompt doorstep arrival.'
       },
       {
         slug: 'wall-waterproofing',

@@ -7,7 +7,7 @@ export default function WhyChooseUs() {
   const benefits = [
     {
       icon: Clock,
-      title: '45-Minute Quick Arrival',
+      title: 'Prompt Doorstep Service',
       desc: 'Local Indore technicians stationed across Vijay Nagar, Palasia, Bhanwarkuan & Super Corridor for rapid doorstep arrival.'
     },
     {

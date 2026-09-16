@@ -65,7 +65,7 @@ export async function POST(request) {
           </div>
           <div style="padding: 24px 12px;">
             <h2 style="font-size: 18px; color: #0f172a; margin-top: 0;">Welcome aboard, ${name.trim()}!</h2>
-            <p style="color: #475569; font-size: 14px; line-height: 1.6;">Thank you for creating an account with Plumber Indore. You can now book verified doorstep plumbers in 60 seconds with 45-minute arrival guarantee and 30-day warranty across all Indore localities.</p>
+            <p style="color: #475569; font-size: 14px; line-height: 1.6;">Thank you for creating an account with Plumber Indore. You can now book verified doorstep plumbers in 60 seconds with prompt doorstep arrival and 30-day warranty across all Indore localities.</p>
             <div style="margin: 24px 0; text-align: center;">
               <a href="https://www.plumberindore.in/book" style="background-color: #0f172a; color: #ffffff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">
                 Book Your First Service →

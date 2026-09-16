@@ -231,7 +231,7 @@ export default function BookingModal() {
             </div>
             <div>
               <h3 className="font-bold text-base font-heading">Book Doorstep Technician</h3>
-              <p className="text-[10px] text-slate-400">45-Min Arrival • Transparent Upfront Rates • 30-Day Warranty</p>
+              <p className="text-[10px] text-slate-400">Prompt Doorstep Service • Transparent Upfront Rates • 30-Day Warranty</p>
             </div>
           </div>
 
@@ -587,7 +587,7 @@ export default function BookingModal() {
             <div className="space-y-5 text-xs">
               <div className="text-center space-y-1">
                 <h4 className="text-lg font-bold text-slate-900 font-heading">Choose Service Appointment Date & Time</h4>
-                <p className="text-xs text-slate-500">Select your preferred date and time window for 45-min doorstep technician arrival.</p>
+                <p className="text-xs text-slate-500">Select your preferred date and time window for doorstep technician arrival.</p>
               </div>
 
               {/* Date Picker Grid */}

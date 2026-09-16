@@ -368,7 +368,7 @@ export async function POST(request) {
               </tr>
             </table>
             <div style="background-color: #fef3c7; border: 1px solid #fde68a; border-radius: 12px; padding: 14px; text-align: center; font-size: 12px; color: #92400e;">
-              <strong>Doorstep Guarantee:</strong> 45-Min Arrival • Transparent Fixed Rates • 30-Day Service Warranty
+              <strong>Doorstep Guarantee:</strong> Prompt Doorstep Arrival • Transparent Fixed Rates • 30-Day Service Warranty
             </div>
           </div>
         </div>

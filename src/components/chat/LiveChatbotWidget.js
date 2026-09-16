@@ -69,7 +69,7 @@ export default function LiveChatbotWidget() {
         {
           id: 'welcome-2',
           sender: 'bot',
-          text: 'Need a certified plumber or technician at your doorstep in Indore? We arrive in 45 minutes with fixed upfront rates!',
+          text: 'Need a certified plumber or technician at your doorstep in Indore? Prompt doorstep service with fixed upfront rates!',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ];
@@ -149,7 +149,7 @@ export default function LiveChatbotWidget() {
       } else if (lower.includes('call') || lower.includes('number') || lower.includes('phone') || lower.includes('contact')) {
         replyText = 'You can reach our 24/7 Indore helpline directly at +91 91749 34135, or enter your number below and our ops manager will call you back within 5 minutes!';
       } else if (lower.includes('book') || lower.includes('appointment') || lower.includes('urgent')) {
-        replyText = 'Great! We have active technician slots open across Vijay Nagar, Palasia, Bhawarkua, and all major Indore pin codes. Please confirm your mobile number below to reserve your 45-minute arrival slot.';
+        replyText = 'Great! We have active technician slots open across Vijay Nagar, Palasia, Bhawarkua, and all major Indore pin codes. Please confirm your mobile number below to reserve your priority arrival slot.';
       } else {
         replyText = 'Thank you for reaching out! Our local Indore technician team is online. Please leave your mobile number or locality so our dispatch executive can assist you right away.';
       }
@@ -223,7 +223,7 @@ export default function LiveChatbotWidget() {
         <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40 flex items-center gap-3 animate-fade-in">
           <div className="hidden sm:flex items-center gap-2 bg-white px-3.5 py-2 rounded-2xl shadow-xl border border-slate-200 text-xs font-bold text-slate-800 animate-bounce">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Online | 45-Min Arrival</span>
+            <span>Online | Prompt Dispatch</span>
           </div>
 
           <button

@@ -20,7 +20,7 @@ export async function GET(request, { params }) {
         success: true,
         bookingId: id,
         status: 'Technician Assigned',
-        eta: '30-45 Mins',
+        eta: 'Prompt Arrival',
         source: 'local_fallback'
       });
     }
@@ -86,7 +86,7 @@ export async function GET(request, { params }) {
         repairsCount: Number(tech.repairs_count || 320),
         photo: tech.photo_url || '/technician-avatar.png',
         vehicleNumber: tech.vehicle_number || 'MP-09-CZ-8821',
-        eta: tech.eta || '30-45 Mins'
+        eta: tech.eta || 'Prompt Arrival'
       } : {
         name: 'Sunil Sharma (Senior Tech)',
         phone: '+91 91749 34135',
@@ -94,7 +94,7 @@ export async function GET(request, { params }) {
         repairsCount: 340,
         photo: '/technician-avatar.png',
         vehicleNumber: 'MP-09-CZ-8821',
-        eta: '30-45 Mins'
+        eta: 'Prompt Arrival'
       }
     });
 

@@ -5,15 +5,15 @@ import { SERVICES_DATA } from '../../data/servicesData';
 import CategoryHubClient from '../../components/category/CategoryHubClient';
 
 export const metadata = {
-  title: 'Carpenter & Painting in Indore | 45-Min Doorstep Service | PlumberIndore',
-  description: 'Book master carpenters and painters in Indore. Door locks, wardrobe hinges, furniture assembly, wall painting & waterproofing with 45-min arrival.',
+  title: 'Carpenter & Painting in Indore | Prompt Doorstep Service | PlumberIndore',
+  description: 'Book master carpenters and painters in Indore. Door locks, wardrobe hinges, furniture assembly, wall painting & waterproofing with prompt doorstep arrival.',
   keywords: 'carpenter Indore, painting service Indore, door lock repair Vijay Nagar, wall dampness Palasia, furniture assembly Indore, waterproofing Indore',
   alternates: {
     canonical: 'https://www.plumberindore.in/carpenter-paint'
   },
   openGraph: {
-    title: 'Carpenter & Painting in Indore | 45-Min Doorstep Service | PlumberIndore',
-    description: 'Book master carpenters and painters in Indore. Door locks, furniture assembly, wall painting & waterproofing with 45-min arrival.',
+    title: 'Carpenter & Painting in Indore | Prompt Doorstep Service | PlumberIndore',
+    description: 'Book master carpenters and painters in Indore. Door locks, furniture assembly, wall painting & waterproofing with prompt doorstep arrival.',
     url: 'https://www.plumberindore.in/carpenter-paint',
     siteName: 'PlumberIndore',
     images: [
@@ -30,7 +30,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Carpenter & Painting in Indore | PlumberIndore',
-    description: 'Book master carpenters and painters in Indore. 45-minute arrival with 30-day post-service warranty.',
+    description: 'Book master carpenters and painters in Indore. prompt doorstep arrival with 30-day post-service warranty.',
     images: ['https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1200&q=80']
   }
 };

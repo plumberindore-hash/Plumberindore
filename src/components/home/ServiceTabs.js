@@ -183,7 +183,7 @@ export default function ServiceTabs() {
             Doorstep Plumbing & Appliance Services
           </h2>
           <p className="text-xs sm:text-sm text-slate-600">
-            Select a service category folder to view studio-inspected trade options, instant fixed rates, and 45-minute arrival across Indore.
+            Select a service category folder to view studio-inspected trade options, instant fixed rates, and prompt doorstep service across Indore.
           </p>
         </div>
 

@@ -39,7 +39,7 @@ export async function GET(request) {
             repairsCount: 420,
             photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&h=200&q=80',
             vehicleNumber: 'Service Bike (MP 09 AB 3344)',
-            eta: '45 Mins',
+            eta: 'Prompt Arrival',
             isActive: true
           },
           {
@@ -94,7 +94,7 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { title, phone, vehicleNumber, eta = '30-45 Mins', photoUrl } = body || {};
+    const { title, phone, vehicleNumber, eta = 'Prompt Arrival', photoUrl } = body || {};
 
     if (!title || !phone) {
       return NextResponse.json({ success: false, error: 'Title and phone number are required.' }, { status: 400 });

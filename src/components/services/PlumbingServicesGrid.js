@@ -246,7 +246,7 @@ export default function PlumbingServicesGrid() {
               {activeCategory === 'all' ? 'All Plumbing Services & Rates' : `${PLUMBING_SUB_CATEGORIES.find(c => c.id === activeCategory)?.name} Price List`}
             </h4>
             <p className="text-xs text-slate-500">
-              Includes 30-day post service warranty and 45-minute doorstep arrival in Indore.
+              Includes 30-day post service warranty and certified doorstep service in Indore.
             </p>
           </div>
           <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">

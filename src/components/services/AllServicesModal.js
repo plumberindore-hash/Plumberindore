@@ -274,8 +274,8 @@ export default function AllServicesModal({ isOpen: propIsOpen, onClose: propOnCl
         <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 shrink-0">
           <div className="flex items-center gap-1.5 text-slate-600">
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            <span className="hidden sm:inline">45-minute doorstep arrival across Indore</span>
-            <span className="sm:hidden">45-min arrival in Indore</span>
+            <span className="hidden sm:inline">Prompt doorstep service across Indore</span>
+            <span className="sm:hidden">Prompt doorstep service</span>
           </div>
 
           <div className="text-[11px] font-semibold text-amber-600">

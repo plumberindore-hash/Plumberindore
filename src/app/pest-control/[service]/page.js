@@ -21,7 +21,7 @@ export function generateMetadata({ params }) {
     };
   }
 
-  const title = `${subcategory.metaTitle || subcategory.name + ' in Indore | 45-Min Doorstep Service'}`;
+  const title = `${subcategory.metaTitle || subcategory.name + ' in Indore | Prompt Doorstep Service'}`;
   const description = subcategory.metaDescription || subcategory.description;
 
   return {

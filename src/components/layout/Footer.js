@@ -69,7 +69,7 @@ export default function Footer() {
             </Link>
 
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
-              PlumberIndore Tech Services Private Limited is Indore’s premier doorstep plumbing and home appliance repair network. Certified HVAC engineers and plumbing specialists at your doorstep in 45 minutes.
+              PlumberIndore Tech Services Private Limited is Indore’s premier doorstep plumbing and home appliance repair network. Certified HVAC engineers and plumbing specialists at your doorstep across Indore.
             </p>
 
             <div className="space-y-2 text-xs text-slate-300 pt-2">

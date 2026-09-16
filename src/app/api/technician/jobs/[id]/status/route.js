@@ -32,7 +32,7 @@ export async function PATCH(request, { params }) {
     // Map technician status to booking status
     const bookingStatusMap = {
       accepted: 'Technician Assigned',
-      on_the_way: 'On The Way (45-Min)',
+      on_the_way: 'On The Way',
       arrived: 'In Progress',
       started: 'In Progress',
       completed: 'Payment Verified & Completed',

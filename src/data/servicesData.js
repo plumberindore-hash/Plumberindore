@@ -8,7 +8,7 @@ export const SERVICES_DATA = [
     startingPrice: 399,
     bannerImage: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=800&q=80',
     description: 'Expert doorstep Air Conditioner repair, foam jet servicing, gas leak refill, and installation by certified HVAC technicians across Indore.',
-    heroSubtitle: '45-Minute Arrival | 30-Day Warranty | Certified HVAC Pros in Indore',
+    heroSubtitle: 'Prompt Doorstep Service | 30-Day Warranty | Certified HVAC Pros in Indore',
     packages: [
       { id: 'ac-foam', title: 'Power Foam Jet Service', price: 499, originalPrice: 699, duration: '45 mins', description: 'Deep foam jet cleaning of indoor cooling coils, outdoor condenser unit, drain pipe flush & gas check.' },
       { id: 'ac-gas', title: 'Gas Refill & Leak Fix', price: 1499, originalPrice: 1999, duration: '60 mins', description: 'Nitrogen pressure testing, copper pipe brazing gas leak repair & full R32 / R410 refrigerant charging.' },
@@ -25,7 +25,7 @@ export const SERVICES_DATA = [
     ],
     faqs: [
       { q: 'Is there a warranty on AC repair in Indore?', a: 'Yes, PlumberIndore provides an official 30-day post-service warranty on all repairs and a 60-day warranty on gas refill services.' },
-      { q: 'How fast can a technician reach my home in Vijay Nagar or Palasia?', a: 'Our assigned local technician reaches your doorstep within 45 minutes of booking confirmation across all Indore sectors.' },
+      { q: 'How fast can a technician reach my home in Vijay Nagar or Palasia?', a: 'Our assigned local technician reaches your doorstep promptly upon booking confirmation across all Indore sectors.' },
       { q: 'Do you service inverter ACs from Daikin, Voltas, LG, and Hitachi?', a: 'Yes, our technicians are certified for all inverter split and window AC brands with genuine OEM PCB boards and copper spares.' },
       { q: 'What is the difference between normal water cleaning and Power Foam Jet service?', a: 'Power Foam Jet uses high-pressure water guns and antibacterial foam that cuts through deeply embedded grease without bending delicate aluminum coil fins.' },
       { q: 'How do you check for gas leaks before refilling refrigerant?', a: 'We inject 150+ PSI dry nitrogen pressure, test all copper joints with soap bubble solution, braze pinholes with silver solder, and vacuum lines before charging gas.' },
@@ -41,7 +41,7 @@ export const SERVICES_DATA = [
     startingPrice: 149,
     bannerImage: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&w=800&q=80',
     description: 'Expert doorstep plumbing services in Indore. Tap & mixer repair, toilet flush tank fix, sink & floor drain blockage removal, water tank installation, and bathroom fittings.',
-    heroSubtitle: 'Expert Plumbers | Leakage & Blockage Specialists | 45-Min Doorstep Arrival',
+    heroSubtitle: 'Expert Plumbers | Leakage & Blockage Specialists | Prompt Doorstep Service',
     packages: [
       { id: 'plm-tap', title: 'Tap, Nozzle & Wall Mixer Repair', price: 149, originalPrice: 249, duration: '30 mins', description: 'Fixing dripping taps, ceramic spindle change, washer replacement, and single lever basin mixer repair.' },
       { id: 'plm-toilet', title: 'Toilet & Flush Tank Service', price: 199, originalPrice: 299, duration: '30 mins', description: 'Cistern syphon repair, flush button change, jet spray fitting, and Western/Indian commode leak fix.' },
@@ -58,7 +58,7 @@ export const SERVICES_DATA = [
       { title: 'Water Motor / Submersible Pump Not Lifting Water', startingPrice: 349, cause: 'Dry run air lock in suction line, worn check foot valve, or damaged impeller seal' }
     ],
     faqs: [
-      { q: 'How quickly can a plumber reach Vijay Nagar, Palasia, or Rau?', a: 'Our assigned plumber reaches your home within 45 minutes of booking confirmation across all Indore sectors.' },
+      { q: 'How quickly can a plumber reach Vijay Nagar, Palasia, or Rau?', a: 'Our assigned plumber reaches your home promptly upon booking confirmation across all Indore sectors.' },
       { q: 'Do you bring spare parts like ceramic spindles, washers, and flush valves?', a: 'Yes, our plumbers carry 100% genuine spares compatible with Jaquar, Hindware, Cera, Kohler, and Parryware.' },
       { q: 'Is there a warranty on plumbing repairs?', a: 'Yes, PlumberIndore provides a 30-day post-service warranty on all fittings, blockages, and pipe repairs.' },
       { q: 'What if the plumber inspects but I decide not to do the repair?', a: 'You only pay a nominal doorstep inspection fee of ₹149, which is 100% adjusted if you approve the repair work.' },
@@ -75,7 +75,7 @@ export const SERVICES_DATA = [
     startingPrice: 149,
     bannerImage: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=800&q=80',
     description: 'Certified doorstep electrician services in Indore. Switchboard & socket repair, ceiling fan installation, light & chandelier mounting, MCB tripping fix, and short circuit fault finding.',
-    heroSubtitle: 'Safety First | ITI-Certified Electricians | 45-Min Doorstep Arrival',
+    heroSubtitle: 'Safety First | ITI-Certified Electricians | Prompt Doorstep Service',
     packages: [
       { id: 'elec-switch', title: 'Switchboard & Power Socket Repair', price: 149, originalPrice: 249, duration: '30 mins', description: 'Modular switch replacement, 16A heavy power socket fitting for AC/Geyser, and fan speed regulator fix.' },
       { id: 'elec-fan', title: 'Ceiling Fan & Wall Fan Repair', price: 199, originalPrice: 299, duration: '30 mins', description: 'Ceiling fan installation/uninstallation, motor capacitor change, noisy bearing greasing, and exhaust fan fitting.' },
@@ -94,7 +94,7 @@ export const SERVICES_DATA = [
     faqs: [
       { q: 'Are your electricians certified for high-voltage short circuit fixes?', a: 'Yes, all our electricians are ITI-certified technicians carrying digital multimeters, insulation testers, and insulated safety tools.' },
       { q: 'Do you install heavy 16A/25A sockets for ACs and Geysers in Indore?', a: 'Yes, we fit heavy-duty modular sockets with 2.5mm/4mm Finolex/Havells copper wiring and independent earth lines.' },
-      { q: 'How fast can an electrician reach my home in Indore?', a: 'Our electrician arrives at your doorstep in Vijay Nagar, Palasia, Bhanwarkuan, or any Indore location within 45 minutes.' },
+      { q: 'How fast can an electrician reach my home in Indore?', a: 'Our electrician arrives at your doorstep in Vijay Nagar, Palasia, Bhanwarkuan, or any Indore location promptly.' },
       { q: 'Is there a warranty on electrical installations?', a: 'Yes, PlumberIndore offers a 30-day doorstep warranty on all switch, socket, fan, light, and MCB installations.' },
       { q: 'Can you trace short circuits hidden inside walls?', a: 'Yes, we use digital continuity and insulation resistance testers to locate concealed cable faults without breaking open entire walls.' },
       { q: 'Do you assemble heavy decorative chandeliers and smart ceiling fans?', a: 'Yes, we assemble, balance, and safely hang chandeliers, smart BLDC fans, and false ceiling profile strip lights.' }
@@ -109,7 +109,7 @@ export const SERVICES_DATA = [
     startingPrice: 499,
     bannerImage: 'https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=800&q=80',
     description: 'Certified doorstep Pest Control services in Indore. Odorless herbal cockroach control, anti-termite wood treatment, bed bugs eradication, and mosquito/ant control.',
-    heroSubtitle: 'Hospital-Grade Sanitization | Odorless Pest Control | 45-Min Arrival',
+    heroSubtitle: 'Hospital-Grade Sanitization | Odorless Pest Control | Prompt Doorstep Service',
     packages: [
       { id: 'pest-cockroach', title: 'Cockroaches, Ants & General Pest Control', price: 599, originalPrice: 899, duration: '45 mins', description: '100% odorless herbal gel baiting and chemical spray in kitchen, cabinets, drain holes & rooms.' },
       { id: 'pest-bedbugs', title: 'Bed Bugs Intensive Treatment', price: 799, originalPrice: 1199, duration: '60 mins', description: 'Two-stage deep chemical spray in mattress seams, bed frames, sofas, and wardrobe crevices.' },
@@ -130,7 +130,7 @@ export const SERVICES_DATA = [
       { q: 'Do I need to empty kitchen cabinets before cockroach treatment?', a: 'No, our advanced odorless gel dot application is placed precisely in corners and hinges without having to empty utensils.' },
       { q: 'How many sessions are required for complete bed bug elimination?', a: 'Bed bugs require a 2-stage chemical treatment spaced 12-15 days apart to destroy newly hatched nymphs and unhatched eggs.' },
       { q: 'How does drill-and-inject anti-termite treatment work?', a: 'We drill tiny 12mm holes along the wall-floor perimeter and door frames, pump anti-termite emulsion (Imidacloprid), and seal holes with matching white cement.' },
-      { q: 'How quickly can your pest control team reach my area in Indore?', a: 'Our certified pest technicians arrive with sanitized spray equipment within 45 minutes across all Indore sectors.' }
+      { q: 'How quickly can your pest control team reach my area in Indore?', a: 'Our certified pest technicians arrive with sanitized spray equipment promptly across all Indore sectors.' }
     ]
   },
   {
@@ -191,9 +191,9 @@ export const SERVICES_DATA = [
     faqs: [
       { q: 'Do you repair double door, side-by-side, and inverter refrigerators in Indore?', a: 'Yes, we service single door, frost-free double door, French door, and smart inverter refrigerators from LG, Samsung, Whirlpool, Haier, Godrej, and Bosch.' },
       { q: 'What refrigerant gas do you use for fridge charging?', a: 'We use genuine, eco-friendly R600a and R134a refrigerants with nitrogen pressure testing and filter-drier replacement.' },
-      { q: 'How quickly can a fridge repair technician reach my home?', a: 'Our refrigerator technicians arrive within 45 minutes across Vijay Nagar, Palasia, Bhanwarkuan, and all Indore areas.' },
+      { q: 'How quickly can a fridge repair technician reach my home?', a: 'Our refrigerator technicians arrive promptly across Vijay Nagar, Palasia, Bhanwarkuan, and all Indore areas.' },
       { q: 'Is there a warranty on compressor relay and gas charging?', a: 'Yes, PlumberIndore offers a 30-day warranty on electrical parts and a 60-day warranty on refrigerator gas charging.' },
-      { q: 'Why is my fridge cooling in the freezer but not downstairs?', a: 'This is the classic defrost failure where ice blocks the cold air passage to the bottom cabin. We fix it at home in 45 minutes.' },
+      { q: 'Why is my fridge cooling in the freezer but not downstairs?', a: 'This is the classic defrost failure where ice blocks the cold air passage to the bottom cabin. We diagnose and fix it right at your home.' },
       { q: 'Can you replace torn magnetic rubber door gaskets?', a: 'Yes, we supply and fit brand-specific food-grade magnetic door gaskets to restore airtight sealing and save electricity.' }
     ]
   },
@@ -252,7 +252,7 @@ export const SERVICES_DATA = [
     faqs: [
       { q: 'Do you repair Bajaj, Havells, Racold, AO Smith, and Venus geysers?', a: 'Yes, our technicians carry genuine elements, thermostats, and multi-function safety valves for all 5L, 10L, 15L, and 25L geyser brands.' },
       { q: 'Is it safe to use a geyser that gives minor electric shocks?', a: 'NO! Turn off the geyser switch immediately. This indicates a ruptured heating element or broken ground wire. Call us for instant emergency repair.' },
-      { q: 'How fast can a geyser technician reach my home in Indore?', a: 'Our geyser specialist reaches your doorstep in 45 minutes across all Indore localities.' },
+      { q: 'How fast can a geyser technician reach my home in Indore?', a: 'Our geyser specialist reaches your doorstep promptly across all Indore localities.' },
       { q: 'Do you use heavy-duty copper heating elements with warranty?', a: 'Yes, we install ISI-certified heavy copper or glass-coated incoloy elements backed by a 30-day doorstep warranty.' },
       { q: 'Why is water dripping continuously from the small side valve?', a: 'That is the pressure release valve. In high-rise apartments with booster pumps, excess tank pressure vents through it. We test and adjust line pressure.' },
       { q: 'Do you install new geysers on tiled bathroom walls?', a: 'Yes, we use precision hammer drills, heavy expansion anchors, stainless steel flexible connection braided pipes, and ensure zero tile cracks.' }
@@ -284,7 +284,7 @@ export const SERVICES_DATA = [
       { q: 'Is it safe to repair high-voltage microwave components at home?', a: 'Yes, our certified technicians carry professional high-voltage discharge probes and safety gear to safely replace parts on site.' },
       { q: 'Why does my microwave spark when turned on?', a: 'Sparks are almost always caused by a burnt mica sheet covered in food splatter. We replace it with fresh heat-resistant mica in 15 minutes.' },
       { q: 'Is there a warranty on magnetron and touch panel replacements?', a: 'Yes, all replacement magnetrons, diodes, touchpads, and PCB boards carry a 30-day PlumberIndore warranty.' },
-      { q: 'How quickly can a microwave technician reach my home in Indore?', a: 'Our doorstep technician arrives within 45 minutes across all residential sectors of Indore.' },
+      { q: 'How quickly can a microwave technician reach my home in Indore?', a: 'Our doorstep technician arrives promptly across all residential sectors of Indore.' },
       { q: 'Can you repair a microwave whose door latch is broken?', a: 'Yes, we carry genuine brand door hooks, spring latches, and safety interlock switches.' }
     ]
   },
@@ -315,7 +315,7 @@ export const SERVICES_DATA = [
       { q: 'How often should a kitchen chimney be serviced in Indian cooking?', a: 'For regular Indian cooking with spices and frying, we recommend deep degreasing every 4 to 6 months to maintain peak motor suction.' },
       { q: 'Can you install anti-bird cowl caps on the exterior duct outlet?', a: 'Yes, we supply and install heavy PVC and stainless steel anti-bird louvers that prevent pigeons and rain from entering ducts.' },
       { q: 'Is there a warranty on chimney motor and PCB repairs?', a: 'Yes, PlumberIndore provides an official 30-day doorstep warranty on all motor, capacitor, and PCB board fixes.' },
-      { q: 'How fast can a chimney technician arrive at my home in Indore?', a: 'Our technician reaches your home within 45 minutes across Vijay Nagar, Palasia, Sudama Nagar, and all Indore hubs.' }
+      { q: 'How fast can a chimney technician arrive at my home in Indore?', a: 'Our technician reaches your home promptly across Vijay Nagar, Palasia, Sudama Nagar, and all Indore hubs.' }
     ]
   },
   {
@@ -341,7 +341,7 @@ export const SERVICES_DATA = [
     ],
     faqs: [
       { q: 'Do you replace original honeycomb cooling pads for Symphony, Kenstar, and Bajaj?', a: 'Yes, we supply high-density 5090/7090 original cellulose honeycomb pads with antimicrobial coating for all cooler sizes.' },
-      { q: 'How fast can you replace a burned cooler pump in Indore summers?', a: 'Our technician reaches your home in 45 minutes with fresh submersible pumps and tests water flow on the spot.' },
+      { q: 'How fast can you replace a burned cooler pump in Indore summers?', a: 'Our technician reaches your home promptly with fresh submersible pumps and tests water flow on the spot.' },
       { q: 'Is there a warranty on air cooler repair and pump replacement?', a: 'Yes, PlumberIndore offers a 30-day warranty on all cooler pump, motor, and capacitor replacements.' },
       { q: 'Can you service large commercial desert coolers and metal coolers in Indore?', a: 'Yes, we repair heavy-duty Crompton, Havells, and local sheet metal desert coolers with powerful 1400 RPM motors.' },
       { q: 'Why is my cooler not giving cool air despite full water?', a: 'Often water distribution holes on top of the pads are choked by hard water scale. We clear all nozzles and descale pads.' },
@@ -357,7 +357,7 @@ export const SERVICES_DATA = [
     startingPrice: 199,
     bannerImage: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80',
     description: 'Doorstep carpenter services in Indore. Door lock replacement, wardrobe & cupboard hinge repair, bed and sofa assembly, wall hanging drill work, and custom furniture adjustments.',
-    heroSubtitle: 'Master Carpenters | Precision Woodwork & Hardware Fixes | 45-Min Arrival',
+    heroSubtitle: 'Master Carpenters | Precision Woodwork & Hardware Fixes | Prompt Doorstep Service',
     packages: [
       { id: 'crp-lock', title: 'Door Lock, Latch & Handle Repair', price: 199, originalPrice: 299, duration: '30 mins', description: 'Main door lock replacement, cylindrical lock fix, tower bolt, handle & magnetic catcher fitting.' },
       { id: 'crp-hinge', title: 'Cupboard & Wardrobe Hinge / Slider Fix', price: 249, originalPrice: 399, duration: '30 mins', description: 'Hydraulic soft-close hinge fitting, drawer channel replacement, and sliding door alignment.' },
@@ -375,7 +375,7 @@ export const SERVICES_DATA = [
     faqs: [
       { q: 'Do your carpenters carry power tools and standard hardware?', a: 'Yes, our carpenters bring professional hammer drills, circular wood trimmers, screws, rawl plugs, and standard fittings.' },
       { q: 'Can you assemble flat-pack furniture from IKEA, Wakefit, and Pepperfry in Indore?', a: 'Yes, our carpenters specialize in precision assembly and dismantling of beds, wardrobes, study desks, and modular units.' },
-      { q: 'How fast can a carpenter reach my home in Indore?', a: 'Our carpenter reaches your doorstep within 45 minutes of booking across all Indore sectors.' },
+      { q: 'How fast can a carpenter reach my home in Indore?', a: 'Our carpenter reaches your doorstep promptly upon booking across all Indore sectors.' },
       { q: 'Do you supply genuine Godrej and Europa door locks?', a: 'Yes, we supply and fit brand-new computerized cylinder locks, deadbolts, and security latches with keys and warranty.' },
       { q: 'Is there a warranty on carpenter repair work?', a: 'Yes, PlumberIndore provides an official 30-day post-service warranty on all hardware fittings and woodwork alignments.' },
       { q: 'Can you fix stripped screw holes in modular particle board wardrobes?', a: 'Yes, we use specialized wooden dowels and heavy-duty anchor plates designed specifically for engineered wood and MDF.' }

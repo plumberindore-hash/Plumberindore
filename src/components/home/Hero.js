@@ -40,8 +40,8 @@ export default function Hero() {
             
             {/* Top Badge: Honest Guarantee Pill (No Fake Stars) */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs font-semibold text-amber-400 shadow-md">
-              <Clock className="w-4 h-4 text-emerald-400" />
-              <span>⚡ 45-Minute Doorstep Arrival Across Indore</span>
+              <Award className="w-4 h-4 text-amber-400" />
+              <span>⚡ Certified Doorstep Services Across Indore</span>
             </div>
 
             {/* Main Headline */}

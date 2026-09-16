@@ -5,15 +5,15 @@ import { SERVICES_DATA } from '../../data/servicesData';
 import CategoryHubClient from '../../components/category/CategoryHubClient';
 
 export const metadata = {
-  title: 'Appliance Repair in Indore | 45-Min Doorstep Service | PlumberIndore',
-  description: 'Book certified doorstep appliance repair in Indore: AC repair, Refrigerator, Washing Machine, RO Purifier, Geyser, Microwave, Chimney & Coolers. 45-min arrival with 30-day warranty.',
+  title: 'Appliance Repair in Indore | Prompt Doorstep Service | PlumberIndore',
+  description: 'Book certified doorstep appliance repair in Indore: AC repair, Refrigerator, Washing Machine, RO Purifier, Geyser, Microwave, Chimney & Coolers. prompt doorstep arrival with 30-day warranty.',
   keywords: 'appliance repair Indore, AC service Indore, refrigerator repair Vijay Nagar, washing machine technician Indore, RO filter change Indore',
   alternates: {
     canonical: 'https://www.plumberindore.in/appliance'
   },
   openGraph: {
-    title: 'Appliance Repair in Indore | 45-Min Doorstep Service | PlumberIndore',
-    description: 'Book certified doorstep appliance repair in Indore. 45-minute arrival with 30-day post-service warranty.',
+    title: 'Appliance Repair in Indore | Prompt Doorstep Service | PlumberIndore',
+    description: 'Book certified doorstep appliance repair in Indore. prompt doorstep arrival with 30-day post-service warranty.',
     url: 'https://www.plumberindore.in/appliance',
     siteName: 'PlumberIndore',
     images: [
@@ -30,7 +30,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Appliance Repair in Indore | PlumberIndore',
-    description: 'Book certified doorstep appliance repair in Indore. 45-minute arrival with 30-day post-service warranty.',
+    description: 'Book certified doorstep appliance repair in Indore. prompt doorstep arrival with 30-day post-service warranty.',
     images: ['https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=1200&q=80']
   }
 };

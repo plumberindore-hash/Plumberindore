@@ -6,14 +6,14 @@ import CategoryHubClient from '../../components/category/CategoryHubClient';
 
 export const metadata = {
   title: 'Pest Control in Indore | Herbal & Odorless Pest Control | PlumberIndore',
-  description: 'Book certified pest control in Indore. Odorless cockroach control, anti-termite wood treatment, bed bugs eradication with up to 45-day warranty and 45-min arrival.',
+  description: 'Book certified pest control in Indore. Odorless cockroach control, anti-termite wood treatment, bed bugs eradication with up to 45-day warranty and prompt doorstep service.',
   keywords: 'pest control Indore, cockroach control Vijay Nagar, termite treatment Palasia, bed bugs spray Indore, herbal pest control Indore',
   alternates: {
     canonical: 'https://www.plumberindore.in/pest-control'
   },
   openGraph: {
     title: 'Pest Control in Indore | Herbal & Odorless Pest Control | PlumberIndore',
-    description: 'Book certified pest control in Indore. Odorless cockroach control, anti-termite wood treatment with 45-min arrival.',
+    description: 'Book certified pest control in Indore. Odorless cockroach control, anti-termite wood treatment with prompt doorstep service.',
     url: 'https://www.plumberindore.in/pest-control',
     siteName: 'PlumberIndore',
     images: [
@@ -30,7 +30,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Pest Control in Indore | PlumberIndore',
-    description: 'Book certified pest control in Indore. 45-minute arrival with up to 45-day warranty.',
+    description: 'Book certified pest control in Indore. Prompt doorstep service with up to 45-day warranty.',
     images: ['https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?auto=format&fit=crop&w=1200&q=80']
   }
 };

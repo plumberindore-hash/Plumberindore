@@ -25,7 +25,7 @@ export default function FinalCTA() {
             Fix Your Plumbing & Appliances Today with PlumberIndore
           </h2>
           <p className="text-sm sm:text-base font-semibold text-slate-900/90">
-            45-minute doorstep technician arrival in Vijay Nagar, Palasia, Bhanwarkuan, Rau, and all Indore areas.
+            Prompt doorstep technician arrival in Vijay Nagar, Palasia, Bhanwarkuan, Rau, and all Indore areas.
           </p>
         </div>
 

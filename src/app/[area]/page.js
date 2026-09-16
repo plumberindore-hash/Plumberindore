@@ -22,7 +22,7 @@ export function generateMetadata({ params }) {
 
   // Exact title pattern requested by user: "Plumbing, Electrician & Pest Control in Vijay Nagar"
   const title = `Plumbing, Electrician & Pest Control in ${areaInfo.name}`;
-  const description = `Doorstep Plumbing, Electrician, Pest Control and Home Appliance Repair in ${areaInfo.name}, Indore (Pincode ${areaInfo.pincode}). Certified technicians with 45-min arrival, fixed pricing, and 30-day warranty.`;
+  const description = `Doorstep Plumbing, Electrician, Pest Control and Home Appliance Repair in ${areaInfo.name}, Indore (Pincode ${areaInfo.pincode}). Certified technicians with prompt doorstep arrival, fixed pricing, and 30-day warranty.`;
 
   return {
     title: title,

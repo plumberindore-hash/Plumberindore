@@ -38,7 +38,7 @@ export default function LocationPageClient({ areaInfo }) {
   const faqs = [
     {
       q: `How quickly can a technician arrive in ${areaInfo.name}?`,
-      a: `Our assigned doorstep technicians and electricians are positioned near ${areaInfo.landmark} and typically reach your home in ${areaInfo.eta} (under 45 minutes) across Pincode ${areaInfo.pincode}.`
+      a: `Our assigned doorstep technicians and electricians are positioned near ${areaInfo.landmark} and typically reach your home in ${areaInfo.eta} across Pincode ${areaInfo.pincode}.`
     },
     {
       q: `What services are available in ${areaInfo.name}, Indore?`,
@@ -124,7 +124,7 @@ export default function LocationPageClient({ areaInfo }) {
               <Clock className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-extrabold text-slate-900">45-Min Arrival</div>
+              <div className="text-xs font-extrabold text-slate-900">Doorstep Service</div>
               <div className="text-[11px] text-slate-500">Fast doorstep dispatch</div>
             </div>
           </div>

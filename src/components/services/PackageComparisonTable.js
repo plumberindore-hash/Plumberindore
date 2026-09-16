@@ -16,7 +16,7 @@ export default function PackageComparisonTable() {
       foamJet: false,
       spareDiscount: '0%',
       warranty: 'None (Inspection only)',
-      arrival: '45 Mins',
+      arrival: 'Prompt Same-Day',
       btnText: 'Book Inspection'
     },
     {
@@ -27,7 +27,7 @@ export default function PackageComparisonTable() {
       foamJet: true,
       spareDiscount: '10% OFF',
       warranty: '30-Day Full Warranty',
-      arrival: '30 Mins (Priority)',
+      arrival: 'Priority Slot',
       btnText: 'Book Foam Service'
     },
     {

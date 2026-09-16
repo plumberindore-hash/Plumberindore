@@ -1154,7 +1154,7 @@ export default function OpsPortalClient() {
       unread: true,
       messages: [
         { sender: 'customer', text: pick.issue, time: '12:40 PM' },
-        { sender: 'bot', text: `Namaste ${pick.name} ji! Hum 45 minute me ${pick.loc} me technician bhej sakte hain.`, time: '12:41 PM' }
+        { sender: 'bot', text: `Namaste ${pick.name} ji! Hum turant ${pick.loc} me technician bhej sakte hain.`, time: '12:41 PM' }
       ]
     };
 
@@ -1205,7 +1205,7 @@ export default function OpsPortalClient() {
         `⏰ *Slot:* ${booking.scheduledDate} (${booking.timeSlot})\n` +
         `💰 *Estimated Amount:* ₹${booking.price} (Pay via UPI/Cash upon completion)\n` +
         `👷 *Assigned Tech:* ${booking.assignedTechnician || 'Doorstep Pro Assigned'}\n\n` +
-        `Our technician will arrive equipped with genuine parts within 45 mins. For urgent updates, call 91749 34135.\n\n` +
+        `Our technician will arrive equipped with genuine parts promptly. For urgent updates, call 91749 34135.\n\n` +
         `_Doorstep Plumbing Network, Indore_`;
     } else {
       text = `*🚨 PLUMBER INDORE - TECHNICIAN DISPATCH ORDER*\n\n` +

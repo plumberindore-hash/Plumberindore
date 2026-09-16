@@ -18,7 +18,7 @@ export const TRANSLATIONS = {
     callHelpline: 'Call Helpline',
     costEstimator: 'Cost Estimator',
     heroTitle: 'Indore’s #1 Doorstep Plumbing & Appliance Repair',
-    heroSubtitle: 'Certified technicians reach your home in 45 minutes across Vijay Nagar, Palasia, Bhanwarkuan & all Indore sectors.',
+    heroSubtitle: 'Certified technicians reach your home promptly across Vijay Nagar, Palasia, Bhanwarkuan & all Indore sectors.',
     guarantee: '30-Day Post Service Warranty',
     selectService: 'Select Service',
     viewDetails: 'View Details',

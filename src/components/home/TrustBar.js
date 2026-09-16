@@ -7,7 +7,7 @@ export default function TrustBar() {
   const trustItems = [
     {
       icon: Clock,
-      title: '45-Min Arrival',
+      title: 'Prompt Arrival',
       desc: 'Rapid doorstep response across all Indore sectors'
     },
     {

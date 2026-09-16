@@ -34,7 +34,7 @@ export default function BlogPostDetailClient({ post }) {
 
           <div className="bg-amber-50 border border-amber-200 p-6 rounded-2xl space-y-3 mt-8">
             <h3 className="text-lg font-bold text-amber-950 font-heading">Need Professional Doorstep Repair in Indore?</h3>
-            <p className="text-xs text-amber-900">Don't risk damaging delicate components. Our certified technicians reach your doorstep in 45 minutes.</p>
+            <p className="text-xs text-amber-900">Don't risk damaging delicate components. Our certified technicians reach your doorstep promptly.</p>
             <button
               onClick={() => openBookingModal('ac-repair')}
               className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold px-6 py-3 rounded-xl text-xs shadow-md cursor-pointer"

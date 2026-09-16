@@ -62,7 +62,7 @@ export default function AboutPageClient() {
               Our Vision for Indore Homes
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              Home appliance breakdowns and plumbing issues can disrupt your daily routine. We eliminate long wait times, unfair pricing, and unverified mechanics by offering a 100% skilled technician team with guaranteed 45-minute arrival.
+              Home appliance breakdowns and plumbing issues can disrupt your daily routine. We eliminate long wait times, unfair pricing, and unverified mechanics by offering a 100% skilled technician team with guaranteed prompt doorstep service.
             </p>
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 text-xs text-slate-700 font-semibold space-y-2">
               <div className="flex items-center gap-2 text-emerald-700">
@@ -71,7 +71,7 @@ export default function AboutPageClient() {
               </div>
               <div className="flex items-center gap-2 text-amber-700">
                 <Clock className="w-4 h-4 text-amber-600" />
-                <span>45-Minute Arrival Guarantee</span>
+                <span>Prompt Doorstep Service</span>
               </div>
             </div>
           </div>

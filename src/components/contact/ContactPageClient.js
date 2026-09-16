@@ -59,7 +59,7 @@ export default function ContactPageClient() {
             Contact PlumberIndore
           </h1>
           <p className="text-sm text-slate-600">
-            Need doorstep plumbing, electrician, or appliance repair in Indore? Call our hotline or submit an inquiry for 45-minute technician dispatch.
+            Need doorstep plumbing, electrician, or appliance repair in Indore? Call our hotline or submit an inquiry for prompt technician dispatch.
           </p>
         </div>
 

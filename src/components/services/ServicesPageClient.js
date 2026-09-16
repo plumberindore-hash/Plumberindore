@@ -45,7 +45,7 @@ function ServicesContent() {
         </h1>
 
         <p className="text-sm text-slate-600 leading-relaxed">
-          Transparent fixed pricing card, 45-minute doorstep arrival, and 30-day post service warranty across all Indore sectors.
+          Transparent fixed pricing card, prompt doorstep arrival, and 30-day post service warranty across all Indore sectors.
         </p>
 
         {/* Instant Search Bar & Category Filter */}

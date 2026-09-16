@@ -65,7 +65,7 @@ export default function CategoryHubClient({ category, baseService }) {
                   30-Day Warranty
                 </span>
                 <span className="text-slate-400">•</span>
-                <span className="text-slate-300 font-semibold">45-Minute Arrival Across Indore</span>
+                <span className="text-slate-300 font-semibold">Prompt Doorstep Service Across Indore</span>
                 <span className="text-slate-400">•</span>
                 <span className="text-emerald-400 font-semibold">100% Genuine Spare Parts</span>
               </div>
@@ -99,7 +99,7 @@ export default function CategoryHubClient({ category, baseService }) {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
                 <div className="absolute bottom-4 left-4 right-4 text-xs text-white bg-slate-900/90 backdrop-blur-md p-3 rounded-2xl border border-slate-700">
-                  ⚡ <span className="font-bold text-amber-400">45-Minute Doorstep Arrival</span> guaranteed across all Vijay Nagar, Palasia & Indore sectors.
+                  ⚡ <span className="font-bold text-amber-400">Prompt Doorstep Service</span> guaranteed across all Vijay Nagar, Palasia & Indore sectors.
                 </div>
               </div>
             </div>
@@ -314,7 +314,7 @@ export default function CategoryHubClient({ category, baseService }) {
         <div className="bg-slate-900 text-white rounded-3xl p-8 border border-slate-800 text-center space-y-4 shadow-xl">
           <h3 className="text-xl sm:text-2xl font-extrabold font-heading">Need Doorstep {category.name} in Indore?</h3>
           <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto leading-relaxed">
-            PlumberIndore technicians are active across Vijay Nagar, Palasia, Bhanwarkuan, Rau, Sudama Nagar, Annapurna, and all Indore sectors with guaranteed 45-minute arrival.
+            PlumberIndore technicians are active across Vijay Nagar, Palasia, Bhanwarkuan, Rau, Sudama Nagar, Annapurna, and all Indore sectors with prompt doorstep service.
           </p>
           <div className="pt-2">
             <button
