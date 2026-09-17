@@ -56,7 +56,15 @@ export async function GET(request) {
       console.error('Error fetching bookings in portal API:', bookingsErr.message);
     }
 
-    const bookings = (dbBookings || []).map((b) => {
+    // Reset & Clear Filter: clears previous test bookings entirely from dashboard state (reset to 0)
+    // Any live booking created after this reset will appear dynamically
+    const RESET_BOOKINGS_CUTOFF = process.env.BOOKINGS_RESET_CUTOFF || '2026-09-17T11:25:00.000Z';
+    const activeDbBookings = (dbBookings || []).filter(b => {
+      if (!b.created_at) return false;
+      return new Date(b.created_at) > new Date(RESET_BOOKINGS_CUTOFF);
+    });
+
+    const bookings = activeDbBookings.map((b) => {
       const bId = b.booking_number || b.id;
       const scheduledDate = b.scheduled_date || b.booking_date || (b.created_at ? b.created_at.split('T')[0] : 'Today');
       const timeSlot = b.time_slot || b.booking_slot || 'Standard Slot';
@@ -70,7 +78,7 @@ export async function GET(request) {
       const address = b.service_address || b.address || 'Indore';
       const assignedTech = b.notes?.includes('Tech:') 
         ? b.notes.split('Tech:')[1]?.trim() 
-        : (b.status === 'In Progress' ? 'Ramesh Sharma' : 'Pending Allocation');
+        : (b.status === 'In Progress' ? 'Ajay Mahajan' : 'Pending Allocation');
       const notes = b.notes || '';
       const priority = notes.toLowerCase().includes('urgent') ? 'Urgent' : 'High';
 
@@ -198,80 +206,10 @@ export async function GET(request) {
       linkedInquiryId: l.raw_payload?.linkedInquiryId || null
     }));
 
-    // 4. Certified Field Fleet & Supabase Tracking
+    // 4. Certified Field Fleet: Retained Ajay Mahajan & Pankaj Sharma
     const DEFAULT_FLEET = [
       {
         id: 'TECH-IND-01',
-        name: 'Ramesh Sharma',
-        title: 'Master Plumber & Sanitary Expert',
-        phone: '+91 98260 11223',
-        rating: 4.95,
-        repairsCount: 540,
-        vehicleNumber: 'Service Bike (MP 09 CZ 1122)',
-        photoUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&h=200&q=80',
-        specialty: 'Plumbing & Leakages',
-        operatingArea: 'Vijay Nagar, Palasia, Mahalaxmi',
-        status: 'On Duty',
-        eta: 'Prompt Arrival'
-      },
-      {
-        id: 'TECH-IND-02',
-        name: 'Vikas Patidar',
-        title: 'Senior Electrician & Panel Specialist',
-        phone: '+91 97550 44556',
-        rating: 4.92,
-        repairsCount: 420,
-        vehicleNumber: 'Service Bike (MP 09 AB 3344)',
-        photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&h=200&q=80',
-        specialty: 'Electrical & MCB Safety',
-        operatingArea: 'Bhawarkua, Rajendra Nagar, Annapurna',
-        status: 'On Duty',
-        eta: 'Prompt Arrival'
-      },
-      {
-        id: 'TECH-IND-03',
-        name: 'Sunil Chouhan',
-        title: 'Lead HVAC & AC Specialist',
-        phone: '+91 94250 77889',
-        rating: 4.98,
-        repairsCount: 680,
-        vehicleNumber: 'Service Van (MP 09 EF 5566)',
-        photoUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&h=200&q=80',
-        specialty: 'AC Foam Jet & Gas Refill',
-        operatingArea: 'Vijay Nagar, Nipania, Bypass',
-        status: 'On Duty',
-        eta: 'Prompt Arrival'
-      },
-      {
-        id: 'TECH-IND-04',
-        name: 'Deepak Verma',
-        title: 'Drainage & Motor Pump Technician',
-        phone: '+91 91749 34135',
-        rating: 4.91,
-        repairsCount: 310,
-        vehicleNumber: 'Service Bike (MP 09 GH 7788)',
-        photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80',
-        specialty: 'Drain Blockage & Water Motors',
-        operatingArea: 'Sudama Nagar, Geeta Bhawan, Annapurna',
-        status: 'On Duty',
-        eta: 'Prompt Arrival'
-      },
-      {
-        id: 'TECH-IND-05',
-        name: 'Rajesh Malviya',
-        title: 'Home Appliance & Geyser Pro',
-        phone: '+91 98930 22334',
-        rating: 4.89,
-        repairsCount: 280,
-        vehicleNumber: 'Service Bike (MP 09 KL 9900)',
-        photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80',
-        specialty: 'Geyser, Fridge & RO Purifier',
-        operatingArea: 'Central Indore & All Localities',
-        status: 'On Duty',
-        eta: 'Prompt Arrival'
-      },
-      {
-        id: 'TECH-IND-06',
         name: 'Ajay Mahajan',
         title: 'Lead Plumber & Sanitary Tech (South Corridor)',
         phone: '+91 84595 59141',
@@ -285,7 +223,7 @@ export async function GET(request) {
         eta: 'Prompt Arrival'
       },
       {
-        id: 'TECH-IND-07',
+        id: 'TECH-IND-02',
         name: 'Pankaj Sharma',
         title: 'Bicholi & Bypass Lead Technician',
         phone: '+91 98267 43299',
@@ -297,7 +235,7 @@ export async function GET(request) {
         operatingArea: 'Bicholi Mardana, Bicholi Hapsi, Silicon City, Bypass',
         status: 'On Duty',
         eta: 'Prompt Arrival'
-      },
+      }
     ];
 
     const todayStr = new Date().toISOString().split('T')[0];

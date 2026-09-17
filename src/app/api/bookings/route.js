@@ -89,9 +89,9 @@ import { IS_BOOKING_ENABLED, SERVICE_UNAVAILABLE_MESSAGE } from '../../../config
  * - Zone 1: Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi
  *   -> Ajay Mahajan (+91 84595 59141)
  * - Zone 2: Bicholi Mardana
- *   -> Bicholi Dispatch Specialist (+91 98267 43299)
- * - Default / Fallback: Central / North / East Indore (Vijay Nagar, Palasia, etc.)
- *   -> Ramesh Sharma (+91 98260 11223)
+ *   -> Pankaj Sharma (+91 98267 43299)
+ * - Default / Fallback: Central / Core Indore
+ *   -> Ajay Mahajan (+91 84595 59141)
  */
 export function resolveAutoDispatchTechnician(address = '', pincode = '') {
   const normAddress = (address || '').toLowerCase();
@@ -154,13 +154,13 @@ export function resolveAutoDispatchTechnician(address = '', pincode = '') {
     };
   }
 
-  // Fallback default technician for Central & North Indore (Vijay Nagar, Palasia, etc.)
+  // Fallback default technician for Central & Other Indore Localities (Lead Technician)
   return {
-    name: 'Ramesh Sharma',
-    phone: '+91 98260 11223',
-    zone: 'Vijay Nagar & Central Hub',
+    name: 'Ajay Mahajan',
+    phone: '+91 84595 59141',
+    zone: 'Indore Central & Core Sector',
     localityMatch: 'INDORE CENTRAL',
-    vehicle: 'Service Bike (MP 09 CZ 1122)'
+    vehicle: 'Service Bike (MP 09 MD 8821)'
   };
 }
 

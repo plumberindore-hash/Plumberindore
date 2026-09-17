@@ -39,106 +39,36 @@ const INITIAL_CHATS = [];
 
 // Pre-canned Quick Replies for Chatbot Monitor
 
-// Certified Indore Field Fleet
+// Certified Indore Field Fleet: Retained Ajay Mahajan & Pankaj Sharma
 const DEFAULT_FLEET_DATA = [
   {
     id: 'TECH-IND-01',
-    name: 'Ramesh Sharma',
-    title: 'Master Plumber & Sanitary Expert',
-    phone: '+91 98260 11223',
-    rating: 4.95,
-    repairsCount: 540,
-    vehicleNumber: 'Service Bike (MP 09 CZ 1122)',
-    photoUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&h=200&q=80',
-    specialty: 'Plumbing & Leakages',
-    operatingArea: 'Vijay Nagar, Palasia, Mahalaxmi',
+    name: 'Ajay Mahajan',
+    title: 'Lead Plumber & Sanitary Tech (South Corridor)',
+    phone: '+91 84595 59141',
+    rating: 4.96,
+    repairsCount: 610,
+    vehicleNumber: 'Service Bike (MP 09 MD 8821)',
+    photoUrl: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?auto=format&fit=crop&w=200&h=200&q=80',
+    specialty: 'Plumbing & South Sector Lead',
+    operatingArea: 'Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi',
     status: 'On Duty',
     eta: 'Prompt Arrival'
   },
   {
     id: 'TECH-IND-02',
-    name: 'Vikas Patidar',
-    title: 'Senior Electrician & Panel Specialist',
-    phone: '+91 97550 44556',
-    rating: 4.92,
-    repairsCount: 420,
-    vehicleNumber: 'Service Bike (MP 09 AB 3344)',
-    photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&h=200&q=80',
-    specialty: 'Electrical & MCB Safety',
-    operatingArea: 'Bhawarkua, Rajendra Nagar, Annapurna',
+    name: 'Pankaj Sharma',
+    title: 'Bicholi & Bypass Lead Technician',
+    phone: '+91 98267 43299',
+    rating: 4.94,
+    repairsCount: 390,
+    vehicleNumber: 'Service Bike (MP 09 BM 4329)',
+    photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&h=200&q=80',
+    specialty: 'Bicholi & East Bypass Plumbing',
+    operatingArea: 'Bicholi Mardana, Bicholi Hapsi, Silicon City, Bypass',
     status: 'On Duty',
     eta: 'Prompt Arrival'
-  },
-  {
-    id: 'TECH-IND-03',
-    name: 'Sunil Chouhan',
-    title: 'Lead HVAC & AC Specialist',
-    phone: '+91 94250 77889',
-    rating: 4.98,
-    repairsCount: 680,
-    vehicleNumber: 'Service Van (MP 09 EF 5566)',
-    photoUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&h=200&q=80',
-    specialty: 'AC Foam Jet & Gas Refill',
-    operatingArea: 'Vijay Nagar, Nipania, Bypass',
-    status: 'On Duty',
-    eta: 'Prompt Arrival'
-  },
-  {
-    id: 'TECH-IND-04',
-    name: 'Deepak Verma',
-    title: 'Drainage & Motor Pump Technician',
-    phone: '+91 91749 34135',
-    rating: 4.91,
-    repairsCount: 310,
-    vehicleNumber: 'Service Bike (MP 09 GH 7788)',
-    photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80',
-    specialty: 'Drain Blockage & Water Motors',
-    operatingArea: 'Sudama Nagar, Geeta Bhawan, Annapurna',
-    status: 'On Duty',
-    eta: 'Prompt Arrival'
-  },
-  {
-    id: 'TECH-IND-05',
-    name: 'Rajesh Malviya',
-    title: 'Home Appliance & Geyser Pro',
-    phone: '+91 98930 22334',
-    rating: 4.89,
-    repairsCount: 280,
-    vehicleNumber: 'Service Bike (MP 09 KL 9900)',
-    photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80',
-    specialty: 'Geyser, Fridge & RO Purifier',
-    operatingArea: 'Central Indore & All Localities',
-    status: 'On Duty',
-    eta: 'Prompt Arrival'
-  },
-      {
-        id: 'TECH-IND-06',
-        name: 'Ajay Mahajan',
-        title: 'Lead Plumber & Sanitary Tech (South Corridor)',
-        phone: '+91 84595 59141',
-        rating: 4.96,
-        repairsCount: 610,
-        vehicleNumber: 'Service Bike (MP 09 MD 8821)',
-        photoUrl: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?auto=format&fit=crop&w=200&h=200&q=80',
-        specialty: 'Plumbing & South Sector Lead',
-        operatingArea: 'Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi',
-        status: 'On Duty',
-        eta: 'Prompt Arrival'
-      },
-      {
-        id: 'TECH-IND-07',
-        name: 'Pankaj Sharma',
-        title: 'Bicholi & Bypass Lead Technician',
-        phone: '+91 98267 43299',
-        rating: 4.94,
-        repairsCount: 390,
-        vehicleNumber: 'Service Bike (MP 09 BM 4329)',
-        photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&h=200&q=80',
-        specialty: 'Bicholi & East Bypass Plumbing',
-        operatingArea: 'Bicholi Mardana, Bicholi Hapsi, Silicon City, Bypass',
-        status: 'On Duty',
-        eta: 'Prompt Arrival'
-      },
+  }
 ];
 
 const QUICK_REPLIES = [
@@ -238,7 +168,7 @@ function normalizeBookingRecord(b) {
   const status = b.status || 'Technician Assigned';
   const notes = b.notes || b.description || '';
   const priority = b.priority || (notes?.toLowerCase().includes('urgent') ? 'Urgent' : 'High');
-  const assignedTechnician = b.assignedTechnician || b.technician || (notes?.includes('Tech:') ? notes.split('Tech:')[1]?.trim() : (status === 'In Progress' ? 'Ramesh Sharma' : 'Pending Allocation'));
+  const assignedTechnician = b.assignedTechnician || b.technician || (notes?.includes('Tech:') ? notes.split('Tech:')[1]?.trim() : (status === 'In Progress' ? 'Ajay Mahajan' : 'Pending Allocation'));
   const paymentStatus = b.paymentStatus || b.payment_status || 'Pending (Pay on Completion)';
   const paymentMethod = b.paymentMethod || b.payment_method || 'Cash / UPI on Doorstep';
   const paymentRef = b.paymentRef || b.payment_ref || null;
