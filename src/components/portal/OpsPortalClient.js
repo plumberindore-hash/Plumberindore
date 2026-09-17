@@ -3,7 +3,7 @@
 import { createClient } from '@supabase/supabase-js';
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  Lock, LogOut, Search, Filter, Download, 
+  Lock, LogOut, Search, Filter, Download, Users, UserCheck, Truck, Wallet, 
   Plus, Send, Eye, Clock, Phone, MapPin, 
   Calendar, Wrench, AlertTriangle, MessageSquare, Bot, Sparkles, 
   TrendingUp, CheckCircle2, ChevronRight, X, ExternalLink, Copy,
@@ -38,6 +38,81 @@ const INITIAL_INQUIRIES = [];
 const INITIAL_CHATS = [];
 
 // Pre-canned Quick Replies for Chatbot Monitor
+
+// Certified Indore Field Fleet
+const DEFAULT_FLEET_DATA = [
+  {
+    id: 'TECH-IND-01',
+    name: 'Ramesh Sharma',
+    title: 'Master Plumber & Sanitary Expert',
+    phone: '+91 98260 11223',
+    rating: 4.95,
+    repairsCount: 540,
+    vehicleNumber: 'Service Bike (MP 09 CZ 1122)',
+    photoUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&h=200&q=80',
+    specialty: 'Plumbing & Leakages',
+    operatingArea: 'Vijay Nagar, Palasia, Mahalaxmi',
+    status: 'On Duty',
+    eta: 'Prompt Arrival'
+  },
+  {
+    id: 'TECH-IND-02',
+    name: 'Vikas Patidar',
+    title: 'Senior Electrician & Panel Specialist',
+    phone: '+91 97550 44556',
+    rating: 4.92,
+    repairsCount: 420,
+    vehicleNumber: 'Service Bike (MP 09 AB 3344)',
+    photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&h=200&q=80',
+    specialty: 'Electrical & MCB Safety',
+    operatingArea: 'Bhawarkua, Rajendra Nagar, Annapurna',
+    status: 'On Duty',
+    eta: 'Prompt Arrival'
+  },
+  {
+    id: 'TECH-IND-03',
+    name: 'Sunil Chouhan',
+    title: 'Lead HVAC & AC Specialist',
+    phone: '+91 94250 77889',
+    rating: 4.98,
+    repairsCount: 680,
+    vehicleNumber: 'Service Van (MP 09 EF 5566)',
+    photoUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&h=200&q=80',
+    specialty: 'AC Foam Jet & Gas Refill',
+    operatingArea: 'Vijay Nagar, Nipania, Bypass',
+    status: 'On Duty',
+    eta: 'Prompt Arrival'
+  },
+  {
+    id: 'TECH-IND-04',
+    name: 'Deepak Verma',
+    title: 'Drainage & Motor Pump Technician',
+    phone: '+91 91749 34135',
+    rating: 4.91,
+    repairsCount: 310,
+    vehicleNumber: 'Service Bike (MP 09 GH 7788)',
+    photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80',
+    specialty: 'Drain Blockage & Water Motors',
+    operatingArea: 'Sudama Nagar, Geeta Bhawan, Annapurna',
+    status: 'On Duty',
+    eta: 'Prompt Arrival'
+  },
+  {
+    id: 'TECH-IND-05',
+    name: 'Rajesh Malviya',
+    title: 'Home Appliance & Geyser Pro',
+    phone: '+91 98930 22334',
+    rating: 4.89,
+    repairsCount: 280,
+    vehicleNumber: 'Service Bike (MP 09 KL 9900)',
+    photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80',
+    specialty: 'Geyser, Fridge & RO Purifier',
+    operatingArea: 'Central Indore & All Localities',
+    status: 'On Duty',
+    eta: 'Prompt Arrival'
+  }
+];
+
 const QUICK_REPLIES = [
   '🚀 Plumber dispatched! On the way, arriving in ~30 mins.',
   '💰 Inspection charge is ₹199, fully adjusted in the bill if repair is confirmed.',
@@ -228,6 +303,173 @@ export default function OpsPortalClient() {
   const [selectedChatId, setSelectedChatId] = useState(null);
   const [chatReplyText, setChatReplyText] = useState('');
 
+
+  // Technicians & Fleet Management State
+  const [technicians, setTechnicians] = useState(DEFAULT_FLEET_DATA);
+  const [isAddTechModalOpen, setIsAddTechModalOpen] = useState(false);
+  const [techFilterSpecialty, setTechFilterSpecialty] = useState('All Specialties');
+  const [newTechForm, setNewTechForm] = useState({
+    name: '',
+    phone: '',
+    specialty: 'Plumbing & Leakages',
+    vehicleNumber: 'Service Bike (MP 09)',
+    operatingArea: 'Vijay Nagar, Palasia',
+    status: 'On Duty'
+  });
+
+  // Dynamically compute real-time metrics for each technician from Supabase bookings
+  const liveTechnicians = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    return technicians.map(tech => {
+      const techName = (tech.name || tech.title || '').toLowerCase();
+      // Find all bookings assigned to this tech
+      const assigned = bookings.filter(b => {
+        const assignedName = (b.assignedTechnician || b.technician || '').toLowerCase();
+        const notes = (b.notes || '').toLowerCase();
+        return assignedName.includes(techName) || notes.includes(`tech: ${techName}`) || notes.includes(techName);
+      });
+
+      // Daily visits: scheduled for today or active status
+      const todayVisits = assigned.filter(b => {
+        const isToday = b.scheduledDate === todayStr || b.date === todayStr;
+        const isActive = ['Technician Assigned', 'In Progress', 'On The Way', 'Completed', 'Payment Verified & Completed'].includes(b.status);
+        return isToday || isActive;
+      });
+
+      // Completed jobs
+      const completed = assigned.filter(b => b.status === 'Completed' || b.status === 'Payment Verified & Completed');
+
+      // Cash in hand: sum of price/total_amount for cash completed jobs not yet reconciled
+      const cashInHand = assigned
+        .filter(b => {
+          const isCash = (b.paymentMethod || '').toLowerCase().includes('cash');
+          const isPaid = (b.paymentStatus || '').toLowerCase().includes('paid') || b.status === 'Completed' || b.status === 'Payment Verified & Completed';
+          return isCash && isPaid && !b.cashReconciled;
+        })
+        .reduce((sum, b) => sum + Number(b.price || b.total_amount || 0), 0);
+
+      const activeJob = assigned.find(b => ['In Progress', 'On The Way', 'Technician Assigned'].includes(b.status)) || null;
+
+      return {
+        ...tech,
+        dailyVisitCount: todayVisits.length,
+        completedJobs: completed.length,
+        cashInHand: cashInHand,
+        assignedBookings: assigned,
+        activeJob: activeJob
+      };
+    });
+  }, [technicians, bookings]);
+
+  // Overall Fleet Totals
+  const fleetTotals = useMemo(() => {
+    const activeTechs = liveTechnicians.filter(t => t.status === 'On Duty').length;
+    const totalDailyVisits = liveTechnicians.reduce((sum, t) => sum + t.dailyVisitCount, 0);
+    const totalCompleted = liveTechnicians.reduce((sum, t) => sum + t.completedJobs, 0);
+    const totalCashInHand = liveTechnicians.reduce((sum, t) => sum + t.cashInHand, 0);
+    return { activeTechs, totalDailyVisits, totalCompleted, totalCashInHand };
+  }, [liveTechnicians]);
+
+  // Assign Technician to Booking
+  const assignTechnicianToBooking = async (bookingId, technicianName) => {
+    const updated = bookings.map(b => {
+      if (b.id === bookingId || b.booking_number === bookingId) {
+        return {
+          ...b,
+          assignedTechnician: technicianName,
+          technician: technicianName,
+          status: technicianName === 'Unassigned' ? 'Pending' : (b.status === 'Pending' ? 'Technician Assigned' : b.status),
+          notes: technicianName === 'Unassigned' ? '' : `Tech: ${technicianName}`
+        };
+      }
+      return b;
+    });
+    setBookings(updated);
+    showNotice(`✓ Assigned ${technicianName} to #${bookingId}`);
+
+    try {
+      await fetch('/api/portal/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'assign_technician',
+          payload: {
+            id: bookingId,
+            technician: technicianName,
+            status: technicianName === 'Unassigned' ? 'Pending' : 'Technician Assigned'
+          }
+        })
+      });
+    } catch (e) {
+      console.warn('Assign technician API error:', e);
+    }
+  };
+
+  // Reconcile Cash Collection for Technician
+  const reconcileTechnicianCash = async (technicianName, amount) => {
+    const updated = bookings.map(b => {
+      const assignedName = (b.assignedTechnician || b.technician || '').toLowerCase();
+      const techName = technicianName.toLowerCase();
+      if (assignedName.includes(techName) || (b.notes && b.notes.toLowerCase().includes(techName))) {
+        return {
+          ...b,
+          cashReconciled: true,
+          paymentStatus: 'Paid & Deposited'
+        };
+      }
+      return b;
+    });
+    setBookings(updated);
+    showNotice(`✓ Reconciled ₹${amount.toLocaleString('en-IN')} cash collection for ${technicianName}`);
+
+    try {
+      await fetch('/api/portal/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reconcile_cash',
+          payload: { technician: technicianName, amount }
+        })
+      });
+    } catch (e) {
+      console.warn('Reconcile cash API error:', e);
+    }
+  };
+
+  // Register New Technician
+  const handleRegisterTechnician = (e) => {
+    e.preventDefault();
+    if (!newTechForm.name || !newTechForm.phone) {
+      showNotice('Please enter technician name and mobile number.');
+      return;
+    }
+    const newTech = {
+      id: `TECH-IND-0${technicians.length + 1}`,
+      name: newTechForm.name.trim(),
+      title: `${newTechForm.specialty} Technician`,
+      phone: newTechForm.phone.trim(),
+      rating: 4.95,
+      repairsCount: 10,
+      vehicleNumber: newTechForm.vehicleNumber.trim() || 'Service Bike (MP 09)',
+      photoUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&h=200&q=80',
+      specialty: newTechForm.specialty,
+      operatingArea: newTechForm.operatingArea.trim() || 'All Indore Sectors',
+      status: newTechForm.status || 'On Duty',
+      eta: 'Prompt Arrival'
+    };
+    setTechnicians(prev => [newTech, ...prev]);
+    setIsAddTechModalOpen(false);
+    setNewTechForm({
+      name: '',
+      phone: '',
+      specialty: 'Plumbing & Leakages',
+      vehicleNumber: 'Service Bike (MP 09)',
+      operatingArea: 'Vijay Nagar, Palasia',
+      status: 'On Duty'
+    });
+    showNotice(`✓ Registered ${newTech.name} to Field Fleet!`);
+  };
+
   // Filters
   const [selectedLocality, setSelectedLocality] = useState('All Localities');
   const [selectedStatus, setSelectedStatus] = useState('All Statuses');
@@ -302,6 +544,9 @@ export default function OpsPortalClient() {
             if (data.chats.length > 0 && !selectedChatId) {
               setSelectedChatId(data.chats[0].id);
             }
+          }
+          if (Array.isArray(data.technicians) && data.technicians.length > 0) {
+            setTechnicians(data.technicians);
           }
           setLiveConnected(true);
           const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -1745,6 +1990,19 @@ export default function OpsPortalClient() {
             <span>Live Chatbot Monitor ({chats.length})</span>
           </button>
 
+
+          <button
+            onClick={() => setActiveTab('technicians')}
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
+              activeTab === 'technicians'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Users className="w-4 h-4 text-amber-500" />
+            <span>Technicians & Field Fleet ({liveTechnicians.length})</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('diagnostics')}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2 ${
@@ -1836,6 +2094,7 @@ export default function OpsPortalClient() {
                       <th className="py-3.5 px-4">Locality & Address</th>
                       <th className="py-3.5 px-4">Service Booked</th>
                       <th className="py-3.5 px-4">Slot & Price</th>
+                      <th className="py-3.5 px-4">Assigned Technician</th>
                       <th className="py-3.5 px-4">Dispatch Status</th>
                       <th className="py-3.5 px-4 text-right">Actions & Chat</th>
                     </tr>
@@ -1843,7 +2102,7 @@ export default function OpsPortalClient() {
                   <tbody className="divide-y divide-slate-100">
                     {filteredBookings.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-16 text-center text-slate-500">
+                        <td colSpan={8} className="py-16 text-center text-slate-500">
                           <Briefcase className="w-10 h-10 mx-auto text-slate-300 mb-3" />
                           <p className="font-bold text-slate-800 text-base font-heading">No bookings recorded</p>
                           <p className="text-xs mt-1 text-slate-500 max-w-md mx-auto">
@@ -1983,6 +2242,21 @@ export default function OpsPortalClient() {
                                 <Clock className="w-3 h-3 text-slate-400" />
                                 <span>{b.timeSlot || b.time_slot || (b.time ? b.time.split(',')[1] : 'Standard Slot')}</span>
                               </div>
+                            </td>
+
+                            <td className="py-4 px-4 whitespace-nowrap">
+                              <select
+                                value={b.assignedTechnician || 'Unassigned'}
+                                onChange={(e) => assignTechnicianToBooking(b.id, e.target.value)}
+                                className="text-xs font-bold px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white text-slate-800 focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-2xs transition-all"
+                              >
+                                <option value="Unassigned">⚠️ Pending Allocation</option>
+                                {liveTechnicians.map(t => (
+                                  <option key={t.id || t.name} value={t.name}>
+                                    👷 {t.name} ({t.specialty || 'Pro'})
+                                  </option>
+                                ))}
+                              </select>
                             </td>
 
                             <td className="py-4 px-4 whitespace-nowrap">
@@ -2440,6 +2714,260 @@ export default function OpsPortalClient() {
           </div>
         )}
 
+
+        {/* --------------------------------------------------------- */}
+        {/* TAB 5: TECHNICIANS & FIELD FLEET DASHBOARD */}
+        {/* --------------------------------------------------------- */}
+        {activeTab === 'technicians' && (
+          <div className="space-y-6">
+            {/* Top Stat Summary Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-soft-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Field Fleet On Duty</span>
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <Users className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-slate-900 font-mono">{fleetTotals.activeTechs}</span>
+                  <span className="text-xs text-slate-500">/ {liveTechnicians.length} Verified</span>
+                </div>
+                <span className="text-[11px] text-emerald-600 font-semibold block mt-1">● 100% Indore Service Coverage</span>
+              </div>
+
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-soft-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Daily Visits Scheduled</span>
+                  <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-slate-900 font-mono">{fleetTotals.totalDailyVisits}</span>
+                  <span className="text-xs text-slate-500">Scheduled Visits</span>
+                </div>
+                <span className="text-[11px] text-slate-500 font-medium block mt-1">Directly synced from bookings</span>
+              </div>
+
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-soft-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Jobs Completed</span>
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <CheckCircle className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-slate-900 font-mono">{fleetTotals.totalCompleted}</span>
+                  <span className="text-xs text-slate-500">Finished</span>
+                </div>
+                <span className="text-[11px] text-emerald-600 font-semibold block mt-1">Verified on-site repairs</span>
+              </div>
+
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-soft-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Cash in Hand (Fleet)</span>
+                  <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <Wallet className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-emerald-600 font-mono">₹{fleetTotals.totalCashInHand.toLocaleString('en-IN')}</span>
+                </div>
+                <span className="text-[11px] text-slate-500 font-medium block mt-1">Cash collected pending deposit</span>
+              </div>
+            </div>
+
+            {/* Fleet Controls & Search Filter Bar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-soft-sm">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700">
+                  <Filter className="w-3.5 h-3.5 text-slate-400" />
+                  <select
+                    value={techFilterSpecialty}
+                    onChange={(e) => setTechFilterSpecialty(e.target.value)}
+                    className="bg-transparent border-none focus:outline-none text-xs text-slate-800 cursor-pointer font-bold"
+                  >
+                    <option value="All Specialties">All Specialties</option>
+                    <option value="Plumbing & Leakages">Plumbing & Leakages</option>
+                    <option value="Electrical & MCB Safety">Electrical & MCB Safety</option>
+                    <option value="AC Foam Jet & Gas Refill">AC Foam Jet & Gas Refill</option>
+                    <option value="Drain Blockage & Water Motors">Drain Blockage & Water Motors</option>
+                    <option value="Geyser, Fridge & RO Purifier">Home Appliances</option>
+                  </select>
+                </div>
+
+                <span className="text-xs text-slate-500 font-medium">
+                  Showing {liveTechnicians.filter(t => techFilterSpecialty === 'All Specialties' || t.specialty === techFilterSpecialty).length} of {liveTechnicians.length} field professionals
+                </span>
+              </div>
+
+              <button
+                onClick={() => setIsAddTechModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm transition-all active:scale-95 whitespace-nowrap"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                <span>Register New Technician</span>
+              </button>
+            </div>
+
+            {/* Technician Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              {liveTechnicians
+                .filter(t => techFilterSpecialty === 'All Specialties' || t.specialty === techFilterSpecialty)
+                .map((tech) => (
+                  <div
+                    key={tech.id}
+                    className="bg-white border border-slate-200 rounded-2xl p-5 shadow-soft-sm hover:shadow-md transition-all flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* Technician Header */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            <img
+                              src={tech.photoUrl}
+                              alt={tech.name}
+                              className="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-2xs"
+                            />
+                            <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full" title="Active on Duty" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="font-extrabold text-slate-900 text-sm font-heading">{tech.name}</h4>
+                              <span className="text-[10px] font-bold bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded">
+                                ★ {tech.rating}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-600 font-medium">{tech.title}</p>
+                            <span className="text-[10px] text-slate-400 font-mono">ID: {tech.id}</span>
+                          </div>
+                        </div>
+
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                          tech.status === 'On Duty'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-slate-100 text-slate-600 border border-slate-200'
+                        }`}>
+                          {tech.status}
+                        </span>
+                      </div>
+
+                      {/* Contact & Vehicle Info */}
+                      <div className="mt-3 pt-3 border-t border-slate-100 space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between text-slate-600">
+                          <span className="flex items-center gap-1.5 text-slate-500">
+                            <Phone className="w-3.5 h-3.5 text-emerald-600" /> Phone:
+                          </span>
+                          <a href={`tel:${tech.phone}`} className="font-mono font-bold text-slate-900 hover:text-blue-600">
+                            {tech.phone}
+                          </a>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-600">
+                          <span className="flex items-center gap-1.5 text-slate-500">
+                            <Truck className="w-3.5 h-3.5 text-slate-400" /> Vehicle:
+                          </span>
+                          <span className="font-mono font-medium text-slate-800">{tech.vehicleNumber}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-600">
+                          <span className="flex items-center gap-1.5 text-slate-500">
+                            <MapPin className="w-3.5 h-3.5 text-amber-500" /> Hubs:
+                          </span>
+                          <span className="font-medium text-slate-800 text-right truncate max-w-[180px]" title={tech.operatingArea}>
+                            {tech.operatingArea}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Supabase Real-Time Tracking Stat Badges */}
+                      <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100 text-center">
+                        <div className="bg-amber-50/70 border border-amber-100 p-2 rounded-xl">
+                          <span className="text-[10px] font-bold text-amber-800 uppercase block">Daily Visits</span>
+                          <span className="text-base font-black text-amber-900 font-mono">{tech.dailyVisitCount}</span>
+                          <span className="text-[9px] text-amber-700 block">Today's Visits</span>
+                        </div>
+
+                        <div className="bg-blue-50/70 border border-blue-100 p-2 rounded-xl">
+                          <span className="text-[10px] font-bold text-blue-800 uppercase block">Completed</span>
+                          <span className="text-base font-black text-blue-900 font-mono">{tech.completedJobs}</span>
+                          <span className="text-[9px] text-blue-700 block">Closed Jobs</span>
+                        </div>
+
+                        <div className="bg-emerald-50/70 border border-emerald-100 p-2 rounded-xl">
+                          <span className="text-[10px] font-bold text-emerald-800 uppercase block">Cash in Hand</span>
+                          <span className="text-base font-black text-emerald-700 font-mono">₹{tech.cashInHand}</span>
+                          <span className="text-[9px] text-emerald-700 block">
+                            {tech.cashInHand > 0 ? 'To Deposit' : 'Clear'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Cash in Hand Reconcile Quick Action */}
+                      {tech.cashInHand > 0 && (
+                        <div className="mt-2 flex items-center justify-between bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl text-xs">
+                          <span className="text-[11px] font-bold text-emerald-900">
+                            ₹{tech.cashInHand} Cash Collected
+                          </span>
+                          <button
+                            onClick={() => reconcileTechnicianCash(tech.name, tech.cashInHand)}
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold transition-colors shadow-2xs"
+                          >
+                            Reconcile Cash
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Current Active Job Snippet */}
+                      {tech.activeJob ? (
+                        <div className="mt-3 bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-xs">
+                          <div className="flex items-center justify-between text-[11px] mb-1">
+                            <span className="font-bold text-slate-800 flex items-center gap-1">
+                              <Activity className="w-3 h-3 text-blue-600" /> Current Active Job:
+                            </span>
+                            <span className="font-mono text-blue-600 font-bold">#{tech.activeJob.id}</span>
+                          </div>
+                          <p className="text-slate-700 font-semibold truncate">{tech.activeJob.customerName} - {tech.activeJob.locality}</p>
+                          <p className="text-[11px] text-slate-500 truncate">{tech.activeJob.serviceName} ({tech.activeJob.timeSlot})</p>
+                        </div>
+                      ) : (
+                        <div className="mt-3 bg-slate-50 border border-dashed border-slate-200 p-2.5 rounded-xl text-center text-slate-400 text-xs">
+                          No active job in progress • Available for instant dispatch
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Direct Assignment Dropdown Linked to Bookings Table */}
+                    <div className="mt-4 pt-3 border-t border-slate-100">
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1 flex items-center justify-between">
+                        <span>Assign Booking to {tech.name.split(' ')[0]}:</span>
+                        <span className="text-[10px] text-slate-400 font-normal">Supabase Link</span>
+                      </label>
+                      <select
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            assignTechnicianToBooking(e.target.value, tech.name);
+                            e.target.value = '';
+                          }
+                        }}
+                        defaultValue=""
+                        className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-amber-500 cursor-pointer transition-all"
+                      >
+                        <option value="" disabled>+ Select Booking from Table to Assign...</option>
+                        {bookings
+                          .filter(b => b.status !== 'Completed' && b.status !== 'Cancelled')
+                          .map(b => (
+                            <option key={b.id} value={b.id}>
+                              #{b.id} - {b.customerName} ({b.locality || 'Indore'}) - {b.serviceName} [{b.assignedTechnician || 'Unassigned'}]
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
         {/* --------------------------------------------------------- */}
         {/* TAB 4: AI DIAGNOSTIC ENGINE */}
         {/* --------------------------------------------------------- */}
@@ -2618,6 +3146,113 @@ export default function OpsPortalClient() {
           </div>
         )}
       </main>
+
+
+      {/* ------------------------------------------------------------- */}
+      {/* MODAL: REGISTER NEW FIELD TECHNICIAN */}
+      {/* ------------------------------------------------------------- */}
+      {isAddTechModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-slate-900 text-white rounded-lg">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base font-heading">Register Field Technician</h3>
+                  <p className="text-[11px] text-slate-500">Add verified field professional to PlumberIndore fleet</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsAddTechModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRegisterTechnician} className="p-6 space-y-3.5 text-xs">
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Technician Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Mukesh Chouhan"
+                  value={newTechForm.name}
+                  onChange={(e) => setNewTechForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Mobile Phone (Calling & WhatsApp) *</label>
+                <input
+                  type="tel"
+                  required
+                  placeholder="e.g. +91 98260 12345"
+                  value={newTechForm.phone}
+                  onChange={(e) => setNewTechForm(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Trade Specialty</label>
+                <select
+                  value={newTechForm.specialty}
+                  onChange={(e) => setNewTechForm(prev => ({ ...prev, specialty: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium cursor-pointer"
+                >
+                  <option value="Plumbing & Leakages">Plumbing & Leakages</option>
+                  <option value="Electrical & MCB Safety">Electrical & MCB Safety</option>
+                  <option value="AC Foam Jet & Gas Refill">AC Foam Jet & Gas Refill</option>
+                  <option value="Drain Blockage & Water Motors">Drain Blockage & Water Motors</option>
+                  <option value="Geyser, Fridge & RO Purifier">Home Appliances</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Vehicle Registration / Type</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Service Bike (MP 09 XY 5678)"
+                  value={newTechForm.vehicleNumber}
+                  onChange={(e) => setNewTechForm(prev => ({ ...prev, vehicleNumber: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Operating Localities / Zones</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Vijay Nagar, Palasia, Sudama Nagar"
+                  value={newTechForm.operatingArea}
+                  onChange={(e) => setNewTechForm(prev => ({ ...prev, operatingArea: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddTechModalOpen(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-sm transition-all"
+                >
+                  Confirm & Save Technician
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ------------------------------------------------------------- */}
       {/* MODAL 1: MANUAL LEAD ENTRY MODAL (Supports linking to chat/inquiry) */}

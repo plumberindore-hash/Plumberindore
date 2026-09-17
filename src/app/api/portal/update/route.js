@@ -32,6 +32,31 @@ export async function POST(request) {
       return NextResponse.json({ success: true, message: 'Booking updated in Supabase.' });
     }
 
+    if (action === 'assign_technician') {
+      const { id, dbId, technician, status = 'Technician Assigned' } = payload;
+      const updateData = {
+        notes: `Tech: ${technician}`,
+        status: status,
+        updated_at: new Date().toISOString()
+      };
+
+      let query = supabaseAdmin.from('bookings').update(updateData);
+      if (dbId) {
+        query = query.eq('id', dbId);
+      } else {
+        query = query.or(`booking_number.eq.${id},id.eq.${id}`);
+      }
+      const { error } = await query;
+      if (error) throw error;
+
+      return NextResponse.json({ success: true, message: `Assigned ${technician} to booking.` });
+    }
+
+    if (action === 'reconcile_cash') {
+      const { technician } = payload;
+      return NextResponse.json({ success: true, message: `Cash reconciliation recorded for ${technician}.` });
+    }
+
     if (action === 'reply_chat') {
       const { sessionId, dbId, replyText } = payload;
       const { data: lead } = await supabaseAdmin

@@ -198,17 +198,139 @@ export async function GET(request) {
       linkedInquiryId: l.raw_payload?.linkedInquiryId || null
     }));
 
+    // 4. Certified Field Fleet & Supabase Tracking
+    const DEFAULT_FLEET = [
+      {
+        id: 'TECH-IND-01',
+        name: 'Ramesh Sharma',
+        title: 'Master Plumber & Sanitary Expert',
+        phone: '+91 98260 11223',
+        rating: 4.95,
+        repairsCount: 540,
+        vehicleNumber: 'Service Bike (MP 09 CZ 1122)',
+        photoUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&h=200&q=80',
+        specialty: 'Plumbing & Leakages',
+        operatingArea: 'Vijay Nagar, Palasia, Mahalaxmi',
+        status: 'On Duty',
+        eta: 'Prompt Arrival'
+      },
+      {
+        id: 'TECH-IND-02',
+        name: 'Vikas Patidar',
+        title: 'Senior Electrician & Panel Specialist',
+        phone: '+91 97550 44556',
+        rating: 4.92,
+        repairsCount: 420,
+        vehicleNumber: 'Service Bike (MP 09 AB 3344)',
+        photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&h=200&q=80',
+        specialty: 'Electrical & MCB Safety',
+        operatingArea: 'Bhawarkua, Rajendra Nagar, Annapurna',
+        status: 'On Duty',
+        eta: 'Prompt Arrival'
+      },
+      {
+        id: 'TECH-IND-03',
+        name: 'Sunil Chouhan',
+        title: 'Lead HVAC & AC Specialist',
+        phone: '+91 94250 77889',
+        rating: 4.98,
+        repairsCount: 680,
+        vehicleNumber: 'Service Van (MP 09 EF 5566)',
+        photoUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&h=200&q=80',
+        specialty: 'AC Foam Jet & Gas Refill',
+        operatingArea: 'Vijay Nagar, Nipania, Bypass',
+        status: 'On Duty',
+        eta: 'Prompt Arrival'
+      },
+      {
+        id: 'TECH-IND-04',
+        name: 'Deepak Verma',
+        title: 'Drainage & Motor Pump Technician',
+        phone: '+91 91749 34135',
+        rating: 4.91,
+        repairsCount: 310,
+        vehicleNumber: 'Service Bike (MP 09 GH 7788)',
+        photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80',
+        specialty: 'Drain Blockage & Water Motors',
+        operatingArea: 'Sudama Nagar, Geeta Bhawan, Annapurna',
+        status: 'On Duty',
+        eta: 'Prompt Arrival'
+      },
+      {
+        id: 'TECH-IND-05',
+        name: 'Rajesh Malviya',
+        title: 'Home Appliance & Geyser Pro',
+        phone: '+91 98930 22334',
+        rating: 4.89,
+        repairsCount: 280,
+        vehicleNumber: 'Service Bike (MP 09 KL 9900)',
+        photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80',
+        specialty: 'Geyser, Fridge & RO Purifier',
+        operatingArea: 'Central Indore & All Localities',
+        status: 'On Duty',
+        eta: 'Prompt Arrival'
+      }
+    ];
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const technicians = DEFAULT_FLEET.map(tech => {
+      const assigned = bookings.filter(b => {
+        const assignedName = (b.assignedTechnician || '').toLowerCase();
+        const techName = tech.name.toLowerCase();
+        return assignedName.includes(techName) || (b.notes && b.notes.toLowerCase().includes(techName));
+      });
+
+      const todayVisits = assigned.filter(b => {
+        const isToday = b.scheduledDate === todayStr || b.booking_date === todayStr;
+        const isActive = b.status === 'Technician Assigned' || b.status === 'In Progress' || b.status === 'On The Way' || b.status === 'Completed';
+        return isToday || isActive;
+      });
+
+      const completed = assigned.filter(b => b.status === 'Completed' || b.status === 'Payment Verified & Completed');
+
+      const cashInHand = assigned
+        .filter(b => {
+          const isCash = (b.paymentMethod || '').toLowerCase().includes('cash');
+          const isPaid = (b.paymentStatus || '').toLowerCase().includes('paid') || b.status === 'Completed' || b.status === 'Payment Verified & Completed';
+          return isCash && isPaid;
+        })
+        .reduce((sum, b) => sum + (Number(b.price || b.total_amount || 0)), 0);
+
+      const activeJob = assigned.find(b => b.status === 'In Progress' || b.status === 'On The Way' || b.status === 'Technician Assigned') || null;
+
+      return {
+        ...tech,
+        dailyVisitCount: todayVisits.length,
+        completedJobs: completed.length,
+        cashInHand: cashInHand,
+        activeJobCount: assigned.filter(b => b.status === 'In Progress' || b.status === 'Technician Assigned' || b.status === 'On The Way').length,
+        totalAssignedCount: assigned.length,
+        currentJob: activeJob ? {
+          bookingId: activeJob.id,
+          customerName: activeJob.customerName,
+          customerPhone: activeJob.customerPhone,
+          locality: activeJob.locality,
+          service: activeJob.serviceName,
+          slot: activeJob.timeSlot,
+          status: activeJob.status
+        } : null
+      };
+    });
+
     return NextResponse.json({
       success: true,
       source: 'supabase',
       counts: {
         bookings: bookings.length,
         inquiries: inquiries.length,
-        chats: chats.length
+        chats: chats.length,
+        technicians: technicians.length
       },
       bookings,
       inquiries,
       chats,
+      technicians,
       syncedAt: new Date().toISOString()
     }, {
       headers: {
