@@ -46,7 +46,7 @@ export async function GET(request) {
       });
     }
 
-    // 1. Fetch Bookings
+    // 1. Fetch Bookings & Audit Overrides (guarantees manual dispatch & status persist reliably)
     const { data: dbBookings = [], error: bookingsErr } = await supabaseAdmin
       .from('bookings')
       .select('*')
@@ -54,6 +54,34 @@ export async function GET(request) {
 
     if (bookingsErr) {
       console.error('Error fetching bookings in portal API:', bookingsErr.message);
+    }
+
+    // Fetch assignment & status overrides recorded in audit_logs
+    const auditOverrides = {};
+    try {
+      const { data: auditLogs = [] } = await supabaseAdmin
+        .from('audit_logs')
+        .select('*')
+        .eq('entity_type', 'booking')
+        .in('action', ['assign_technician', 'update_booking'])
+        .order('created_at', { ascending: true }); // chronological, so newer entries take precedence
+
+      (auditLogs || []).forEach(log => {
+        const v = log.new_values || {};
+        const bNum = v.booking_number || log.entity_id;
+        const dbId = v.db_id;
+        const item = {
+          status: v.status,
+          technician: v.technician,
+          notes: v.notes,
+          paymentStatus: v.payment_status
+        };
+        if (bNum) auditOverrides[bNum] = { ...(auditOverrides[bNum] || {}), ...item };
+        if (dbId) auditOverrides[dbId] = { ...(auditOverrides[dbId] || {}), ...item };
+        if (log.entity_id) auditOverrides[log.entity_id] = { ...(auditOverrides[log.entity_id] || {}), ...item };
+      });
+    } catch (auditErr) {
+      console.warn('Notice reading audit_logs for booking overrides:', auditErr.message);
     }
 
     // Reset & Clear Filter: clears previous test bookings entirely from dashboard state (reset to 0)
@@ -66,6 +94,7 @@ export async function GET(request) {
 
     const bookings = activeDbBookings.map((b) => {
       const bId = b.booking_number || b.id;
+      const override = auditOverrides[b.booking_number] || auditOverrides[b.id] || {};
       const scheduledDate = b.scheduled_date || b.booking_date || (b.created_at ? b.created_at.split('T')[0] : 'Today');
       const timeSlot = b.time_slot || b.booking_slot || 'Standard Slot';
       const locality = extractLocality(b.service_address || b.address, b.pincode);
@@ -76,11 +105,23 @@ export async function GET(request) {
       const customerName = b.customer_name || 'Customer';
       const customerEmail = b.customer_email || '';
       const address = b.service_address || b.address || 'Indore';
-      const assignedTech = b.notes?.includes('Tech:') 
-        ? b.notes.split('Tech:')[1]?.trim() 
-        : (b.status === 'In Progress' ? 'Ajay Mahajan' : 'Pending Allocation');
-      const notes = b.notes || '';
+
+      // Status and technician assignment persistence:
+      const notes = override.notes !== undefined ? override.notes : (b.notes || '');
+      const rawStatus = override.status || b.status || 'Pending';
+      const status = rawStatus;
+      
+      let assignedTech = '';
+      if (override.technician !== undefined) {
+        assignedTech = override.technician || '';
+      } else if (notes.includes('Tech:')) {
+        assignedTech = notes.split('Tech:')[1]?.trim() || '';
+      } else if (status === 'Technician Assigned' || status === 'In Progress') {
+        assignedTech = 'Ajay Mahajan';
+      }
+
       const priority = notes.toLowerCase().includes('urgent') ? 'Urgent' : 'High';
+      const paymentStatus = override.paymentStatus || b.payment_status || 'Pending (Pay on Completion)';
 
       return {
         id: bId,
@@ -116,19 +157,19 @@ export async function GET(request) {
         time_slot: timeSlot,
         booking_slot: timeSlot,
         time: `${scheduledDate}, ${timeSlot}`,
-        status: b.status || 'Technician Assigned',
+        status: status,
         priority: priority,
         assignedTechnician: assignedTech,
         technician: assignedTech,
         notes: notes,
-        paymentStatus: b.payment_status || 'Pending (Pay on Completion)',
-        payment_status: b.payment_status || 'Pending (Pay on Completion)',
+        paymentStatus: paymentStatus,
+        payment_status: paymentStatus,
         paymentMethod: b.payment_method || 'Cash / UPI on Doorstep',
         payment_method: b.payment_method || 'Cash / UPI on Doorstep',
         paymentRef: b.payment_ref || null,
         source: b.booking_number?.startsWith('IND-') ? 'Website Booking' : 'Portal Lead',
-        linkedInquiryId: b.notes?.match(/INQ-[A-Za-z0-9-]+/)?.[0] || null,
-        linkedChatId: b.notes?.match(/CHAT-[A-Za-z0-9-]+/)?.[0] || null,
+        linkedInquiryId: notes?.match(/INQ-[A-Za-z0-9-]+/)?.[0] || null,
+        linkedChatId: notes?.match(/CHAT-[A-Za-z0-9-]+/)?.[0] || null,
         createdAt: b.created_at,
         created_at: b.created_at,
         updatedAt: b.updated_at || b.created_at
@@ -206,7 +247,7 @@ export async function GET(request) {
       linkedInquiryId: l.raw_payload?.linkedInquiryId || null
     }));
 
-    // 4. Certified Field Fleet: Retained Ajay Mahajan & Pankaj Sharma
+    // 4. Certified Field Fleet: Ajay Mahajan, Pankaj Sharma & Saurabh Electrician
     const DEFAULT_FLEET = [
       {
         id: 'TECH-IND-01',
@@ -219,7 +260,10 @@ export async function GET(request) {
         photoUrl: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?auto=format&fit=crop&w=200&h=200&q=80',
         specialty: 'Plumbing & South Sector Lead',
         operatingArea: 'Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi',
-        status: 'On Duty',
+        serviceArea: 'Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi',
+        locatedIn: 'Rau / Bhawarkua',
+        specialization: 'Plumbing, Leakages & Sanitary Fixtures',
+        status: 'Available',
         eta: 'Prompt Arrival'
       },
       {
@@ -233,7 +277,27 @@ export async function GET(request) {
         photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&h=200&q=80',
         specialty: 'Bicholi & East Bypass Plumbing',
         operatingArea: 'Bicholi Mardana, Bicholi Hapsi, Silicon City, Bypass',
-        status: 'On Duty',
+        serviceArea: 'Bicholi Mardana, Bicholi Hapsi, Silicon City, Bypass',
+        locatedIn: 'Bicholi Mardana',
+        specialization: 'Plumbing, Water Motors & Pipeline Overhauls',
+        status: 'Available',
+        eta: 'Prompt Arrival'
+      },
+      {
+        id: 'TECH-IND-03',
+        name: 'Saurabh Electrician',
+        title: 'Master Electrician & POP Specialist',
+        phone: '+917869709526',
+        rating: 4.98,
+        repairsCount: 420,
+        vehicleNumber: 'Service Bike (MP 09 EA 7869)',
+        photoUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=200&h=200&q=80',
+        specialty: 'Electrician, POP and False Ceiling',
+        operatingArea: 'All over Indore',
+        serviceArea: 'All over Indore',
+        locatedIn: 'Vijay Nagar',
+        specialization: 'Electrician, POP and False Ceiling',
+        status: 'Available',
         eta: 'Prompt Arrival'
       }
     ];

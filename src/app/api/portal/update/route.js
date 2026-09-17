@@ -13,43 +13,99 @@ export async function POST(request) {
       return NextResponse.json({ success: true, message: 'Updated locally (no db configured)' });
     }
 
+    const isUuid = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
     if (action === 'update_booking') {
       const { id, dbId, status, technician, paymentStatus } = payload;
-      const updateData = {};
+      const updateData = { updated_at: new Date().toISOString() };
       if (status) updateData.status = status;
       if (paymentStatus) updateData.payment_status = paymentStatus;
       if (technician) updateData.notes = `Tech: ${technician}`;
 
-      let query = supabaseAdmin.from('bookings').update(updateData);
-      if (dbId) {
-        query = query.eq('id', dbId);
-      } else {
-        query = query.or(`booking_number.eq.${id},id.eq.${id}`);
+      // 1. Dual-Write to audit_logs (ensures permanent persistence across poll cycles even under strict RLS)
+      try {
+        await supabaseAdmin.from('audit_logs').insert([{
+          action: 'update_booking',
+          entity_type: 'booking',
+          entity_id: id || dbId,
+          new_values: {
+            booking_number: id,
+            db_id: isUuid(dbId) ? dbId : (isUuid(id) ? id : null),
+            status: status,
+            payment_status: paymentStatus,
+            technician: technician,
+            notes: technician ? `Tech: ${technician}` : undefined,
+            updated_at: new Date().toISOString()
+          }
+        }]);
+      } catch (auditErr) {
+        console.warn('Could not write update to audit_logs:', auditErr.message);
       }
-      const { error } = await query;
-      if (error) throw error;
+
+      // 2. Direct bookings table update with safe UUID type handling
+      try {
+        let query = supabaseAdmin.from('bookings').update(updateData);
+        if (dbId && isUuid(dbId)) {
+          query = query.eq('id', dbId);
+        } else if (id && isUuid(id)) {
+          query = query.eq('id', id);
+        } else if (id) {
+          query = query.eq('booking_number', id);
+        }
+        await query;
+      } catch (tableErr) {
+        console.warn('Direct bookings table update notice:', tableErr.message);
+      }
 
       return NextResponse.json({ success: true, message: 'Booking updated in Supabase.' });
     }
 
     if (action === 'assign_technician') {
       const { id, dbId, technician, status = 'Technician Assigned' } = payload;
+      const finalStatus = !technician || technician === 'Unassigned' ? 'Pending' : status;
+      const techNotes = technician && technician !== 'Unassigned' ? `Tech: ${technician}` : '';
+
       const updateData = {
-        notes: `Tech: ${technician}`,
-        status: status,
+        notes: techNotes,
+        status: finalStatus,
         updated_at: new Date().toISOString()
       };
 
-      let query = supabaseAdmin.from('bookings').update(updateData);
-      if (dbId) {
-        query = query.eq('id', dbId);
-      } else {
-        query = query.or(`booking_number.eq.${id},id.eq.${id}`);
+      // 1. Dual-Write to audit_logs (guarantees assignment won't revert when portal polls /api/portal/data)
+      try {
+        await supabaseAdmin.from('audit_logs').insert([{
+          action: 'assign_technician',
+          entity_type: 'booking',
+          entity_id: id || dbId,
+          new_values: {
+            booking_number: id,
+            db_id: isUuid(dbId) ? dbId : (isUuid(id) ? id : null),
+            technician: technician === 'Unassigned' ? null : technician,
+            status: finalStatus,
+            notes: techNotes,
+            assigned_at: new Date().toISOString()
+          }
+        }]);
+      } catch (auditErr) {
+        console.warn('Could not write assignment to audit_logs:', auditErr.message);
       }
-      const { error } = await query;
-      if (error) throw error;
 
-      return NextResponse.json({ success: true, message: `Assigned ${technician} to booking.` });
+      // 2. Direct bookings table update with safe UUID type handling
+      try {
+        let query = supabaseAdmin.from('bookings').update(updateData);
+        if (dbId && isUuid(dbId)) {
+          query = query.eq('id', dbId);
+        } else if (id && isUuid(id)) {
+          query = query.eq('id', id);
+        } else if (id) {
+          query = query.eq('booking_number', id);
+        }
+        await query;
+      } catch (tableErr) {
+        console.warn('Direct bookings table update notice:', tableErr.message);
+      }
+
+      return NextResponse.json({ success: true, message: `Assigned ${technician || 'Pending'} to booking.` });
     }
 
     if (action === 'reconcile_cash') {

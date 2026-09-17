@@ -39,7 +39,7 @@ const INITIAL_CHATS = [];
 
 // Pre-canned Quick Replies for Chatbot Monitor
 
-// Certified Indore Field Fleet: Retained Ajay Mahajan & Pankaj Sharma
+// Certified Indore Field Fleet: Ajay Mahajan, Pankaj Sharma & Saurabh Electrician
 const DEFAULT_FLEET_DATA = [
   {
     id: 'TECH-IND-01',
@@ -52,7 +52,10 @@ const DEFAULT_FLEET_DATA = [
     photoUrl: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?auto=format&fit=crop&w=200&h=200&q=80',
     specialty: 'Plumbing & South Sector Lead',
     operatingArea: 'Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi',
-    status: 'On Duty',
+    serviceArea: 'Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi',
+    locatedIn: 'Rau / Bhawarkua',
+    specialization: 'Plumbing, Leakages & Sanitary Fixtures',
+    status: 'Available',
     eta: 'Prompt Arrival'
   },
   {
@@ -66,7 +69,27 @@ const DEFAULT_FLEET_DATA = [
     photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&h=200&q=80',
     specialty: 'Bicholi & East Bypass Plumbing',
     operatingArea: 'Bicholi Mardana, Bicholi Hapsi, Silicon City, Bypass',
-    status: 'On Duty',
+    serviceArea: 'Bicholi Mardana, Bicholi Hapsi, Silicon City, Bypass',
+    locatedIn: 'Bicholi Mardana',
+    specialization: 'Plumbing, Water Motors & Pipeline Overhauls',
+    status: 'Available',
+    eta: 'Prompt Arrival'
+  },
+  {
+    id: 'TECH-IND-03',
+    name: 'Saurabh Electrician',
+    title: 'Master Electrician & POP Specialist',
+    phone: '+917869709526',
+    rating: 4.98,
+    repairsCount: 420,
+    vehicleNumber: 'Service Bike (MP 09 EA 7869)',
+    photoUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=200&h=200&q=80',
+    specialty: 'Electrician, POP and False Ceiling',
+    operatingArea: 'All over Indore',
+    serviceArea: 'All over Indore',
+    locatedIn: 'Vijay Nagar',
+    specialization: 'Electrician, POP and False Ceiling',
+    status: 'Available',
     eta: 'Prompt Arrival'
   }
 ];
@@ -165,10 +188,10 @@ function normalizeBookingRecord(b) {
   const price = Number(b.price ?? b.amount ?? b.total_amount ?? b.subtotal ?? 499);
   const scheduledDate = b.scheduledDate || b.scheduled_date || b.booking_date || (b.createdAt ? b.createdAt.split('T')[0] : (b.created_at ? b.created_at.split('T')[0] : 'Today'));
   const timeSlot = b.timeSlot || b.time_slot || b.booking_slot || (b.time?.includes(',') ? b.time.split(',')[1]?.trim() : (b.time || 'Standard Slot'));
-  const status = b.status || 'Technician Assigned';
+  const status = b.status || 'Pending';
   const notes = b.notes || b.description || '';
   const priority = b.priority || (notes?.toLowerCase().includes('urgent') ? 'Urgent' : 'High');
-  const assignedTechnician = b.assignedTechnician || b.technician || (notes?.includes('Tech:') ? notes.split('Tech:')[1]?.trim() : (status === 'In Progress' ? 'Ajay Mahajan' : 'Pending Allocation'));
+  const assignedTechnician = b.assignedTechnician || b.technician || (notes?.includes('Tech:') ? notes.split('Tech:')[1]?.trim() : '');
   const paymentStatus = b.paymentStatus || b.payment_status || 'Pending (Pay on Completion)';
   const paymentMethod = b.paymentMethod || b.payment_method || 'Cash / UPI on Doorstep';
   const paymentRef = b.paymentRef || b.payment_ref || null;
@@ -270,9 +293,12 @@ export default function OpsPortalClient() {
     name: '',
     phone: '',
     specialty: 'Plumbing & Leakages',
+    specialization: 'Plumbing, Leakages & Sanitary Fixtures',
+    locatedIn: 'Vijay Nagar',
+    serviceArea: 'All over Indore',
     vehicleNumber: 'Service Bike (MP 09)',
-    operatingArea: 'Vijay Nagar, Palasia',
-    status: 'On Duty'
+    operatingArea: 'All over Indore',
+    status: 'Available'
   });
 
   // Dynamically compute real-time metrics for each technician from Supabase bookings
@@ -330,20 +356,27 @@ export default function OpsPortalClient() {
 
   // Assign Technician to Booking
   const assignTechnicianToBooking = async (bookingId, technicianName) => {
+    let targetDbId = null;
+    const isUnassigned = !technicianName || technicianName === 'Unassigned';
+    const finalTech = isUnassigned ? '' : technicianName;
+    const finalStatus = isUnassigned ? 'Pending' : 'Technician Assigned';
+
     const updated = bookings.map(b => {
-      if (b.id === bookingId || b.booking_number === bookingId) {
+      if (b.id === bookingId || b.booking_number === bookingId || b.dbId === bookingId) {
+        targetDbId = b.dbId;
         return {
           ...b,
-          assignedTechnician: technicianName,
-          technician: technicianName,
-          status: technicianName === 'Unassigned' ? 'Pending' : (b.status === 'Pending' ? 'Technician Assigned' : b.status),
-          notes: technicianName === 'Unassigned' ? '' : `Tech: ${technicianName}`
+          assignedTechnician: finalTech,
+          technician: finalTech,
+          status: finalStatus,
+          notes: isUnassigned ? '' : `Tech: ${finalTech}`
         };
       }
       return b;
     });
     setBookings(updated);
-    showNotice(`✓ Assigned ${technicianName} to #${bookingId}`);
+    persistState(updated);
+    showNotice(isUnassigned ? `Booking #${bookingId} marked as Pending` : `✓ Assigned ${technicianName} to #${bookingId}`);
 
     try {
       await fetch('/api/portal/update', {
@@ -353,8 +386,9 @@ export default function OpsPortalClient() {
           action: 'assign_technician',
           payload: {
             id: bookingId,
-            technician: technicianName,
-            status: technicianName === 'Unassigned' ? 'Pending' : 'Technician Assigned'
+            dbId: targetDbId,
+            technician: finalTech || null,
+            status: finalStatus
           }
         })
       });
@@ -404,15 +438,18 @@ export default function OpsPortalClient() {
     const newTech = {
       id: `TECH-IND-0${technicians.length + 1}`,
       name: newTechForm.name.trim(),
-      title: `${newTechForm.specialty} Technician`,
+      title: `${newTechForm.specialization || newTechForm.specialty} Specialist`,
       phone: newTechForm.phone.trim(),
       rating: 4.95,
       repairsCount: 10,
       vehicleNumber: newTechForm.vehicleNumber.trim() || 'Service Bike (MP 09)',
       photoUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&h=200&q=80',
-      specialty: newTechForm.specialty,
-      operatingArea: newTechForm.operatingArea.trim() || 'All Indore Sectors',
-      status: newTechForm.status || 'On Duty',
+      specialty: newTechForm.specialization || newTechForm.specialty,
+      specialization: newTechForm.specialization || newTechForm.specialty,
+      operatingArea: newTechForm.serviceArea || newTechForm.operatingArea || 'All over Indore',
+      serviceArea: newTechForm.serviceArea || newTechForm.operatingArea || 'All over Indore',
+      locatedIn: newTechForm.locatedIn || 'Indore',
+      status: newTechForm.status || 'Available',
       eta: 'Prompt Arrival'
     };
     setTechnicians(prev => [newTech, ...prev]);
@@ -421,9 +458,12 @@ export default function OpsPortalClient() {
       name: '',
       phone: '',
       specialty: 'Plumbing & Leakages',
+      specialization: 'Plumbing, Leakages & Sanitary Fixtures',
+      locatedIn: 'Vijay Nagar',
+      serviceArea: 'All over Indore',
       vehicleNumber: 'Service Bike (MP 09)',
-      operatingArea: 'Vijay Nagar, Palasia',
-      status: 'On Duty'
+      operatingArea: 'All over Indore',
+      status: 'Available'
     });
     showNotice(`✓ Registered ${newTech.name} to Field Fleet!`);
   };
@@ -1042,8 +1082,12 @@ export default function OpsPortalClient() {
 
   // Status Updater
   const updateBookingStatus = (bookingId, newStatus) => {
+    let targetDbId = null;
+    let targetTech = null;
     const updated = bookings.map(b => {
-      if (b.id === bookingId) {
+      if (b.id === bookingId || b.booking_number === bookingId || b.dbId === bookingId) {
+        targetDbId = b.dbId;
+        targetTech = b.assignedTechnician || b.technician;
         return {
           ...b,
           status: newStatus,
@@ -1056,7 +1100,6 @@ export default function OpsPortalClient() {
     persistState(updated);
 
     // Persist status update to Supabase
-    const targetBooking = bookings.find(b => b.id === bookingId);
     fetch('/api/portal/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1064,7 +1107,8 @@ export default function OpsPortalClient() {
         action: 'update_booking',
         payload: {
           id: bookingId,
-          dbId: targetBooking?.dbId,
+          dbId: targetDbId,
+          technician: targetTech,
           status: newStatus,
           paymentStatus: newStatus === 'Completed' ? 'Paid' : undefined
         }
@@ -2204,14 +2248,18 @@ export default function OpsPortalClient() {
 
                             <td className="py-4 px-4 whitespace-nowrap">
                               <select
-                                value={b.assignedTechnician || 'Unassigned'}
+                                value={
+                                  !b.assignedTechnician || b.assignedTechnician === 'Pending Allocation' || b.assignedTechnician === 'Unassigned'
+                                    ? 'Unassigned'
+                                    : b.assignedTechnician
+                                }
                                 onChange={(e) => assignTechnicianToBooking(b.id, e.target.value)}
                                 className="text-xs font-bold px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white text-slate-800 focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-2xs transition-all"
                               >
                                 <option value="Unassigned">⚠️ Pending Allocation</option>
                                 {liveTechnicians.map(t => (
                                   <option key={t.id || t.name} value={t.name}>
-                                    👷 {t.name} ({t.specialty || 'Pro'})
+                                    👷 {t.name} ({t.specialization || t.specialty || 'Pro'})
                                   </option>
                                 ))}
                               </select>
@@ -2803,17 +2851,47 @@ export default function OpsPortalClient() {
                         </div>
 
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                          tech.status === 'On Duty'
+                          tech.status === 'Available' || tech.status === 'On Duty'
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : 'bg-slate-100 text-slate-600 border border-slate-200'
                         }`}>
-                          {tech.status}
+                          ● {tech.status || 'Available'}
                         </span>
                       </div>
 
-                      {/* Contact & Vehicle Info */}
-                      <div className="mt-3 pt-3 border-t border-slate-100 space-y-1.5 text-xs">
-                        <div className="flex items-center justify-between text-slate-600">
+                      {/* 3 Core Metadata Attributes: Service Area, Located in, Specialization */}
+                      <div className="mt-3 pt-3 border-t border-slate-100 space-y-2 text-xs">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="flex items-center gap-1.5 font-bold text-slate-500 shrink-0">
+                            <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            <span>Located in:</span>
+                          </span>
+                          <span className="font-bold text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md text-right">
+                            {tech.locatedIn || tech.location || 'Indore'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="flex items-center gap-1.5 font-bold text-slate-500 shrink-0">
+                            <Truck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                            <span>Service Area:</span>
+                          </span>
+                          <span className="font-semibold text-slate-800 text-right max-w-[210px] truncate" title={tech.serviceArea || tech.operatingArea}>
+                            {tech.serviceArea || tech.operatingArea || 'All over Indore'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="flex items-center gap-1.5 font-bold text-slate-500 shrink-0">
+                            <Wrench className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>Specialization:</span>
+                          </span>
+                          <span className="font-bold text-emerald-900 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md text-right max-w-[220px]">
+                            {tech.specialization || tech.specialty || 'General Maintenance'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-slate-600 pt-1 border-t border-slate-50">
                           <span className="flex items-center gap-1.5 text-slate-500">
                             <Phone className="w-3.5 h-3.5 text-emerald-600" /> Phone:
                           </span>
@@ -2823,17 +2901,9 @@ export default function OpsPortalClient() {
                         </div>
                         <div className="flex items-center justify-between text-slate-600">
                           <span className="flex items-center gap-1.5 text-slate-500">
-                            <Truck className="w-3.5 h-3.5 text-slate-400" /> Vehicle:
+                            <Shield className="w-3.5 h-3.5 text-slate-400" /> Vehicle:
                           </span>
                           <span className="font-mono font-medium text-slate-800">{tech.vehicleNumber}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-slate-600">
-                          <span className="flex items-center gap-1.5 text-slate-500">
-                            <MapPin className="w-3.5 h-3.5 text-amber-500" /> Hubs:
-                          </span>
-                          <span className="font-medium text-slate-800 text-right truncate max-w-[180px]" title={tech.operatingArea}>
-                            {tech.operatingArea}
-                          </span>
                         </div>
                       </div>
 
@@ -3156,18 +3226,39 @@ export default function OpsPortalClient() {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-bold mb-1">Trade Specialty</label>
-                <select
-                  value={newTechForm.specialty}
-                  onChange={(e) => setNewTechForm(prev => ({ ...prev, specialty: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium cursor-pointer"
-                >
-                  <option value="Plumbing & Leakages">Plumbing & Leakages</option>
-                  <option value="Electrical & MCB Safety">Electrical & MCB Safety</option>
-                  <option value="AC Foam Jet & Gas Refill">AC Foam Jet & Gas Refill</option>
-                  <option value="Drain Blockage & Water Motors">Drain Blockage & Water Motors</option>
-                  <option value="Geyser, Fridge & RO Purifier">Home Appliances</option>
-                </select>
+                <label className="block text-slate-700 font-bold mb-1">Located in (Residential Area) *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Vijay Nagar"
+                  value={newTechForm.locatedIn}
+                  onChange={(e) => setNewTechForm(prev => ({ ...prev, locatedIn: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Service Area (Coverage Territory) *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. All over Indore"
+                  value={newTechForm.serviceArea}
+                  onChange={(e) => setNewTechForm(prev => ({ ...prev, serviceArea: e.target.value, operatingArea: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Specialization (Skills & Trades) *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Electrician, POP and False Ceiling"
+                  value={newTechForm.specialization}
+                  onChange={(e) => setNewTechForm(prev => ({ ...prev, specialization: e.target.value, specialty: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                />
               </div>
 
               <div>
@@ -3177,17 +3268,6 @@ export default function OpsPortalClient() {
                   placeholder="e.g. Service Bike (MP 09 XY 5678)"
                   value={newTechForm.vehicleNumber}
                   onChange={(e) => setNewTechForm(prev => ({ ...prev, vehicleNumber: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 font-bold mb-1">Operating Localities / Zones</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Vijay Nagar, Palasia, Sudama Nagar"
-                  value={newTechForm.operatingArea}
-                  onChange={(e) => setNewTechForm(prev => ({ ...prev, operatingArea: e.target.value }))}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
                 />
               </div>

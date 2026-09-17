@@ -242,9 +242,8 @@ export async function POST(request) {
     const primaryServiceName = validatedItems.map(i => i.serviceName).filter((v, i, a) => a.indexOf(v) === i).join(' + ');
     const primaryPackageTitle = validatedItems.map(i => i.packageTitle).join(' | ');
 
-    // Automatic Technician Dispatch Assignment based on Locality / Corridor
-    const autoTech = resolveAutoDispatchTechnician(address, pincode);
-    const techNotes = `Tech: ${autoTech.name} (${autoTech.phone}) | Auto-Dispatched for ${autoTech.localityMatch}${description ? ` | Notes: ${description}` : ''}`;
+    // Manual Dispatch Mode: All new bookings default to 'Pending' without auto-assignment
+    const rawNotes = description ? description.trim() : '';
 
     const supabaseAdmin = getAdminClient();
 
@@ -260,17 +259,17 @@ export async function POST(request) {
       time_slot: slot,
       service_name: primaryServiceName,
       package_title: primaryPackageTitle,
-      status: 'Technician Assigned',
+      status: 'Pending',
       payment_status: 'Pending (Pay on Completion)',
       payment_method: 'Cash / UPI on Doorstep',
       subtotal: subtotal,
       parts_cost: 0,
       total_amount: totalAmount,
       price: totalAmount,
-      assignedTechnician: autoTech.name,
-      technician: autoTech.name,
-      technicianPhone: autoTech.phone,
-      notes: techNotes,
+      assignedTechnician: null,
+      technician: null,
+      technicianPhone: null,
+      notes: rawNotes,
       created_at: new Date().toISOString()
     };
 
@@ -291,13 +290,13 @@ export async function POST(request) {
             time_slot: slot,
             service_name: primaryServiceName,
             package_title: primaryPackageTitle,
-            status: 'Technician Assigned',
+            status: 'Pending',
             payment_status: 'Pending (Pay on Completion)',
             payment_method: 'Cash / UPI on Doorstep',
             subtotal: subtotal,
             parts_cost: 0,
             total_amount: totalAmount,
-            notes: techNotes
+            notes: rawNotes
           })
           .select()
           .single();
@@ -327,10 +326,10 @@ export async function POST(request) {
             paymentMethod: dbBooking.payment_method
           };
 
-          // Log the Visit & Auto-Dispatch Event in Supabase audit_logs
+          // Log Booking Creation in Supabase audit_logs
           try {
             await supabaseAdmin.from('audit_logs').insert({
-              action: 'technician_auto_dispatch',
+              action: 'booking_created',
               entity_type: 'booking',
               entity_id: dbBooking.id,
               new_values: {
@@ -339,20 +338,18 @@ export async function POST(request) {
                 customer_phone: cleanedPhone,
                 service_address: address.trim(),
                 pincode: pincode || '452010',
-                assigned_technician: autoTech.name,
-                technician_phone: autoTech.phone,
-                operational_zone: autoTech.zone,
-                locality_matched: autoTech.localityMatch,
+                status: 'Pending',
+                assigned_technician: null,
                 scheduled_date: scheduledDate,
                 time_slot: slot,
                 total_amount: totalAmount,
-                dispatched_at: new Date().toISOString()
+                created_at: new Date().toISOString()
               },
               ip_address: ip
             });
-            console.log(`[Auto-Dispatch Visit Logged] #${randomBookingNumber} -> ${autoTech.name} (${autoTech.phone})`);
+            console.log(`[Booking Created - Pending Manual Dispatch] #${randomBookingNumber}`);
           } catch (logErr) {
-            console.warn('[Auto-Dispatch Audit Notice] Could not log visit to audit_logs:', logErr.message);
+            console.warn('[Booking Audit Notice] Could not log booking to audit_logs:', logErr.message);
           }
 
           // Insert itemized booking records
@@ -432,12 +429,9 @@ export async function POST(request) {
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${address.trim()} (Pincode: ${pincode || '452010'})</td>
               </tr>
               <tr>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Auto-Dispatched Tech:</td>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">
-                  👷 ${autoTech.name} (<a href="tel:${autoTech.phone.replace(/\s+/g, '')}" style="color: #2563eb; text-decoration: none;">${autoTech.phone}</a>)
-                  <span style="display: block; font-size: 11px; font-weight: normal; color: #64748b; margin-top: 2px;">
-                    📍 Zone: ${autoTech.zone} (${autoTech.localityMatch}) • Vehicle: ${autoTech.vehicle}
-                  </span>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Dispatch Status:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #d97706;">
+                  ⚠️ Pending Dispatch (Manual Allocation from Ops Portal)
                 </td>
               </tr>
               <tr>
@@ -451,7 +445,7 @@ export async function POST(request) {
             </table>
             <div style="text-align: center; margin-top: 16px;">
               <a href="https://www.plumberindore.in/portal-indore-ops-9821" style="background-color: #0f172a; color: #ffffff; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 13px; display: inline-block;">
-                Open Indore Ops Console →
+                Open Indore Ops Console to Assign Technician →
               </a>
             </div>
           </div>
@@ -459,7 +453,7 @@ export async function POST(request) {
       `;
 
       // Customer Confirmation HTML
-      const customerEmailSubject = `[PlumberIndore Booking Confirmed] #${bookingNo} - ${primaryServiceName}`;
+      const customerEmailSubject = `[PlumberIndore Booking Received] #${bookingNo} - ${primaryServiceName}`;
       const customerEmailHtml = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 620px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff; color: #0f172a;">
           <div style="background-color: #0f172a; padding: 20px; text-align: center; border-radius: 12px 12px 0 0;">
@@ -469,10 +463,10 @@ export async function POST(request) {
           <div style="padding: 24px 16px;">
             <div style="text-align: center; margin-bottom: 20px;">
               <span style="background-color: #ecfdf5; color: #047857; font-size: 12px; font-weight: 800; padding: 6px 14px; border-radius: 9999px; border: 1px solid #a7f3d0;">
-                ✓ BOOKING CONFIRMED (#${bookingNo})
+                ✓ BOOKING RECEIVED (#${bookingNo})
               </span>
-              <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 12px 0 4px 0;">Doorstep Technician Assigned!</h2>
-              <p style="font-size: 13px; color: #64748b; margin: 0;">Hello ${name.trim()}, your doorstep appointment has been confirmed.</p>
+              <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 12px 0 4px 0;">Appointment Confirmed!</h2>
+              <p style="font-size: 13px; color: #64748b; margin: 0;">Hello ${name.trim()}, your doorstep appointment request has been scheduled.</p>
             </div>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #f8fafc; border-radius: 12px; font-size: 13px;">
               <tr>
@@ -488,9 +482,9 @@ export async function POST(request) {
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${address.trim()} (${pincode || 'Indore'})</td>
               </tr>
               <tr>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Assigned Technician:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Technician Allocation:</td>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">
-                  👷 ${autoTech.name} (${autoTech.phone})
+                  👷 Verified field professional will be dispatched shortly by our ops team
                 </td>
               </tr>
               <tr>
@@ -534,19 +528,13 @@ export async function POST(request) {
       success: true,
       booking: createdBookingRecord,
       validatedPricing: pricing,
-      assignedTechnician: {
-        name: autoTech.name,
-        phone: autoTech.phone,
-        zone: autoTech.zone,
-        locality: autoTech.localityMatch,
-        vehicle: autoTech.vehicle
-      },
-      visitLogged: true,
+      status: 'Pending',
+      assignedTechnician: null,
       emailDispatch: {
         adminAlert: adminEmailResult,
         customerConfirmation: customerEmailResult
       },
-      message: `Booking created and automatically dispatched to ${autoTech.name} (${autoTech.phone}).`
+      message: 'Booking created successfully. Defaulted to Pending for manual dispatch.'
     });
 
   } catch (err) {
