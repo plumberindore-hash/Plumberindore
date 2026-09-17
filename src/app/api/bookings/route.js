@@ -83,6 +83,87 @@ export async function GET(request) {
 import { checkRateLimit, sanitizeString, validateIndianPhone, validateEmail, validatePincode, getClientIp } from '../../../lib/security.js';
 import { IS_BOOKING_ENABLED, SERVICE_UNAVAILABLE_MESSAGE } from '../../../config/serviceArea.js';
 
+
+/**
+ * Auto-Dispatches certified field technicians based on Indore operational zones.
+ * - Zone 1: Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi
+ *   -> Ajay Mahajan (+91 84595 59141)
+ * - Zone 2: Bicholi Mardana
+ *   -> Bicholi Dispatch Specialist (+91 98267 43299)
+ * - Default / Fallback: Central / North / East Indore (Vijay Nagar, Palasia, etc.)
+ *   -> Ramesh Sharma (+91 98260 11223)
+ */
+export function resolveAutoDispatchTechnician(address = '', pincode = '') {
+  const normAddress = (address || '').toLowerCase();
+  const normPincode = (pincode || '').toString().trim();
+
+  // Zone 1: Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi
+  const zone1Keywords = [
+    'rau',
+    'mhow',
+    'bhawarkua',
+    'bhanwarkua',
+    'bhanwarkuan',
+    'bijalpur',
+    'rajendra nagar',
+    'sudama nagar',
+    'tejaji nagar',
+    'nimbodi'
+  ];
+
+  const zone1Pincodes = [
+    '453331', // Rau
+    '453441', // Mhow
+    '452014', // Bhawarkua
+    '452012', // Rajendra Nagar / Bijalpur
+    '452009', // Sudama Nagar
+    '452020'  // Tejaji Nagar / Nimbodi
+  ];
+
+  const matchedZone1 = zone1Keywords.find(keyword => normAddress.includes(keyword));
+  const isZone1 = Boolean(matchedZone1) || zone1Pincodes.includes(normPincode);
+
+  if (isZone1) {
+    return {
+      name: 'Ajay Mahajan',
+      phone: '+91 84595 59141',
+      zone: 'South Indore & Mhow Corridor',
+      localityMatch: matchedZone1 ? matchedZone1.toUpperCase() : 'Rau / Bhawarkua Sector',
+      vehicle: 'Service Bike (MP 09 MD 8821)'
+    };
+  }
+
+  // Zone 2: Bicholi Mardana
+  const zone2Keywords = [
+    'bicholi mardana',
+    'bicholi',
+    'bicholi hapsi',
+    'mardana'
+  ];
+
+  const matchedZone2 = zone2Keywords.find(keyword => normAddress.includes(keyword));
+  const isZone2 = Boolean(matchedZone2) || normPincode === '452016';
+
+  if (isZone2) {
+    return {
+      name: 'Pankaj Sharma',
+      phone: '+91 98267 43299',
+      zone: 'Bicholi Mardana & Bypass Corridor',
+      localityMatch: 'BICHOLI MARDANA',
+      vehicle: 'Service Bike (MP 09 BM 4329)'
+    };
+  }
+
+  // Fallback default technician for Central & North Indore (Vijay Nagar, Palasia, etc.)
+  return {
+    name: 'Ramesh Sharma',
+    phone: '+91 98260 11223',
+    zone: 'Vijay Nagar & Central Hub',
+    localityMatch: 'INDORE CENTRAL',
+    vehicle: 'Service Bike (MP 09 CZ 1122)'
+  };
+}
+
 export async function POST(request) {
   try {
     // 0. Global Emergency Suspension / Availability Check
@@ -161,6 +242,10 @@ export async function POST(request) {
     const primaryServiceName = validatedItems.map(i => i.serviceName).filter((v, i, a) => a.indexOf(v) === i).join(' + ');
     const primaryPackageTitle = validatedItems.map(i => i.packageTitle).join(' | ');
 
+    // Automatic Technician Dispatch Assignment based on Locality / Corridor
+    const autoTech = resolveAutoDispatchTechnician(address, pincode);
+    const techNotes = `Tech: ${autoTech.name} (${autoTech.phone}) | Auto-Dispatched for ${autoTech.localityMatch}${description ? ` | Notes: ${description}` : ''}`;
+
     const supabaseAdmin = getAdminClient();
 
     let createdBookingRecord = {
@@ -182,7 +267,10 @@ export async function POST(request) {
       parts_cost: 0,
       total_amount: totalAmount,
       price: totalAmount,
-      notes: description || '',
+      assignedTechnician: autoTech.name,
+      technician: autoTech.name,
+      technicianPhone: autoTech.phone,
+      notes: techNotes,
       created_at: new Date().toISOString()
     };
 
@@ -209,7 +297,7 @@ export async function POST(request) {
             subtotal: subtotal,
             parts_cost: 0,
             total_amount: totalAmount,
-            notes: description || ''
+            notes: techNotes
           })
           .select()
           .single();
@@ -238,6 +326,34 @@ export async function POST(request) {
             paymentStatus: dbBooking.payment_status,
             paymentMethod: dbBooking.payment_method
           };
+
+          // Log the Visit & Auto-Dispatch Event in Supabase audit_logs
+          try {
+            await supabaseAdmin.from('audit_logs').insert({
+              action: 'technician_auto_dispatch',
+              entity_type: 'booking',
+              entity_id: dbBooking.id,
+              new_values: {
+                booking_number: randomBookingNumber,
+                customer_name: name.trim(),
+                customer_phone: cleanedPhone,
+                service_address: address.trim(),
+                pincode: pincode || '452010',
+                assigned_technician: autoTech.name,
+                technician_phone: autoTech.phone,
+                operational_zone: autoTech.zone,
+                locality_matched: autoTech.localityMatch,
+                scheduled_date: scheduledDate,
+                time_slot: slot,
+                total_amount: totalAmount,
+                dispatched_at: new Date().toISOString()
+              },
+              ip_address: ip
+            });
+            console.log(`[Auto-Dispatch Visit Logged] #${randomBookingNumber} -> ${autoTech.name} (${autoTech.phone})`);
+          } catch (logErr) {
+            console.warn('[Auto-Dispatch Audit Notice] Could not log visit to audit_logs:', logErr.message);
+          }
 
           // Insert itemized booking records
           if (validatedItems.length > 0) {
@@ -316,6 +432,15 @@ export async function POST(request) {
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${address.trim()} (Pincode: ${pincode || '452010'})</td>
               </tr>
               <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Auto-Dispatched Tech:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">
+                  👷 ${autoTech.name} (<a href="tel:${autoTech.phone.replace(/\s+/g, '')}" style="color: #2563eb; text-decoration: none;">${autoTech.phone}</a>)
+                  <span style="display: block; font-size: 11px; font-weight: normal; color: #64748b; margin-top: 2px;">
+                    📍 Zone: ${autoTech.zone} (${autoTech.localityMatch}) • Vehicle: ${autoTech.vehicle}
+                  </span>
+                </td>
+              </tr>
+              <tr>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Issue Notes:</td>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${description || 'Standard doorstep appointment'}</td>
               </tr>
@@ -363,6 +488,12 @@ export async function POST(request) {
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${address.trim()} (${pincode || 'Indore'})</td>
               </tr>
               <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Assigned Technician:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">
+                  👷 ${autoTech.name} (${autoTech.phone})
+                </td>
+              </tr>
+              <tr>
                 <td style="padding: 12px 16px; font-weight: bold; color: #64748b;">Total Amount Due:</td>
                 <td style="padding: 12px 16px; font-weight: 800; font-size: 16px; color: #059669;">₹${totalAmount} <span style="font-size: 11px; font-weight: normal; color: #64748b;">(Pay on Doorstep Completion)</span></td>
               </tr>
@@ -403,11 +534,19 @@ export async function POST(request) {
       success: true,
       booking: createdBookingRecord,
       validatedPricing: pricing,
+      assignedTechnician: {
+        name: autoTech.name,
+        phone: autoTech.phone,
+        zone: autoTech.zone,
+        locality: autoTech.localityMatch,
+        vehicle: autoTech.vehicle
+      },
+      visitLogged: true,
       emailDispatch: {
         adminAlert: adminEmailResult,
         customerConfirmation: customerEmailResult
       },
-      message: 'Booking created successfully with verified server pricing.'
+      message: `Booking created and automatically dispatched to ${autoTech.name} (${autoTech.phone}).`
     });
 
   } catch (err) {

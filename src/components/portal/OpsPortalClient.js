@@ -110,7 +110,35 @@ const DEFAULT_FLEET_DATA = [
     operatingArea: 'Central Indore & All Localities',
     status: 'On Duty',
     eta: 'Prompt Arrival'
-  }
+  },
+      {
+        id: 'TECH-IND-06',
+        name: 'Ajay Mahajan',
+        title: 'Lead Plumber & Sanitary Tech (South Corridor)',
+        phone: '+91 84595 59141',
+        rating: 4.96,
+        repairsCount: 610,
+        vehicleNumber: 'Service Bike (MP 09 MD 8821)',
+        photoUrl: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?auto=format&fit=crop&w=200&h=200&q=80',
+        specialty: 'Plumbing & South Sector Lead',
+        operatingArea: 'Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi',
+        status: 'On Duty',
+        eta: 'Prompt Arrival'
+      },
+      {
+        id: 'TECH-IND-07',
+        name: 'Pankaj Sharma',
+        title: 'Bicholi & Bypass Lead Technician',
+        phone: '+91 98267 43299',
+        rating: 4.94,
+        repairsCount: 390,
+        vehicleNumber: 'Service Bike (MP 09 BM 4329)',
+        photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&h=200&q=80',
+        specialty: 'Bicholi & East Bypass Plumbing',
+        operatingArea: 'Bicholi Mardana, Bicholi Hapsi, Silicon City, Bypass',
+        status: 'On Duty',
+        eta: 'Prompt Arrival'
+      },
 ];
 
 const QUICK_REPLIES = [
