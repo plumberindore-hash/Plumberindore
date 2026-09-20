@@ -299,12 +299,66 @@ export async function GET(request) {
         specialization: 'Electrician, POP and False Ceiling',
         status: 'Available',
         eta: 'Prompt Arrival'
+      },
+      {
+        id: 'TECH-IND-04',
+        name: 'Saifee Khozema',
+        title: 'Senior Refrigerator & Cold Appliance Specialist',
+        phone: '+91 98267 27487',
+        rating: 4.97,
+        repairsCount: 380,
+        vehicleNumber: 'Service Bike (MP 09 SK 2748)',
+        photoUrl: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&h=200&q=80',
+        specialty: 'Refrigerator Repair Work',
+        operatingArea: 'All areas (provides home services across the city)',
+        serviceArea: 'All areas (provides home services across the city)',
+        locatedIn: 'Khatiwala Tank, Indore, Madhya Pradesh',
+        specialization: 'Refrigerator Repair Work',
+        status: 'Available',
+        eta: 'Prompt Arrival'
       }
     ];
 
+    // Hydrate any additional dynamic technicians registered in Supabase audit_logs
+    let dynamicTechs = [];
+    try {
+      const { data: techLogs = [] } = await supabaseAdmin
+        .from('audit_logs')
+        .select('*')
+        .eq('action', 'register_technician')
+        .order('created_at', { ascending: true });
+
+      techLogs.forEach(log => {
+        const v = log.new_values;
+        if (v && v.name && !DEFAULT_FLEET.some(t => t.name.toLowerCase() === v.name.toLowerCase() || (v.phone && t.phone.includes(v.phone.replace(/[^0-9]/g, ''))))) {
+          dynamicTechs.push({
+            id: v.id || `TECH-IND-${String(DEFAULT_FLEET.length + dynamicTechs.length + 1).padStart(2, '0')}`,
+            name: v.name,
+            title: v.title || `${v.specialization || v.specialty || 'Service'} Specialist`,
+            phone: v.phone || v.raw_phone,
+            rating: Number(v.rating) || 4.95,
+            repairsCount: Number(v.repairs_count) || 100,
+            vehicleNumber: v.vehicle_number || 'Service Bike',
+            photoUrl: v.photo_url || 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&h=200&q=80',
+            specialty: v.specialty || v.specialization || 'Home Appliances',
+            operatingArea: v.service_area || v.operating_area || 'All over Indore',
+            serviceArea: v.service_area || v.operating_area || 'All over Indore',
+            locatedIn: v.located_in || 'Indore',
+            specialization: v.specialization || v.specialty || 'Home Appliances',
+            status: v.status || 'Available',
+            eta: v.eta || 'Prompt Arrival'
+          });
+        }
+      });
+    } catch (techErr) {
+      console.warn('Notice reading dynamic technicians from audit_logs:', techErr.message);
+    }
+
+    const mergedFleet = [...DEFAULT_FLEET, ...dynamicTechs];
+
     const todayStr = new Date().toISOString().split('T')[0];
 
-    const technicians = DEFAULT_FLEET.map(tech => {
+    const technicians = mergedFleet.map(tech => {
       const assigned = bookings.filter(b => {
         const assignedName = (b.assignedTechnician || '').toLowerCase();
         const techName = tech.name.toLowerCase();

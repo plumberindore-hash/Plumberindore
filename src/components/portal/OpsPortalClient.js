@@ -91,6 +91,23 @@ const DEFAULT_FLEET_DATA = [
     specialization: 'Electrician, POP and False Ceiling',
     status: 'Available',
     eta: 'Prompt Arrival'
+  },
+  {
+    id: 'TECH-IND-04',
+    name: 'Saifee Khozema',
+    title: 'Senior Refrigerator & Cold Appliance Specialist',
+    phone: '+91 98267 27487',
+    rating: 4.97,
+    repairsCount: 380,
+    vehicleNumber: 'Service Bike (MP 09 SK 2748)',
+    photoUrl: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&h=200&q=80',
+    specialty: 'Refrigerator Repair Work',
+    operatingArea: 'All areas (provides home services across the city)',
+    serviceArea: 'All areas (provides home services across the city)',
+    locatedIn: 'Khatiwala Tank, Indore, Madhya Pradesh',
+    specialization: 'Refrigerator Repair Work',
+    status: 'Available',
+    eta: 'Prompt Arrival'
   }
 ];
 
@@ -2800,11 +2817,18 @@ export default function OpsPortalClient() {
                     <option value="AC Foam Jet & Gas Refill">AC Foam Jet & Gas Refill</option>
                     <option value="Drain Blockage & Water Motors">Drain Blockage & Water Motors</option>
                     <option value="Geyser, Fridge & RO Purifier">Home Appliances</option>
+                    <option value="Refrigerator Repair Work">Refrigerator Repair Work</option>
                   </select>
                 </div>
 
                 <span className="text-xs text-slate-500 font-medium">
-                  Showing {liveTechnicians.filter(t => techFilterSpecialty === 'All Specialties' || t.specialty === techFilterSpecialty).length} of {liveTechnicians.length} field professionals
+                  Showing {liveTechnicians.filter(t => 
+                    techFilterSpecialty === 'All Specialties' || 
+                    t.specialty === techFilterSpecialty || 
+                    t.specialization === techFilterSpecialty ||
+                    (t.specialization && t.specialization.toLowerCase().includes(techFilterSpecialty.toLowerCase())) ||
+                    (t.specialty && t.specialty.toLowerCase().includes(techFilterSpecialty.toLowerCase()))
+                  ).length} of {liveTechnicians.length} field professionals
                 </span>
               </div>
 
@@ -2820,7 +2844,13 @@ export default function OpsPortalClient() {
             {/* Technician Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               {liveTechnicians
-                .filter(t => techFilterSpecialty === 'All Specialties' || t.specialty === techFilterSpecialty)
+                .filter(t => 
+                  techFilterSpecialty === 'All Specialties' || 
+                  t.specialty === techFilterSpecialty || 
+                  t.specialization === techFilterSpecialty ||
+                  (t.specialization && t.specialization.toLowerCase().includes(techFilterSpecialty.toLowerCase())) ||
+                  (t.specialty && t.specialty.toLowerCase().includes(techFilterSpecialty.toLowerCase()))
+                )
                 .map((tech) => (
                   <div
                     key={tech.id}
