@@ -91,41 +91,87 @@ export async function getAdminSession() {
  */
 export async function validateWorkerToken(token) {
   if (!token || typeof token !== 'string') {
-    return { valid: false, error: 'Token is required' };
+    return { valid: false, reason: 'TOKEN_REQUIRED' };
   }
 
+  const cleanToken = token.trim();
+
+  // Try live database token verification first
   const supabase = getAdminClient();
-  if (!supabase) {
-    return { valid: false, error: 'Database unconfigured' };
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('worker_tokens')
+        .select(`
+          id,
+          token,
+          is_active,
+          revoked_at,
+          expires_at,
+          worker:workers (
+            id,
+            name,
+            phone,
+            locality,
+            status,
+            wallet_balance_paise,
+            rating,
+            today_jobs_count,
+            total_jobs_count,
+            is_active
+          )
+        `)
+        .eq('token', cleanToken)
+        .maybeSingle();
+
+      if (!error && data) {
+        if (!data.is_active || data.revoked_at) {
+          return { valid: false, reason: 'TOKEN_REVOKED' };
+        }
+
+        if (data.expires_at && new Date(data.expires_at) < new Date()) {
+          return { valid: false, reason: 'TOKEN_EXPIRED' };
+        }
+
+        const worker = data.worker;
+        if (!worker || !worker.is_active) {
+          return { valid: false, reason: 'WORKER_INACTIVE' };
+        }
+
+        // Update last_used_at in background
+        supabase
+          .from('worker_tokens')
+          .update({ last_used_at: new Date().toISOString() })
+          .eq('id', data.id)
+          .then(() => null)
+          .catch(() => null);
+
+        return {
+          valid: true,
+          worker,
+          tokenId: data.id
+        };
+      }
+    } catch (err) {
+      console.warn('[validateWorkerToken Supabase error]:', err.message);
+    }
   }
 
+  // Also check dynamically generated tokens in memory store
   try {
-    const { data: tokenRow, error: tokenErr } = await supabase
-      .from('worker_tokens')
-      .select('*, worker:workers(*)')
-      .eq('token', token)
-      .eq('revoked', false)
-      .maybeSingle();
-
-    if (tokenErr || !tokenRow) {
-      return { valid: false, error: 'Invalid or revoked token' };
+    const { getFleet } = await import('./store.js');
+    const fleet = await getFleet();
+    const dynamicWorker = fleet.find(w => w.token === cleanToken);
+    if (dynamicWorker) {
+      if (!dynamicWorker.is_active) return { valid: false, reason: 'WORKER_INACTIVE' };
+      if (dynamicWorker.is_suspended || dynamicWorker.status === 'SUSPENDED') return { valid: false, reason: 'WORKER_SUSPENDED' };
+      return {
+        valid: true,
+        worker: dynamicWorker,
+        tokenId: `dyn_${dynamicWorker.id}`
+      };
     }
+  } catch (e) {}
 
-    if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) {
-      return { valid: false, error: 'Token expired' };
-    }
-
-    const worker = tokenRow.worker;
-    if (!worker || worker.status === 'SUSPENDED') {
-      return { valid: false, error: 'Worker account is suspended' };
-    }
-
-    return {
-      valid: true,
-      worker,
-      token: tokenRow
-    };
-  } catch (err) {
-    return { valid: false, error: err.message };
-  }
+  return { valid: false, reason: 'TOKEN_NOT_FOUND' };
 }
