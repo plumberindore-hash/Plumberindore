@@ -82,7 +82,12 @@ import { IS_BOOKING_ENABLED, SERVICE_UNAVAILABLE_MESSAGE } from '../../../config
 
 /**
  * Auto-Dispatches certified field technicians based on Indore operational zones.
- * Maps South Indore / Mhow Corridor -> Ajay Mahajan; Bicholi Mardana / Bypass -> Pankaj Sharma.
+ * - Zone 1: Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi
+ *   -> Ajay Mahajan (+91 84595 59141)
+ * - Zone 2: Bicholi Mardana
+ *   -> Pankaj Sharma (+91 98267 43299)
+ * - Default / Fallback: Central / Core Indore
+ *   -> Ajay Mahajan (+91 84595 59141)
  */
 function getAssignedTechnicianByZone(address = '', pincode = '') {
   const normAddress = (address || '').toLowerCase();
@@ -455,7 +460,7 @@ export async function POST(request) {
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">${primaryServiceName} (${primaryPackageTitle})</td>
               </tr>
               <tr>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Appointment Slot:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #d97706;">Appointment Slot:</td>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #d97706;">${scheduledDate}, ${slot}</td>
               </tr>
               <tr>
@@ -514,10 +519,24 @@ export async function POST(request) {
 
       if (isAutoDispatch) {
         const fleet = await getFleet();
+        const requestedTech = sanitizeString(body?.preferredTechnician || body?.technician || body?.technicianName || body?.workerId);
+
+        // 1. Direct Preferred Technician Match (by Name, Phone, or ID)
+        if (requestedTech) {
+          const directMatch = fleet.find(w => 
+            w.name?.toLowerCase().includes(requestedTech.toLowerCase()) || 
+            w.phone?.replace(/\D/g, '').includes(requestedTech.replace(/\D/g, '')) ||
+            w.id === requestedTech
+          );
+          if (directMatch && !directMatch.is_suspended) {
+            assignedWorkerRecord = directMatch;
+          }
+        }
+
         const zoneMatch = getAssignedTechnicianByZone(address, pincode);
 
-        // Attempt to match zone-preferred technician if online and free
-        if (zoneMatch && zoneMatch.name) {
+        // 2. Zone-preferred technician if no direct requested technician
+        if (!assignedWorkerRecord && zoneMatch && zoneMatch.name) {
           const preferred = fleet.find(w => 
             w.name?.toLowerCase().includes(zoneMatch.name.toLowerCase()) || 
             zoneMatch.name?.toLowerCase().includes(w.name?.toLowerCase())
@@ -527,7 +546,7 @@ export async function POST(request) {
           }
         }
 
-        // Fallback to any online and free technician if preferred is busy
+        // 3. Fallback to any online and free technician if preferred is busy
         if (!assignedWorkerRecord) {
           assignedWorkerRecord = fleet.find(w => w.status === 'ONLINE_FREE' && !w.is_suspended) || null;
         }
@@ -555,8 +574,8 @@ export async function POST(request) {
           if (supabaseAdmin && createdBookingRecord?.id) {
             await supabaseAdmin.from('bookings').update({
               status: assignedWorkerRecord ? 'Assigned' : 'Pending',
-              assigned_technician: assignedWorkerRecord?.name || null,
-              technician_phone: assignedWorkerRecord?.phone || null
+              technician_id: assignedWorkerRecord?.id || null,
+              assigned_worker_id: assignedWorkerRecord?.id || null
             }).or(`id.eq.${createdBookingRecord.id},booking_number.eq.${createdBookingRecord.booking_number || createdBookingRecord.id}`).catch(() => null);
           }
 
