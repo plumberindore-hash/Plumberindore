@@ -90,13 +90,12 @@ export async function GET(request) {
       console.warn('Notice reading audit_logs for booking overrides:', auditErr.message);
     }
 
-    // Reset & Clear Filter: clears previous test bookings entirely from dashboard state (reset to 0)
-    // Any live booking created after this reset will appear dynamically
-    const RESET_BOOKINGS_CUTOFF = process.env.BOOKINGS_RESET_CUTOFF || '2026-09-17T11:25:00.000Z';
-    const activeDbBookings = (dbBookings || []).filter(b => {
-      if (!b.created_at) return false;
-      return new Date(b.created_at) > new Date(RESET_BOOKINGS_CUTOFF);
-    });
+    // Reset & Clear Filter: clears previous test bookings if BOOKINGS_RESET_CUTOFF is specified
+    // Otherwise loads all active bookings from the database
+    const RESET_BOOKINGS_CUTOFF = process.env.BOOKINGS_RESET_CUTOFF || null;
+    const activeDbBookings = RESET_BOOKINGS_CUTOFF
+      ? (dbBookings || []).filter(b => b.created_at && new Date(b.created_at) > new Date(RESET_BOOKINGS_CUTOFF))
+      : (dbBookings || []);
 
     const bookings = activeDbBookings.map((b) => {
       const bId = b.booking_number || b.id;
@@ -197,7 +196,7 @@ export async function GET(request) {
       id: `INQ-Q${q.id.slice(0, 5).toUpperCase()}`,
       dbId: q.id,
       customerName: q.customer_name || 'Cost Calculator Lead',
-      phone: q.customer_phone || q.phone || '',
+      phone: q.customer_phone || '',
       service: `${q.service_category || q.category ? (q.service_category || q.category).toUpperCase() : 'General'}: ${q.details || q.issue || 'Plumbing Service'}`,
       locality: extractLocality('', q.pincode || q.customer_pincode || ''),
       estimatedAmount: Number(q.estimated_price || q.estimated_amount) || 299,
