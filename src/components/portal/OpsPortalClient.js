@@ -12,9 +12,7 @@ import {
   MessageCircle, Layers, FileText, Receipt, Printer, Trash2
 } from 'lucide-react';
 
-// Hardcoded Master Auth Credentials
-const AUTH_EMAIL = 'admin@plumberindore.in';
-const AUTH_PASS = 'admin123';
+// Operations Portal Storage Keys
 const AUTH_STORAGE_KEY = 'plumberindore_portal_auth_v1';
 const DATA_STORAGE_KEY = 'plumberindore_ops_portal_data_v2';
 
@@ -39,8 +37,25 @@ const INITIAL_CHATS = [];
 
 // Pre-canned Quick Replies for Chatbot Monitor
 
-// Certified Indore Field Fleet: Ajay Mahajan, Pankaj Sharma & Saurabh Electrician
+// Certified Indore Field Fleet: Ansh Patidar, Ajay Mahajan, Pankaj Sharma & Saurabh Electrician
 const DEFAULT_FLEET_DATA = [
+  {
+    id: 'TECH-IND-00',
+    name: 'Ansh Patidar',
+    title: 'All-Rounder Worker',
+    phone: '+91 93435 05454',
+    rating: 4.99,
+    repairsCount: 520,
+    vehicleNumber: 'Service Vehicle (MP 09 AP 5454)',
+    photoUrl: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?auto=format&fit=crop&w=200&h=200&q=80',
+    specialty: 'Plumber, Electrician, Appliance Repair, Pest Control, Carpenter, Paint',
+    operatingArea: 'All over Indore',
+    serviceArea: 'All over Indore',
+    locatedIn: 'All over Indore',
+    specialization: 'Plumber, Electrician, Appliance Repair, Pest Control, Carpenter, Paint',
+    status: 'Available',
+    eta: 'Prompt Arrival'
+  },
   {
     id: 'TECH-IND-01',
     name: 'Ajay Mahajan',
@@ -106,6 +121,57 @@ const DEFAULT_FLEET_DATA = [
     serviceArea: 'All areas (provides home services across the city)',
     locatedIn: 'Khatiwala Tank, Indore, Madhya Pradesh',
     specialization: 'Refrigerator Repair Work',
+    status: 'Available',
+    eta: 'Prompt Arrival'
+  },
+  {
+    id: 'TECH-IND-05',
+    name: 'Vansh Budhlani',
+    title: 'Certified Senior Electrician & Wiring Specialist',
+    phone: '+91 95898 18490',
+    rating: 4.96,
+    repairsCount: 340,
+    vehicleNumber: 'Service Bike (MP 09 VB 1849)',
+    photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80',
+    specialty: 'Electrician / Electrical Work',
+    operatingArea: 'All over Indore (provides home services across the city)',
+    serviceArea: 'All over Indore (provides home services across the city)',
+    locatedIn: 'Sudama Nagar, Indore, Madhya Pradesh',
+    specialization: 'Electrician / Electrical Work',
+    status: 'Available',
+    eta: 'Prompt Arrival'
+  },
+  {
+    id: 'TECH-IND-06',
+    name: 'Ramiz',
+    title: 'Certified Electrician & Geyser Repair Specialist',
+    phone: '+91 92299 59827',
+    rating: 4.96,
+    repairsCount: 320,
+    vehicleNumber: 'Service Bike (MP 09 RM 5982)',
+    photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80',
+    specialty: 'Electrician & Geyser Repair Work',
+    operatingArea: 'Annapurna & all over Indore (provides home services across the city)',
+    serviceArea: 'Annapurna & all over Indore (provides home services across the city)',
+    locatedIn: 'Annapurna, Indore, Madhya Pradesh',
+    specialization: 'All Electrical Repairs, Geyser Repair & Power Wiring',
+    status: 'Available',
+    eta: 'Prompt Arrival'
+  },
+  {
+    id: 'TECH-IND-07',
+    name: 'Aman Meena (RB Core Cutting & Rewiring)',
+    title: 'Lead Specialist – RB Core Cutting & Rewiring',
+    phone: '+91 70895 98182',
+    rating: 4.97,
+    repairsCount: 450,
+    vehicleNumber: 'Utility Fleet Van (MP 09 RB 9182)',
+    photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&h=200&q=80',
+    specialty: 'Core Cutting, Slab Cutting, Demolition & Rebaring',
+    operatingArea: 'All over Indore (residential, commercial & industrial)',
+    serviceArea: 'All over Indore (residential, commercial & industrial)',
+    locatedIn: 'Indore, Madhya Pradesh',
+    specialization: 'Core cutting, slab cutting, breaker & demolition work, hole cutting, chemical/concrete rewiring (rebaring)',
     status: 'Available',
     eta: 'Prompt Arrival'
   }
@@ -582,8 +648,8 @@ export default function OpsPortalClient() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://hnawwvxvfdnkmwtytwre.supabase.co';
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_BT_qk2dmGPrd82h-FWZ-VA_ONM7HKJO';
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://rxbrkbnubionfsyswohe.supabase.co';
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_e97-IjaP9kRty5R40M1F5Q_3PGATNBo';
     
     let client = null;
     let channel = null;
@@ -731,7 +797,7 @@ export default function OpsPortalClient() {
   }, [invoiceSubtotal, invoiceDiscount]);
 
   // Dynamic UPI Payment URI & QR Code
-  const upiId = '9174934135@yescred';
+  const upiId = '9752524398@yescred';
   const upiPayee = 'sarthak patidar';
   const upiPaymentUri = useMemo(() => {
     const encodedPayee = encodeURIComponent(upiPayee);
@@ -801,7 +867,7 @@ export default function OpsPortalClient() {
       <div>
         <div class="logo-text">Plumber<span>Indore</span></div>
         <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Indore's #1 Doorstep Home Services • Certified Operations</div>
-        <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Support: +91 91749 34135 • www.plumberindore.in</div>
+        <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Support: +91 97525 24398 • plumberindore@gmail.com • www.plumberindore.in</div>
       </div>
       <div style="text-align: right;">
         <div class="badge">${invoicePaymentStatus === 'Paid' ? 'TAX INVOICE - PAID' : 'TAX INVOICE - PAYMENT DUE'}</div>
@@ -882,9 +948,8 @@ export default function OpsPortalClient() {
     </div>
 
     <div class="footer">
-      <strong>30-Day Post Service Warranty:</strong> All repair work and installed parts are protected under PlumberIndore standard warranty.<br>
       This is a certified digital tax invoice generated by PlumberIndore Operations Center.<br>
-      Regd. Address: Indore, Madhya Pradesh • Helpline: +91 91749 34135 • https://www.plumberindore.in
+      Regd. Address: Indore, Madhya Pradesh • Helpline: +91 97525 24398 • plumberindore@gmail.com • https://www.plumberindore.in
     </div>
   </div>
 </body>
@@ -932,7 +997,7 @@ export default function OpsPortalClient() {
 `Payment Link: ${upiPaymentUri}\n` +
 `--------------------------------------\n` +
 `🛡️ *30-Day Doorstep Service Warranty Included*\n` +
-`Helpline: +91 91749 34135\n` +
+`Helpline: +91 97525 24398\n` +
 `Website: https://www.plumberindore.in`;
 
     const encoded = encodeURIComponent(text);
@@ -1021,34 +1086,40 @@ export default function OpsPortalClient() {
     showNotice('All records cleared. Counters reset to zero.');
   };
 
-  // Auth Handler
-  const handleLogin = (e) => {
+  // Auth Handler - Server-side authentication
+  const handleLogin = async (e) => {
     e.preventDefault();
     setAuthError('');
     setIsAuthenticating(true);
 
-    setTimeout(() => {
-      if (authEmail.trim().toLowerCase() === AUTH_EMAIL && authPassword === AUTH_PASS) {
+    try {
+      const res = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: authEmail,
+          password: authPassword
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
         setIsAuthenticated(true);
         localStorage.setItem(AUTH_STORAGE_KEY, 'authenticated');
-        setIsAuthenticating(false);
       } else {
-        setAuthError('Invalid Ops credentials. Access restricted to authorized PlumberIndore personnel.');
-        setIsAuthenticating(false);
+        setAuthError(data.error || 'Invalid credentials. Access restricted to authorized personnel.');
       }
-    }, 400);
+    } catch (err) {
+      setAuthError('Authentication service unreachable. Please try again.');
+    } finally {
+      setIsAuthenticating(false);
+    }
   };
 
   const handleLogout = () => {
     localStorage.removeItem(AUTH_STORAGE_KEY);
     setIsAuthenticated(false);
     setAuthPassword('');
-  };
-
-  const autofillDemoCredentials = () => {
-    setAuthEmail(AUTH_EMAIL);
-    setAuthPassword(AUTH_PASS);
-    setAuthError('');
   };
 
   // KPI Calculations - Starts at ZERO when empty
@@ -1434,7 +1505,7 @@ export default function OpsPortalClient() {
     const samples = [
       { name: 'Neeraj Joshi', phone: '9826555123', loc: 'Vijay Nagar', cat: 'Full Bathroom Plumbing Renovation', msg: 'Want to remodel bathroom in Scheme 78 with concealed valves. Need quote.' },
       { name: 'Kavita Verma', phone: '9425112233', loc: 'Palasia', cat: 'Water Meter & Main Line Repair', msg: 'Narmada water line inlet valve leaking outside boundary wall.' },
-      { name: 'Dr. Manish Patidar', phone: '9174934135', loc: 'Sudama Nagar', cat: 'Water Motor Booster Pump Installation', msg: 'Need automatic 0.5HP pressure booster pump installed.' }
+      { name: 'Dr. Manish Patidar', phone: '9752524398', loc: 'Sudama Nagar', cat: 'Water Motor Booster Pump Installation', msg: 'Need automatic 0.5HP pressure booster pump installed.' }
     ];
     const pick = samples[Math.floor(Math.random() * samples.length)];
     const newId = `INQ-${Math.floor(100 + Math.random() * 900)}`;
@@ -1469,7 +1540,7 @@ export default function OpsPortalClient() {
         `⏰ *Slot:* ${booking.scheduledDate} (${booking.timeSlot})\n` +
         `💰 *Estimated Amount:* ₹${booking.price} (Pay via UPI/Cash upon completion)\n` +
         `👷 *Assigned Tech:* ${booking.assignedTechnician || 'Doorstep Pro Assigned'}\n\n` +
-        `Our technician will arrive equipped with genuine parts promptly. For urgent updates, call 91749 34135.\n\n` +
+        `Our technician will arrive equipped with genuine parts promptly. For urgent updates, call 97525 24398.\n\n` +
         `_Doorstep Plumbing Network, Indore_`;
     } else {
       text = `*🚨 PLUMBER INDORE - TECHNICIAN DISPATCH ORDER*\n\n` +
@@ -1658,7 +1729,7 @@ export default function OpsPortalClient() {
                   type="email"
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
-                  placeholder="admin@plumberindore.in"
+                  placeholder="Enter email address"
                   required
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-colors"
                 />
@@ -1674,7 +1745,7 @@ export default function OpsPortalClient() {
                   type="password"
                   value={authPassword}
                   onChange={(e) => setAuthPassword(e.target.value)}
-                  placeholder="••••••••••••"
+                  placeholder="Enter secret access key"
                   required
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-colors"
                 />
@@ -1695,15 +1766,6 @@ export default function OpsPortalClient() {
             >
               <Lock className="w-4 h-4" />
               <span>{isAuthenticating ? 'Authenticating Session...' : 'Sign In to Ops Console'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={autofillDemoCredentials}
-              className="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold transition-colors flex items-center justify-center gap-1.5"
-            >
-              <Zap className="w-3.5 h-3.5 text-amber-500" />
-              <span>Auto-fill Demo Credentials (admin@plumberindore.in)</span>
             </button>
           </form>
 
@@ -3773,7 +3835,7 @@ export default function OpsPortalClient() {
                       </div>
                     </div>
                     <p className="text-[10px] text-slate-500 pt-1">
-                      Certified Operations • Helpline: +91 91749 34135 • www.plumberindore.in
+                      Certified Operations • Helpline: +91 97525 24398 • www.plumberindore.in
                     </p>
                   </div>
 
@@ -3977,14 +4039,10 @@ export default function OpsPortalClient() {
                   </div>
                 </div>
 
-                {/* Guarantee & Certified Service Footer */}
+                {/* Invoice Footer */}
                 <div className="pt-4 border-t border-slate-200 text-center space-y-1 text-slate-500 text-[11px]">
-                  <p className="font-semibold text-slate-700 flex items-center justify-center gap-1.5">
-                    <Shield className="w-3.5 h-3.5 text-blue-600" />
-                    <span>30-Day Post-Service Warranty Guaranteed on All Completed Doorstep Works</span>
-                  </p>
                   <p>
-                    For queries or follow-up service, contact PlumberIndore 24/7 Helpline: <strong>+91 91749 34135</strong> • support@plumberindore.in
+                    For queries or follow-up service, contact PlumberIndore 24/7 Helpline: <strong>+91 97525 24398</strong> • plumberindore@gmail.com
                   </p>
                   <p className="text-[10px] text-slate-400">
                     This is a computer-generated tax invoice issued by PlumberIndore Operations Console.
