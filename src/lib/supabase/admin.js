@@ -87,10 +87,24 @@ export function getAdminClient() {
     return null;
   }
 
+  const timeoutMs = Number(process.env.SUPABASE_TIMEOUT_MS || (process.env.NODE_ENV === 'production' ? 8000 : 1500));
+  const customFetch = (url, options = {}) => {
+    if (options.signal) {
+      return fetch(url, options);
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, { ...options, signal: controller.signal })
+      .finally(() => clearTimeout(timeout));
+  };
+
   return createClient(supabaseUrl, activeKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
+    },
+    global: {
+      fetch: customFetch
     }
   });
 }
@@ -136,59 +150,86 @@ export async function checkDatabaseReadiness() {
 
   const start = Date.now();
   try {
-    const { data, error } = await client
-      .from('workers')
-      .select('count', { count: 'exact', head: true });
-
+    const { error } = await client.from('settings').select('key').limit(1);
     const latencyMs = Date.now() - start;
 
     if (error) {
+      const msg = (error.message || '').toLowerCase();
+      const code = String(error.code || '');
+
+      // Server-side diagnostic log (never prints keys, URLs, tokens, or customer data)
+      const sanitizedCode = error.code ? String(error.code).replace(/[^a-zA-Z0-9_-]/g, '') : 'NO_CODE';
+      const sanitizedMsg = typeof error.message === 'string' ? error.message.slice(0, 100) : 'Query error';
+      console.error(`[checkDatabaseReadiness] Database query failed: code=${sanitizedCode}, msg=${sanitizedMsg}, latency=${latencyMs}ms`);
+
+      // 1. Missing table or schema cache issue
+      if (
+        code === 'PGRST205' ||
+        code === '42P01' ||
+        msg.includes('schema cache') ||
+        msg.includes('could not find') ||
+        msg.includes('does not exist') ||
+        msg.includes('relation')
+      ) {
+        return {
+          status: 'NOT_READY',
+          reason: 'SCHEMA_NOT_FOUND',
+          persistent: false,
+          latencyMs
+        };
+      }
+
+      // 2. Authentication or invalid key issue
+      if (
+        code === 'PGRST301' ||
+        code === '401' ||
+        msg.includes('invalid api key') ||
+        msg.includes('jwt') ||
+        msg.includes('apikey') ||
+        msg.includes('unauthorized') ||
+        msg.includes('signature')
+      ) {
+        return {
+          status: 'NOT_READY',
+          reason: 'AUTH_FAILED_SERVICE_ROLE_KEY',
+          persistent: false,
+          latencyMs
+        };
+      }
+
+      // 3. Permission denied (Postgres 42501)
+      if (code === '42501' || msg.includes('permission denied')) {
+        return {
+          status: 'DEGRADED',
+          reason: 'PERMISSION_DENIED',
+          persistent: false,
+          latencyMs
+        };
+      }
+
+      // 4. Other query errors
       return {
         status: 'DEGRADED',
-        reason: 'SCHEMA_DISCREPANCY',
+        reason: 'DATABASE_QUERY_ERROR',
         persistent: false,
         latencyMs
       };
     }
 
     return {
-      status: 'OPERATIONAL',
-      reason: 'ALL_SYSTEMS_VERIFIED',
+      status: 'READY',
+      reason: 'CONNECTED',
       persistent: true,
       latencyMs
     };
   } catch (err) {
     return {
-      status: 'ERROR',
-      reason: 'NETWORK_TIMEOUT',
+      status: 'NOT_READY',
+      reason: 'CONNECTION_FAILED',
       persistent: false,
       latencyMs: Date.now() - start
     };
   }
 }
 
-/**
- * Creates an admin client with custom schema or auth config if needed
- */
-export function getCustomAdminClient(options = {}) {
-  const supabaseUrl = getNormalizedSupabaseUrl();
-  const rawServiceKey = 
-    process.env.SUPABASE_SERVICE_ROLE_KEY || 
-    process.env.SUPABASE_SECRET_KEY || 
-    process.env.SUPABASE_SERVICE_KEY;
-
-  const isRealKey = isServiceRoleKeyValid(rawServiceKey, supabaseUrl);
-  const activeKey = isRealKey ? cleanKey(rawServiceKey) : cleanKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_e97-IjaP9kRty5R40M1F5Q_3PGATNBo');
-
-  if (!supabaseUrl || !activeKey) {
-    return null;
-  }
-
-  return createClient(supabaseUrl, activeKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    },
-    ...options
-  });
-}
+export default getAdminClient;
