@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAdminSession } from '../../../../lib/partner-engine/auth.js';
-import { getAdminClient } from '../../../../lib/supabase/admin.js';
-import { getDashboardMetrics, getTodaysHisab } from '../../../../lib/partner-engine/store.js';
+import { getOperationalAnalytics } from '@/lib/partner-engine/store.js';
+import { getAdminSession } from '@/lib/partner-engine/auth.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,18 +11,11 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const [metrics, hisab] = await Promise.all([
-      getDashboardMetrics(),
-      getTodaysHisab()
-    ]);
-
+    const analytics = await getOperationalAnalytics();
     return NextResponse.json({
       success: true,
-      analytics: {
-        fleet: metrics,
-        financials: hisab,
-        generatedAt: new Date().toISOString()
-      }
+      timestamp: new Date().toISOString(),
+      analytics
     });
   } catch (err) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
