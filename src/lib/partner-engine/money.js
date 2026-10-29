@@ -48,14 +48,35 @@ export function calculateSplits(grossPaise, commissionPercent = 10) {
   return {
     grossPaise: gross,
     commissionPaise: commission,
-    workerPayoutPaise: workerPayout
+    workerPayoutPaise: workerPayout,
+    workerSharePaise: workerPayout,
+    commissionPercent: validPercent,
+    workerPayoutPercent: 100 - validPercent
   };
 }
 
 /**
- * Parses integer amount in paise safely
+ * Inspection fee waiver rule:
+ * If services/parts total > 0, inspection fee is ₹0 (waived).
+ * If services/parts total == 0, inspection fee is ₹299.
  */
-export function parsePaise(value) {
-  const parsed = parseInt(value, 10);
-  return isNaN(parsed) ? 0 : parsed;
+export function calculateJobTotal(serviceItemsTotalPaise = 0, defaultInspectionPaise = 29900) {
+  const subtotal = Math.max(0, Number(serviceItemsTotalPaise || 0));
+  if (subtotal > 0) {
+    return {
+      subtotalPaise: subtotal,
+      inspectionFeePaise: defaultInspectionPaise,
+      waiverPaise: defaultInspectionPaise,
+      totalPaise: subtotal,
+      isInspectionWaived: true
+    };
+  }
+
+  return {
+    subtotalPaise: 0,
+    inspectionFeePaise: defaultInspectionPaise,
+    waiverPaise: 0,
+    totalPaise: defaultInspectionPaise,
+    isInspectionWaived: false
+  };
 }
