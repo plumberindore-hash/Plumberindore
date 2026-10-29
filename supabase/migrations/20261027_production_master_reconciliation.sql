@@ -181,7 +181,7 @@ BEGIN
   v_inspection_fee_paise := LEAST(29900::bigint, v_total_paise);
 
   -- 4. Dynamic commission lookup from settings (default 10%)
-  SELECT COALESCE(NULLIF(value, '')::numeric, 10.0) INTO v_commission_pct
+  SELECT COALESCE((value #>> '{}')::numeric, 10.0) INTO v_commission_pct
   FROM public.settings
   WHERE key = 'platform_commission_percent'
   LIMIT 1;
