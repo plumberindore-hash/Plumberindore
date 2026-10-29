@@ -1,1 +1,1 @@
-// read from store.js
+// store.js content
