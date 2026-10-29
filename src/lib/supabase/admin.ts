@@ -34,8 +34,29 @@ export function getAdminClient(): SupabaseClient | null {
     process.env.SUPABASE_SECRET_KEY ||
     process.env.SUPABASE_SERVICE_KEY;
 
+  const isMismatchedJwt = (key: string, targetUrl: string) => {
+    if (key.includes('.')) {
+      try {
+        const parts = key.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+          const match = targetUrl.match(/https:\/\/([^.]+)\.supabase\.co/);
+          if (payload.ref && match && match[1] && payload.ref !== match[1]) {
+            return true;
+          }
+        }
+      } catch (e) {}
+    }
+    return false;
+  };
+
+  const isRealKey =
+    serviceRoleKey &&
+    serviceRoleKey !== 'your_secret_key' &&
+    !isMismatchedJwt(serviceRoleKey, supabaseUrl);
+
   const activeKey =
-    serviceRoleKey && serviceRoleKey !== 'your_secret_key'
+    isRealKey
       ? serviceRoleKey
       : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
         process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
