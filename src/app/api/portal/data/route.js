@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAdminClient } from '../../../../lib/supabase/admin.js';
+import { validateAdminRequest } from '../../../../lib/adminAuth.js';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -34,6 +35,11 @@ function extractLocality(address = '', pincode = '') {
 
 export async function GET(request) {
   try {
+    const authCheck = validateAdminRequest(request);
+    if (!authCheck.authorized) {
+      return authCheck.response;
+    }
+
     const supabaseAdmin = getAdminClient();
     if (!supabaseAdmin) {
       return NextResponse.json({
@@ -191,14 +197,14 @@ export async function GET(request) {
       id: `INQ-Q${q.id.slice(0, 5).toUpperCase()}`,
       dbId: q.id,
       customerName: q.customer_name || 'Cost Calculator Lead',
-      phone: q.customer_phone || '',
-      service: `${q.category ? q.category.toUpperCase() : 'General'}: ${q.issue}`,
-      locality: extractLocality('', q.customer_pincode),
-      estimatedAmount: Number(q.estimated_price) || 299,
+      phone: q.customer_phone || q.phone || '',
+      service: `${q.service_category || q.category ? (q.service_category || q.category).toUpperCase() : 'General'}: ${q.details || q.issue || 'Plumbing Service'}`,
+      locality: extractLocality('', q.pincode || q.customer_pincode || ''),
+      estimatedAmount: Number(q.estimated_price || q.estimated_amount) || 299,
       status: q.status === 'pending' ? 'Pending Quote' : (q.status === 'converted' ? 'Converted' : 'Reviewed'),
       time: new Date(q.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
       source: 'Instant Cost Calculator',
-      notes: q.remarks || '',
+      notes: q.details || q.remarks || '',
       createdAt: q.created_at
     }));
 
@@ -314,6 +320,57 @@ export async function GET(request) {
         serviceArea: 'All areas (provides home services across the city)',
         locatedIn: 'Khatiwala Tank, Indore, Madhya Pradesh',
         specialization: 'Refrigerator Repair Work',
+        status: 'Available',
+        eta: 'Prompt Arrival'
+      },
+      {
+        id: 'TECH-IND-05',
+        name: 'Vansh Budhlani',
+        title: 'Certified Senior Electrician & Wiring Specialist',
+        phone: '+91 95898 18490',
+        rating: 4.96,
+        repairsCount: 340,
+        vehicleNumber: 'Service Bike (MP 09 VB 1849)',
+        photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80',
+        specialty: 'Electrician / Electrical Work',
+        operatingArea: 'All over Indore (provides home services across the city)',
+        serviceArea: 'All over Indore (provides home services across the city)',
+        locatedIn: 'Sudama Nagar, Indore, Madhya Pradesh',
+        specialization: 'Electrician / Electrical Work',
+        status: 'Available',
+        eta: 'Prompt Arrival'
+      },
+      {
+        id: 'TECH-IND-06',
+        name: 'Ramiz',
+        title: 'Certified Electrician & Geyser Repair Specialist',
+        phone: '+91 92299 59827',
+        rating: 4.96,
+        repairsCount: 320,
+        vehicleNumber: 'Service Bike (MP 09 RM 5982)',
+        photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80',
+        specialty: 'Electrician & Geyser Repair Work',
+        operatingArea: 'Annapurna & all over Indore (provides home services across the city)',
+        serviceArea: 'Annapurna & all over Indore (provides home services across the city)',
+        locatedIn: 'Annapurna, Indore, Madhya Pradesh',
+        specialization: 'All Electrical Repairs, Geyser Repair & Power Wiring',
+        status: 'Available',
+        eta: 'Prompt Arrival'
+      },
+      {
+        id: 'TECH-IND-07',
+        name: 'Aman Meena (RB Core Cutting & Rewiring)',
+        title: 'Lead Specialist – RB Core Cutting & Rewiring',
+        phone: '+91 70895 98182',
+        rating: 4.97,
+        repairsCount: 450,
+        vehicleNumber: 'Utility Fleet Van (MP 09 RB 9182)',
+        photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&h=200&q=80',
+        specialty: 'Core Cutting, Slab Cutting, Demolition & Rebaring',
+        operatingArea: 'All over Indore (residential, commercial & industrial)',
+        serviceArea: 'All over Indore (residential, commercial & industrial)',
+        locatedIn: 'Indore, Madhya Pradesh',
+        specialization: 'Core cutting, slab cutting, breaker & demolition work, hole cutting, chemical/concrete rewiring (rebaring)',
         status: 'Available',
         eta: 'Prompt Arrival'
       }
