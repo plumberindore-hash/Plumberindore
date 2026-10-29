@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAdminClient } from '../../../lib/supabase/admin.js';
 import { calculateServerPrice } from '../../../lib/pricing.js';
 import { sendEmail, ADMIN_NOTIFICATION_RECIPIENTS, ADMIN_NOTIFICATION_EMAIL } from '../../../utils/brevo.js';
+import { getPlatformSettings, getFleet, dispatchJob } from '@/lib/partner-engine/store.js';
 
 /**
  * GET /api/bookings
@@ -81,42 +82,30 @@ import { IS_BOOKING_ENABLED, SERVICE_UNAVAILABLE_MESSAGE } from '../../../config
 
 /**
  * Auto-Dispatches certified field technicians based on Indore operational zones.
- * - Zone 1: Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi
- *   -> Ajay Mahajan (+91 84595 59141)
- * - Zone 2: Bicholi Mardana
- *   -> Pankaj Sharma (+91 98267 43299)
- * - Default / Fallback: Central / Core Indore
- *   -> Ajay Mahajan (+91 84595 59141)
+ * Maps South Indore / Mhow Corridor -> Ajay Mahajan; Bicholi Mardana / Bypass -> Pankaj Sharma.
  */
-export function resolveAutoDispatchTechnician(address = '', pincode = '') {
+function getAssignedTechnicianByZone(address = '', pincode = '') {
   const normAddress = (address || '').toLowerCase();
-  const normPincode = (pincode || '').toString().trim();
+  const normPincode = (pincode || '').trim();
 
-  // Zone 1: Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi
+  // Zone 1: Rau, Silicon City, Cat Road, Bhawarkua, Rajendra Nagar, Mhow Sector
   const zone1Keywords = [
     'rau',
-    'mhow',
+    'silicon city',
+    'cat road',
     'bhawarkua',
-    'bhanwarkua',
     'bhanwarkuan',
-    'bijalpur',
     'rajendra nagar',
+    'annapurna',
+    'bijalpur',
+    'chhatribagh',
     'sudama nagar',
-    'tejaji nagar',
-    'nimbodi'
-  ];
-
-  const zone1Pincodes = [
-    '453331', // Rau
-    '453441', // Mhow
-    '452014', // Bhawarkua
-    '452012', // Rajendra Nagar / Bijalpur
-    '452009', // Sudama Nagar
-    '452020'  // Tejaji Nagar / Nimbodi
+    'mhow',
+    'khatiwala tank'
   ];
 
   const matchedZone1 = zone1Keywords.find(keyword => normAddress.includes(keyword));
-  const isZone1 = Boolean(matchedZone1) || zone1Pincodes.includes(normPincode);
+  const isZone1 = Boolean(matchedZone1) || normPincode === '452012' || normPincode === '453331';
 
   if (isZone1) {
     return {
@@ -237,7 +226,6 @@ export async function POST(request) {
     const primaryServiceName = validatedItems.map(i => i.serviceName).filter((v, i, a) => a.indexOf(v) === i).join(' + ');
     const primaryPackageTitle = validatedItems.map(i => i.packageTitle).join(' | ');
 
-    // Manual Dispatch Mode: All new bookings default to 'Pending' without auto-assignment
     const rawNotes = description ? description.trim() : '';
 
     const supabaseAdmin = getAdminClient();
@@ -342,7 +330,7 @@ export async function POST(request) {
               },
               ip_address: ip
             });
-            console.log(`[Booking Created - Pending Manual Dispatch] #${randomBookingNumber}`);
+            console.log(`[Booking Created] #${randomBookingNumber}`);
           } catch (logErr) {
             console.warn('[Booking Audit Notice] Could not log booking to audit_logs:', logErr.message);
           }
@@ -402,7 +390,7 @@ export async function POST(request) {
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">${name.trim()}</td>
               </tr>
               <tr>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Phone:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #2563eb;">Phone:</td>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #2563eb;">
                   <a href="tel:${cleanedPhone}" style="color: #2563eb; text-decoration: none;">${cleanedPhone}</a>
                 </td>
@@ -416,18 +404,12 @@ export async function POST(request) {
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">${primaryServiceName} (${primaryPackageTitle})</td>
               </tr>
               <tr>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Scheduled Slot:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #d97706;">Scheduled Slot:</td>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #d97706;">${scheduledDate}, ${slot}</td>
               </tr>
               <tr>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Service Address:</td>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${address.trim()} (Pincode: ${pincode || '452010'})</td>
-              </tr>
-              <tr>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Dispatch Status:</td>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #d97706;">
-                  ⚠️ Pending Dispatch (Manual Allocation from Ops Portal)
-                </td>
               </tr>
               <tr>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Issue Notes:</td>
@@ -440,7 +422,7 @@ export async function POST(request) {
             </table>
             <div style="text-align: center; margin-top: 16px;">
               <a href="https://www.plumberindore.in/portal-indore-ops-9821" style="background-color: #0f172a; color: #ffffff; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 13px; display: inline-block;">
-                Open Indore Ops Console to Assign Technician →
+                Open Indore Ops Console to Manage Booking →
               </a>
             </div>
           </div>
@@ -458,26 +440,30 @@ export async function POST(request) {
           <div style="padding: 24px 16px;">
             <div style="text-align: center; margin-bottom: 20px;">
               <span style="background-color: #ecfdf5; color: #047857; font-size: 12px; font-weight: 800; padding: 6px 14px; border-radius: 9999px; border: 1px solid #a7f3d0;">
-                ✓ BOOKING RECEIVED (#${bookingNo})
+                ✅ APPOINTMENT CONFIRMED (#${bookingNo})
               </span>
-              <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 12px 0 4px 0;">Appointment Confirmed!</h2>
-              <p style="font-size: 13px; color: #64748b; margin: 0;">Hello ${name.trim()}, your doorstep appointment request has been scheduled.</p>
+              <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 12px 0 4px 0;">Namaste ${name.trim()}!</h2>
+              <p style="font-size: 13px; color: #64748b; margin: 0;">We have received your service booking.</p>
             </div>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #f8fafc; border-radius: 12px; font-size: 13px;">
               <tr>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b; width: 35%;">Service(s):</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b; width: 35%;">Booking Number:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">#${bookingNo}</td>
+              </tr>
+              <tr>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Service Package:</td>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">${primaryServiceName} (${primaryPackageTitle})</td>
               </tr>
               <tr>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #d97706;">Scheduled Slot:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Appointment Slot:</td>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #d97706;">${scheduledDate}, ${slot}</td>
               </tr>
               <tr>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Doorstep Address:</td>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${address.trim()} (${pincode || 'Indore'})</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Service Address:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #0f172a;">${address.trim()} (Pincode: ${pincode || '452010'})</td>
               </tr>
               <tr>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Technician Allocation:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Assigned Technician:</td>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">
                   👷 Verified field professional will be dispatched shortly by our ops team
                 </td>
@@ -519,17 +505,95 @@ export async function POST(request) {
       console.error(`[POST /api/bookings EXCEPTION] Brevo dispatch exception for #${bookingNo}:`, emailErr);
     }
 
+    // 5. Automated Partner Engine Dispatch & WhatsApp Broadcast
+    let autoDispatchResult = null;
+    let assignedWorkerRecord = null;
+    try {
+      const platformSettings = await getPlatformSettings();
+      const isAutoDispatch = platformSettings?.auto_dispatch_broadcast !== false;
+
+      if (isAutoDispatch) {
+        const fleet = await getFleet();
+        const zoneMatch = getAssignedTechnicianByZone(address, pincode);
+
+        // Attempt to match zone-preferred technician if online and free
+        if (zoneMatch && zoneMatch.name) {
+          const preferred = fleet.find(w => 
+            w.name?.toLowerCase().includes(zoneMatch.name.toLowerCase()) || 
+            zoneMatch.name?.toLowerCase().includes(w.name?.toLowerCase())
+          );
+          if (preferred && preferred.status === 'ONLINE_FREE' && !preferred.is_suspended && (Number(preferred.wallet_balance_paise || 0) >= 10000 || Number(preferred.wallet_balance_paise || 0) === 0)) {
+            assignedWorkerRecord = preferred;
+          }
+        }
+
+        // Fallback to any online and free technician if preferred is busy
+        if (!assignedWorkerRecord) {
+          assignedWorkerRecord = fleet.find(w => w.status === 'ONLINE_FREE' && !w.is_suspended) || null;
+        }
+
+        // Execute Partner Engine Dispatch
+        const dispatchPayload = {
+          customerName: name.trim(),
+          customerPhone: cleanedPhone,
+          customerWhatsapp: cleanedPhone,
+          locality: zoneMatch?.localityMatch || 'Vijay Nagar',
+          address: address.trim(),
+          issue: `${primaryServiceName}: ${primaryPackageTitle}`,
+          serviceCategory: primaryServiceName.toLowerCase().includes('electric') ? 'Electrician' : 'Plumber',
+          priority: 'Normal',
+          preferredTime: `${scheduledDate} (${slot})`,
+          preferredWorkerId: assignedWorkerRecord?.id || null,
+          notes: rawNotes
+        };
+
+        autoDispatchResult = await dispatchJob(dispatchPayload, 'Auto-Dispatch');
+
+        if (autoDispatchResult?.job) {
+          const job = autoDispatchResult.job;
+          // Update Supabase booking record with dispatch status and tracking link
+          if (supabaseAdmin && createdBookingRecord?.id) {
+            await supabaseAdmin.from('bookings').update({
+              status: assignedWorkerRecord ? 'Assigned' : 'Pending',
+              assigned_technician: assignedWorkerRecord?.name || null,
+              technician_phone: assignedWorkerRecord?.phone || null
+            }).or(`id.eq.${createdBookingRecord.id},booking_number.eq.${createdBookingRecord.booking_number || createdBookingRecord.id}`).catch(() => null);
+          }
+
+          createdBookingRecord.status = assignedWorkerRecord ? 'Assigned' : 'Pending';
+          createdBookingRecord.assignedTechnician = assignedWorkerRecord ? {
+            name: assignedWorkerRecord.name,
+            phone: assignedWorkerRecord.phone,
+            vehicle: assignedWorkerRecord.vehicle || zoneMatch?.vehicle
+          } : null;
+          createdBookingRecord.trackingUrl = job.tracking_token ? `/track/${job.tracking_token}` : null;
+          createdBookingRecord.jobNumber = job.job_number;
+        }
+      }
+    } catch (dispatchErr) {
+      console.warn('[POST /api/bookings] Partner engine auto-dispatch notice:', dispatchErr.message);
+    }
+
     return NextResponse.json({
       success: true,
       booking: createdBookingRecord,
       validatedPricing: pricing,
-      status: 'Pending',
-      assignedTechnician: null,
+      status: createdBookingRecord.status || 'Pending',
+      assignedTechnician: createdBookingRecord.assignedTechnician || null,
+      trackingUrl: createdBookingRecord.trackingUrl || null,
+      jobNumber: createdBookingRecord.jobNumber || null,
+      autoDispatch: {
+        enabled: true,
+        dispatched: !!autoDispatchResult?.success,
+        workerAssigned: assignedWorkerRecord?.name || null
+      },
       emailDispatch: {
         adminAlert: adminEmailResult,
         customerConfirmation: customerEmailResult
       },
-      message: 'Booking created successfully. Defaulted to Pending for manual dispatch.'
+      message: assignedWorkerRecord 
+        ? `Booking created & assigned to ${assignedWorkerRecord.name}. WhatsApp alert dispatched.`
+        : 'Booking created and broadcast to partner engine.'
     });
 
   } catch (err) {
