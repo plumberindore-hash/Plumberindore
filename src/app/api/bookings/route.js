@@ -29,12 +29,7 @@ export async function GET(request) {
 
     let query = supabaseAdmin
       .from('bookings')
-      .select(`
-        *,
-        items:booking_items(*),
-        invoices(*),
-        payments(*)
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (bookingNumber) {
@@ -474,7 +469,7 @@ export async function POST(request) {
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #0f172a;">${primaryServiceName} (${primaryPackageTitle})</td>
               </tr>
               <tr>
-                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">Scheduled Slot:</td>
+                <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #d97706;">Scheduled Slot:</td>
                 <td style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #d97706;">${scheduledDate}, ${slot}</td>
               </tr>
               <tr>
