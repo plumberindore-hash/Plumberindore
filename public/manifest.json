@@ -1,0 +1,22 @@
+{
+  "name": "PlumberIndore Partner Engine",
+  "short_name": "PI Partner",
+  "description": "Internal field operations and job dispatch console for PlumberIndore technicians",
+  "start_url": "/partner",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F1B33",
+  "theme_color": "#0F1B33",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
