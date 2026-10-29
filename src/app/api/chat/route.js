@@ -87,12 +87,17 @@ export async function POST(request) {
     const supabaseAdmin = getAdminClient();
     if (supabaseAdmin) {
       try {
-        const { data: existingLead } = await supabaseAdmin
-          .from('leads')
-          .select('id, raw_payload')
-          .eq('source', 'live_chat')
-          .eq('lead_number', effectiveSessionId)
-          .maybeSingle();
+        const notesContent = `[Session: ${effectiveSessionId}] [Locality: ${cleanLocality || 'Indore'}] Last Message: ${cleanMsg}`;
+
+        // Find existing lead by phone or session tag in notes
+        let query = supabaseAdmin.from('leads').select('id, notes');
+        if (cleanPhone) {
+          query = query.eq('phone', cleanPhone);
+        } else {
+          query = query.ilike('notes', `%${effectiveSessionId}%`);
+        }
+
+        const { data: existingLead } = await query.maybeSingle();
 
         if (existingLead) {
           await supabaseAdmin
@@ -100,38 +105,18 @@ export async function POST(request) {
             .update({
               name: cleanName && cleanName !== 'Website Visitor' ? cleanName : undefined,
               phone: cleanPhone || undefined,
-              service_address: cleanLocality,
-              issue_description: cleanMsg,
-              raw_payload: {
-                ...(existingLead.raw_payload || {}),
-                sessionId: effectiveSessionId,
-                locality: cleanLocality,
-                messages: chatHistory.length > 0 ? chatHistory : existingLead.raw_payload?.messages || [],
-                lastUpdated: new Date().toISOString()
-              },
-              updated_at: new Date().toISOString()
+              notes: `${existingLead.notes || ''} | ${notesContent}`.slice(0, 1000)
             })
             .eq('id', existingLead.id);
         } else {
           await supabaseAdmin
             .from('leads')
             .insert({
-              lead_number: effectiveSessionId,
               source: 'live_chat',
               name: cleanName || 'Website Visitor',
-              phone: cleanPhone || null,
-              service_name: 'Website Live Chatbot',
-              service_address: cleanLocality || 'Indore',
-              issue_description: cleanMsg,
+              phone: cleanPhone || 'Not provided',
               status: 'active',
-              raw_payload: {
-                sessionId: effectiveSessionId,
-                locality: cleanLocality,
-                messages: chatHistory.length > 0 ? chatHistory : [
-                  { sender: 'user', text: cleanMsg, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
-                ],
-                lastUpdated: new Date().toISOString()
-              }
+              notes: notesContent
             });
         }
       } catch (dbErr) {

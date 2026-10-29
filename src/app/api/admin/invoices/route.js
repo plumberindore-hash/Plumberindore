@@ -28,20 +28,7 @@ export async function GET(request) {
     const { data: invoices = [], error } = await supabaseAdmin
       .from('invoices')
       .select(`
-        id,
-        invoice_number,
-        customer_name,
-        customer_email,
-        customer_phone,
-        billing_address,
-        labor_cost,
-        parts_cost,
-        tax_amount,
-        total_paid,
-        payment_method,
-        payment_ref,
-        issued_at,
-        sent_at,
+        *,
         bookings (
           booking_number,
           service_name
@@ -49,11 +36,10 @@ export async function GET(request) {
         invoice_items (
           description,
           quantity,
-          unit_price,
-          amount
+          unit_price
         )
       `)
-      .order('issued_at', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -67,17 +53,17 @@ export async function GET(request) {
         bookingNumber: i.bookings?.booking_number || 'N/A',
         serviceName: i.bookings?.service_name || 'Home Service',
         customerName: i.customer_name,
-        customerEmail: i.customer_email,
-        customerPhone: i.customer_phone,
-        billingAddress: i.billing_address,
-        laborCost: Number(i.labor_cost),
-        partsCost: Number(i.parts_cost),
-        taxAmount: Number(i.tax_amount),
-        totalPaid: Number(i.total_paid),
-        paymentMethod: i.payment_method,
-        paymentRef: i.payment_ref,
-        issuedAt: i.issued_at,
-        sentAt: i.sent_at,
+        customerEmail: i.customer_email || '',
+        customerPhone: i.customer_phone || '',
+        billingAddress: i.billing_address || i.customer_address || 'Indore, MP',
+        laborCost: Number(i.labor_cost || i.subtotal || i.total_amount || 0),
+        partsCost: Number(i.parts_cost || 0),
+        taxAmount: Number(i.tax_amount || 0),
+        totalPaid: Number(i.total_paid || i.total_amount || 0),
+        paymentMethod: i.payment_method || 'UPI / Cash',
+        paymentRef: i.payment_ref || null,
+        issuedAt: i.issued_at || i.created_at,
+        sentAt: i.sent_at || null,
         items: i.invoice_items || []
       }))
     });

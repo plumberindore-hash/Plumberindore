@@ -50,22 +50,23 @@ export async function POST(request) {
         const bookingNum = invoiceNumber.replace('INV-2026-', '').replace('INV-', '');
         const { data: bData } = await supabaseAdmin.from('bookings').select('id').or(`booking_number.eq.${bookingNum},id.eq.${bookingNum}`).maybeSingle();
 
-        const { data: invRecord, error: invErr } = await supabaseAdmin.from('invoices').insert({
+        const invoicePayload = {
           booking_id: bData ? bData.id : null,
           invoice_number: invoiceNumber,
           customer_name: customerName,
-          customer_email: customerEmail,
-          customer_phone: customerPhone || '+91 91749 34135',
-          billing_address: address || 'Indore, MP',
-          labor_cost: Number(laborCost || totalPaid),
-          parts_cost: Number(partsCost || 0),
+          customer_phone: customerPhone || '+91 97525 24398',
+          customer_address: address || 'Indore, MP',
+          subtotal: Number(laborCost || totalPaid),
           tax_amount: Number(taxCost || 0),
-          discount_amount: Number(discountCost || 0),
-          total_paid: Number(totalPaid),
-          payment_method: paymentMethod || 'Cash / UPI Verified',
-          payment_ref: paymentRef || `TXN-${invoiceNumber}`,
-          sent_at: new Date().toISOString()
-        }).select().single();
+          total_amount: Number(totalPaid),
+          payment_status: 'paid'
+        };
+
+        const { data: invRecord, error: invErr } = await supabaseAdmin
+          .from('invoices')
+          .insert(invoicePayload)
+          .select()
+          .single();
 
         if (invRecord) {
           await supabaseAdmin.from('invoice_items').insert({
@@ -73,7 +74,7 @@ export async function POST(request) {
             description: `${serviceName} - ${packageTitle || 'Service Package'}`,
             quantity: 1,
             unit_price: Number(totalPaid),
-            amount: Number(totalPaid)
+            total_price: Number(totalPaid)
           });
         }
 

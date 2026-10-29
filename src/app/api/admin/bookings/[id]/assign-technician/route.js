@@ -81,7 +81,7 @@ export async function POST(request, { params }) {
       .from('bookings')
       .update({
         status: 'Technician Assigned',
-        technician_id: technicianId
+        assigned_worker_id: technicianId
       })
       .eq('id', booking.id);
 

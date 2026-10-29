@@ -31,7 +31,7 @@ export async function GET(request) {
         customer_name,
         rating,
         comment,
-        is_verified,
+        is_approved,
         created_at,
         bookings (
           booking_number,
@@ -52,7 +52,7 @@ export async function GET(request) {
       customerName: r.customer_name,
       rating: r.rating,
       comment: r.comment,
-      isVerified: r.is_verified,
+      isVerified: r.is_approved ?? true,
       createdAt: r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN') : 'Recent'
     }));
 
@@ -87,7 +87,7 @@ export async function PATCH(request) {
 
     const { data: updated, error } = await supabaseAdmin
       .from('reviews')
-      .update({ is_verified: !!isVerified })
+      .update({ is_approved: !!isVerified })
       .eq('id', id)
       .select()
       .maybeSingle();

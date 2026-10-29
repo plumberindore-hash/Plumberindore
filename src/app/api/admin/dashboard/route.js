@@ -49,7 +49,7 @@ export async function GET(request) {
     const totalBookings = bookings.length;
     const todayBookings = bookings.filter(b => b.scheduled_date === todayStr || (b.created_at && b.created_at.startsWith(todayStr))).length;
     const completedJobs = bookings.filter(b => b.status === 'Payment Verified & Completed').length;
-    const pendingBookings = bookings.filter(b => b.status === 'Technician Assigned' || b.status === 'On The Way (45-Min)' || b.status === 'On The Way').length;
+    const pendingBookings = bookings.filter(b => b.status === 'Pending' || b.status === 'pending' || b.status === 'Technician Assigned' || b.status === 'On The Way (45-Min)' || b.status === 'On The Way').length;
     const activeJobs = bookings.filter(b => b.status === 'In Progress' || b.status === 'On The Way (45-Min)' || b.status === 'On The Way').length;
     const cancelledBookings = bookings.filter(b => b.status === 'Cancelled').length;
 
