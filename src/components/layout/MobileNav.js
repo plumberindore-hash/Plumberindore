@@ -10,8 +10,10 @@ export default function MobileNav() {
   const pathname = usePathname();
   const { openBookingModal } = useBooking();
 
+  const currentPath = pathname || (typeof window !== 'undefined' ? window.location.pathname : '');
+
   // Suppress customer navigation on partner, admin, ops portal, and tracking screens
-  if (pathname && (pathname.startsWith('/partner') || pathname.startsWith('/admin') || pathname.startsWith('/portal') || pathname.startsWith('/track'))) {
+  if (currentPath && (currentPath.startsWith('/partner') || currentPath.startsWith('/admin') || currentPath.startsWith('/portal') || currentPath.startsWith('/track'))) {
     return null;
   }
 
@@ -24,7 +26,7 @@ export default function MobileNav() {
   return (
     <>
       {/* Prominent Quick Call & WhatsApp Floating Sticky Bar */}
-      <div className="md:hidden fixed bottom-16 left-3 right-3 z-40 flex items-center justify-between gap-2.5 pointer-events-auto">
+      <div data-customer-nav="true" className="customer-helpline-bar md:hidden fixed bottom-16 left-3 right-3 z-40 flex items-center justify-between gap-2.5 pointer-events-auto">
         <a
           href="tel:+919752524398"
           className="flex-1 bg-slate-900/95 backdrop-blur-md hover:bg-slate-900 text-white font-extrabold py-2.5 px-3 rounded-2xl shadow-xl border border-slate-700/80 flex items-center justify-center gap-2 text-xs transition-all active:scale-95"
@@ -49,7 +51,7 @@ export default function MobileNav() {
       </div>
 
       {/* Main Bottom Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-lg border-t border-slate-800 px-3 py-1.5 shadow-2xl">
+      <div data-customer-nav="true" className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-lg border-t border-slate-800 px-3 py-1.5 shadow-2xl">
         <div className="grid grid-cols-3 items-center justify-items-center">
           {navItems.map((item, index) => {
             const Icon = item.icon;

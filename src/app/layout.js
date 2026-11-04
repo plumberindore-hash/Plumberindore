@@ -1,13 +1,7 @@
 import React from 'react';
 import Script from 'next/script';
 import './globals.css';
-import Header from '../components/layout/Header';
-import Footer from '../components/layout/Footer';
-import MobileNav from '../components/layout/MobileNav';
-import BookingModal from '../components/booking/BookingModal';
-import TrackingModal from '../components/booking/TrackingModal';
-import AllServicesModal from '../components/services/AllServicesModal';
-import LiveChatbotWidget from '../components/chat/LiveChatbotWidget';
+import CustomerLayoutChrome from '../components/layout/CustomerLayoutChrome';
 import { BookingProvider } from '../context/BookingContext';
 import { LanguageProvider } from '../context/LanguageContext';
 
@@ -80,16 +74,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
         <LanguageProvider>
           <BookingProvider>
-            <Header />
-            <main className="flex-1">
+            <CustomerLayoutChrome>
               {children}
-            </main>
-            <Footer />
-            <MobileNav />
-            <BookingModal />
-            <TrackingModal />
-            <AllServicesModal />
-            <LiveChatbotWidget />
+            </CustomerLayoutChrome>
           </BookingProvider>
         </LanguageProvider>
       </body>
