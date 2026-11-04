@@ -15,11 +15,12 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
 
+  const currentPath = pathname || (typeof window !== 'undefined' ? window.location.pathname : '');
+
   // Suppress customer header on partner, admin, ops portal, and tracking screens
-  if (pathname && (pathname.startsWith('/partner') || pathname.startsWith('/admin') || pathname.startsWith('/portal') || pathname.startsWith('/track'))) {
+  if (currentPath && (currentPath.startsWith('/partner') || currentPath.startsWith('/admin') || currentPath.startsWith('/portal') || currentPath.startsWith('/track'))) {
     return null;
   }
-
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
@@ -44,17 +45,23 @@ export default function Header() {
     : [];
 
   const matchingAreas = trimmedQuery.length >= 1
-    ? INDORE_AREAS_DATA.filter((a) => 
+    ? INDORE_AREAS_DATA.filter((a) =>
         a.name.toLowerCase().includes(trimmedQuery) ||
-        (a.pincode && a.pincode.includes(trimmedQuery))
-      ).slice(0, 3)
+        a.landmark.toLowerCase().includes(trimmedQuery) ||
+        a.pincode.includes(trimmedQuery) ||
+        a.slug.toLowerCase().includes(trimmedQuery)
+      ).slice(0, 4)
     : [];
 
-  const hasSearchMatches = matchingServices.length > 0 || matchingAreas.length > 0;
+  const showSearchResults = isSearchFocused && trimmedQuery.length >= 1 && (matchingServices.length > 0 || matchingAreas.length > 0);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -68,77 +75,84 @@ export default function Header() {
     setSearchQuery('');
   }, [pathname]);
 
-  // Click outside listener to safely dismiss search dropdown
+  // Click outside to dismiss search results
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
         setIsSearchFocused(false);
+      }
+      if (megaMenuContainerRef.current && !megaMenuContainerRef.current.contains(e.target)) {
+        setIsMegaMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleMouseEnter = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsMegaMenuOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => {
-      setIsMegaMenuOpen(false);
-    }, 200);
-  };
-
   const handleSelectService = (slug) => {
-    const targetUrl = getLegacyServiceRedirect(slug);
     setIsSearchFocused(false);
     setSearchQuery('');
-    router.push(targetUrl);
+    router.push(getLegacyServiceRedirect(slug));
   };
 
   const handleSelectArea = (areaSlug) => {
     setIsSearchFocused(false);
     setSearchQuery('');
-    router.push(`/indore/${areaSlug}`);
+    router.push(`/${areaSlug}`);
+  };
+
+  const handleMouseEnterServices = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setIsMegaMenuOpen(true);
+  };
+
+  const handleMouseLeaveServices = () => {
+    timeoutRef.current = setTimeout(() => {
+      setIsMegaMenuOpen(false);
+    }, 200);
   };
 
   return (
-    <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-md py-2 border-b border-slate-100'
-          : 'bg-white py-3 border-b border-slate-100'
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header data-customer-header="true" className={`sticky top-0 z-50 transition-all duration-300 ${
+      isScrolled 
+        ? 'bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-lg py-2.5' 
+        : 'bg-slate-900 border-b border-slate-800/80 py-3.5'
+    }`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative" ref={megaMenuContainerRef}>
         <div className="flex items-center justify-between gap-4">
+          
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 shrink-0 group">
-            <span className="font-heading text-xl sm:text-2xl font-black tracking-tight text-slate-900 group-hover:text-amber-500 transition-colors">
-              Plumber<span className="text-amber-500">Indore</span>
-            </span>
-            <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 rounded-full">
-              Doorstep Experts
-            </span>
+          <Link href="/" className="flex items-center space-x-2.5 shrink-0 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-md group-hover:scale-105 transition-transform">
+              <Wrench className="w-5 h-5 stroke-[2.5]" />
+            </div>
+            <div>
+              <span className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center">
+                Plumber<span className="text-amber-400">Indore</span>
+              </span>
+              <span className="block text-[9px] uppercase tracking-widest text-slate-400 font-bold -mt-1">
+                Doorstep Experts
+              </span>
+            </div>
           </Link>
 
-          {/* Search Bar - Center */}
-          <div ref={searchContainerRef} className="hidden md:flex flex-1 max-w-md mx-4 relative">
+          {/* Search Bar - Desktop */}
+          <div ref={searchContainerRef} className="hidden md:flex flex-1 max-w-md mx-6 relative">
             <div className="relative w-full">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                placeholder={t('searchPlaceholder') || 'Search plumbing, AC, electrician or area...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
-                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white transition-all shadow-inner"
+                placeholder="Search plumbing, AC, electrician or area..."
+                className="w-full pl-10 pr-9 py-2 bg-slate-800/90 border border-slate-700/80 rounded-full text-xs font-semibold text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all shadow-inner"
               />
               {searchQuery && (
                 <button
+                  type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -146,51 +160,45 @@ export default function Header() {
             </div>
 
             {/* Instant Search Suggestions Dropdown */}
-            {isSearchFocused && hasSearchMatches && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+            {showSearchResults && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-2.5 space-y-2 z-50">
                 {matchingServices.length > 0 && (
-                  <div className="p-2">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold px-2 py-1">
                       Services
                     </div>
-                    {matchingServices.map((service) => (
+                    {matchingServices.map((srv) => (
                       <button
-                        key={service.id}
-                        onClick={() => handleSelectService(service.slug)}
-                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-amber-50 flex items-center justify-between group transition-colors"
+                        key={srv.id}
+                        onClick={() => handleSelectService(srv.slug)}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 flex items-center justify-between text-xs text-white group transition-colors"
                       >
-                        <div className="flex items-center space-x-2.5 truncate">
-                          <Wrench className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                          <span className="text-xs font-semibold text-slate-800 group-hover:text-amber-900 truncate">
-                            {service.name}
-                          </span>
+                        <div className="flex items-center space-x-2">
+                          <Wrench className="w-3.5 h-3.5 text-amber-400" />
+                          <span className="font-semibold">{srv.name}</span>
                         </div>
-                        <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-amber-500 shrink-0" />
+                        <span className="text-amber-400 font-bold">₹{srv.startingPrice}</span>
                       </button>
                     ))}
                   </div>
                 )}
 
                 {matchingAreas.length > 0 && (
-                  <div className="p-2 border-t border-slate-100 bg-slate-50/50">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 py-1">
+                  <div className="pt-2 border-t border-slate-800">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold px-2 py-1">
                       Indore Areas
                     </div>
                     {matchingAreas.map((area) => (
                       <button
                         key={area.slug}
                         onClick={() => handleSelectArea(area.slug)}
-                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-amber-50 flex items-center justify-between group transition-colors"
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 flex items-center justify-between text-xs text-white group transition-colors"
                       >
-                        <div className="flex items-center space-x-2.5 truncate">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-500 shrink-0" />
-                          <span className="text-xs font-medium text-slate-700 group-hover:text-amber-900 truncate">
-                            {area.name} <span className="text-[10px] text-slate-400">({area.pincode})</span>
-                          </span>
+                        <div className="flex items-center space-x-2">
+                          <MapPin className="w-3.5 h-3.5 text-blue-400" />
+                          <span className="font-semibold">{area.name}</span>
                         </div>
-                        <span className="text-[10px] text-slate-400 group-hover:text-amber-600 font-medium shrink-0">
-                          View local experts →
-                        </span>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-400 transition-colors" />
                       </button>
                     ))}
                   </div>
@@ -199,109 +207,155 @@ export default function Header() {
             )}
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center space-x-6 text-sm font-semibold text-slate-700">
-            <Link href="/" className="hover:text-amber-500 transition-colors">
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center space-x-7 text-xs font-bold text-slate-300">
+            <Link href="/" className="hover:text-amber-400 transition-colors">
               Home
             </Link>
 
-            {/* Services with Hover Mega Menu */}
+            {/* Services with Hover Dropdown */}
             <div
-              ref={megaMenuContainerRef}
-              className="relative py-2"
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
+              className="relative py-2 cursor-pointer flex items-center space-x-1 hover:text-amber-400 transition-colors"
+              onMouseEnter={handleMouseEnterServices}
+              onMouseLeave={handleMouseLeaveServices}
             >
-              <button
-                className="flex items-center space-x-1 hover:text-amber-500 transition-colors"
-                onClick={() => setIsMegaMenuOpen(!isMegaMenuOpen)}
-              >
-                <span>Services</span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180 text-amber-500' : ''}`} />
-              </button>
-
-              <ServicesMegaMenu
-                isOpen={isMegaMenuOpen}
-                onClose={() => setIsMegaMenuOpen(false)}
-              />
+              <span>Services</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180 text-amber-400' : ''}`} />
             </div>
 
-            <Link href="/pricing" className="hover:text-amber-500 transition-colors">
-              Pricing
+            <Link href="/services" className="hover:text-amber-400 transition-colors">
+              All Repairs
             </Link>
-            <Link href="/about" className="hover:text-amber-500 transition-colors">
+
+            <Link href="/about" className="hover:text-amber-400 transition-colors">
               About
             </Link>
-            <Link href="/contact" className="hover:text-amber-500 transition-colors">
+
+            <Link href="/contact" className="hover:text-amber-400 transition-colors">
               Contact
             </Link>
           </nav>
 
-          {/* Right Action Buttons */}
+          {/* Action CTAs */}
           <div className="flex items-center space-x-3">
             <button
-              onClick={() => openBookingModal('plumbing')}
-              className="hidden sm:inline-flex items-center justify-center px-4 py-2 text-xs sm:text-sm font-bold rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-sm transition-all active:scale-95"
+              type="button"
+              onClick={() => openBookingModal('ac-repair')}
+              className="hidden sm:inline-flex items-center space-x-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-extrabold text-xs shadow-md shadow-amber-500/20 hover:from-amber-400 hover:to-amber-300 transition-all active:scale-95"
             >
-              Book Service
+              <span>⚡ Book Now</span>
             </button>
 
-            {/* Mobile Menu Hamburger Toggle */}
+            {/* Mobile Hamburger Button */}
             <button
+              type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
-              aria-label="Toggle mobile menu"
+              className="lg:hidden p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              aria-label="Toggle Mobile Menu"
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
+
         </div>
+
+        {/* Desktop Mega Menu Dropdown */}
+        <ServicesMegaMenu
+          isOpen={isMegaMenuOpen}
+          onMouseEnter={handleMouseEnterServices}
+          onMouseLeave={handleMouseLeaveServices}
+          onClose={() => setIsMegaMenuOpen(false)}
+        />
       </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile Slide-down Menu */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-full bg-white border-b border-slate-200 shadow-xl p-4 space-y-3 animate-in slide-in-from-top-2 duration-200">
+        <div className="md:hidden bg-slate-900 border-b border-slate-800 px-4 pt-3 pb-6 space-y-3">
+          {/* Mobile Search Input */}
           <div className="relative mb-3">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             <input
               type="text"
-              placeholder="Search services or areas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-amber-400"
+              placeholder="Search AC, Plumber, Area..."
+              className="w-full pl-9 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-semibold text-white placeholder-slate-400 focus:outline-none focus:border-amber-400"
             />
+            {trimmedQuery.length >= 1 && (
+              <div className="mt-2 bg-slate-950 border border-slate-800 rounded-xl p-2 space-y-2 max-h-56 overflow-y-auto">
+                {matchingServices.map((srv) => (
+                  <button
+                    key={srv.id}
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      handleSelectService(srv.slug);
+                    }}
+                    className="w-full text-left p-2 rounded-lg bg-slate-900 hover:bg-slate-800 flex items-center justify-between text-xs text-white"
+                  >
+                    <span className="font-bold">{srv.name}</span>
+                    <span className="text-amber-400 font-extrabold">₹{srv.startingPrice}</span>
+                  </button>
+                ))}
+                {matchingAreas.map((area) => (
+                  <button
+                    key={area.slug}
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      handleSelectArea(area.slug);
+                    }}
+                    className="w-full text-left p-2 rounded-lg bg-slate-900 hover:bg-slate-800 flex items-center justify-between text-xs text-white"
+                  >
+                    <span className="font-bold">{area.name}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-sm font-medium">
-            <Link href="/" className="p-2.5 rounded-xl bg-slate-50 hover:bg-amber-50 text-slate-800">
+          <div className="grid grid-cols-2 gap-2 text-xs font-bold text-slate-300">
+            <Link
+              href="/"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 hover:text-white"
+            >
               Home
             </Link>
-            <Link href="/services" className="p-2.5 rounded-xl bg-slate-50 hover:bg-amber-50 text-slate-800">
+            <Link
+              href="/services"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 hover:text-white"
+            >
               All Services
             </Link>
-            <Link href="/pricing" className="p-2.5 rounded-xl bg-slate-50 hover:bg-amber-50 text-slate-800">
-              Pricing List
+            <Link
+              href="/about"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 hover:text-white"
+            >
+              About Company
             </Link>
-            <Link href="/about" className="p-2.5 rounded-xl bg-slate-50 hover:bg-amber-50 text-slate-800">
-              About Us
-            </Link>
-            <Link href="/contact" className="p-2.5 rounded-xl bg-slate-50 hover:bg-amber-50 text-slate-800">
-              Contact
-            </Link>
-            <Link href="/privacy" className="p-2.5 rounded-xl bg-slate-50 hover:bg-amber-50 text-slate-800">
-              Warranty & Policy
+            <Link
+              href="/contact"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 hover:text-white"
+            >
+              Contact Indore
             </Link>
           </div>
 
-          <button
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              openBookingModal('plumbing');
-            }}
-            className="w-full py-3 text-center text-xs font-bold rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-heading shadow-md"
-          >
-            ⚡ Instant Doorstep Booking
-          </button>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                openBookingModal('ac-repair');
+              }}
+              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold py-3 rounded-xl text-sm text-center block shadow-md"
+            >
+              {t('bookNow')}
+            </button>
+          </div>
         </div>
       )}
     </header>
