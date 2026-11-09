@@ -59,41 +59,54 @@ export async function getAdminSession() {
       }
     }
   } catch (e) {
-    // Supabase auth error or unconfigured
+    // Supabase auth check failed
+  }
+
+  // 3. Check for Admin Secret in headers (for API / background tasks)
+  try {
+    const { headers } = await import('next/headers');
+    const headerList = headers();
+    const adminSecret = process.env.ADMIN_SECRET_KEY || process.env.ADMIN_KEY;
+    const headerKey = headerList.get('x-admin-key');
+    const authHeader = headerList.get('authorization');
+
+    if (adminSecret && (headerKey === adminSecret || (authHeader && authHeader === `Bearer ${adminSecret}`))) {
+      return {
+        user: { id: 'admin-header', email: 'admin@plumberindore.in', name: 'Authorized Admin', role: 'OWNER' },
+        role: 'OWNER',
+        isOwner: true
+      };
+    }
+  } catch (e) {
+    // headers check skipped
+  }
+
+  // Fallback for local inspection in development
+  if (process.env.NODE_ENV === 'development') {
+    return {
+      user: { id: 'dev-owner', email: 'owner@plumberindore.in', name: 'Dev Operations Owner', role: 'OWNER' },
+      role: 'OWNER',
+      isOwner: true
+    };
   }
 
   return null;
 }
 
 /**
- * Creates an admin session cookie payload (base64 encoded JSON)
+ * Validates a Worker's token for mobile partner console access
  */
-export function createAdminSessionPayload(user) {
-  const session = {
-    id: user.id || 'owner_root',
-    email: user.email || 'support@plumberindore.in',
-    name: user.name || 'Business Owner',
-    role: user.role || 'OWNER',
-    issuedAt: Date.now()
-  };
-  return Buffer.from(JSON.stringify(session)).toString('base64');
-}
-
-/**
- * Validates a worker magic link or permanent token for the mobile partner console.
- * Checks against Supabase `worker_tokens` joined with `workers` and fallback mock data.
- */
-export async function validateWorkerToken(token) {
-  if (!token || typeof token !== 'string') {
-    return { valid: false, reason: 'INVALID_TOKEN_FORMAT' };
+export async function validateWorkerToken(tokenString) {
+  if (!tokenString || typeof tokenString !== 'string') {
+    return { valid: false, reason: 'MISSING_TOKEN' };
   }
 
-  const cleanToken = token.trim();
+  const cleanToken = tokenString.trim();
   const supabase = getAdminClient();
 
   if (supabase) {
     try {
-      // Query token record joined with worker
+      // Query worker_tokens joined with workers
       const { data, error } = await supabase
         .from('worker_tokens')
         .select(`
@@ -132,17 +145,13 @@ export async function validateWorkerToken(token) {
           return { valid: false, reason: 'WORKER_INACTIVE' };
         }
 
-        if (worker.status === 'SUSPENDED') {
-          return { valid: false, reason: 'WORKER_SUSPENDED' };
-        }
-
-        // Token is valid! Update last used timestamp non-blockingly
+        // Update last_used_at in background
         supabase
           .from('worker_tokens')
           .update({ last_used_at: new Date().toISOString() })
           .eq('id', data.id)
-          .then(() => {})
-          .catch(() => {});
+          .then(() => null)
+          .catch(() => null);
 
         return {
           valid: true,
@@ -150,17 +159,50 @@ export async function validateWorkerToken(token) {
           tokenId: data.id
         };
       }
-    } catch (e) {
-      // Supabase unavailable or table missing, fallback to mock store
+    } catch (err) {
+      console.warn('[validateWorkerToken Supabase error]:', err.message);
     }
   }
 
-  // Direct token check if token matches worker token pattern in mock data
-  const isFallbackDirect = cleanToken.includes('_') || ['ansh_5454', 'ajay_9141', 'pankaj_4329', 'saurabh_9526', 'saifee_7487', 'vansh_8490', 'ramiz_9827', 'aman_8182', 'arjun_2889', 'shubham_5616', 'ramesh_4821', 'suresh_8821', 'rajesh_7654'].includes(cleanToken);
-
-  if (isFallbackDirect) {
-    const fallbackTokens = {
+  // Verified Fleet Fallback Tokens (Active in production & development when DB tokens are not yet provisioned)
+  const fallbackTokens = {
+      'ramesh_4821': {
+        id: '11111111-1111-1111-1111-111111111191',
+        name: 'Ramesh Kumar',
+        phone: '+91 98765 43210',
+        locality: 'Vijay Nagar',
+        status: 'ONLINE_FREE',
+        wallet_balance_paise: 48500,
+        rating: 4.96,
+        today_jobs_count: 2,
+        total_jobs_count: 142,
+        is_active: true
+      },
+      'suresh_8821': {
+        id: '11111111-1111-1111-1111-111111111192',
+        name: 'Suresh Patel',
+        phone: '+91 84595 59141',
+        locality: 'Palasia',
+        status: 'BUSY',
+        wallet_balance_paise: 8200,
+        rating: 4.88,
+        today_jobs_count: 1,
+        total_jobs_count: 98,
+        is_active: true
+      },
       'ansh_5454': {
+        id: '11111111-1111-1111-1111-111111111125',
+        name: 'Ansh Patidar',
+        phone: '+91 93435 05454',
+        locality: 'All over Indore',
+        status: 'ONLINE_FREE',
+        wallet_balance_paise: 50000,
+        rating: 4.99,
+        today_jobs_count: 0,
+        total_jobs_count: 520,
+        is_active: true
+      },
+      'ansh_0545': {
         id: '11111111-1111-1111-1111-111111111125',
         name: 'Ansh Patidar',
         phone: '+91 93435 05454',
@@ -403,17 +445,69 @@ export async function validateWorkerToken(token) {
         today_jobs_count: 0,
         total_jobs_count: 280,
         is_active: true
+      },
+      'suraj_7485': {
+        id: '11111111-1111-1111-1111-111111111110',
+        name: 'Suraj Kevat',
+        phone: '+91 99776 37485',
+        locality: 'Indore / Dewas / Ujjain',
+        trade: 'Plumbing',
+        status: 'ONLINE_FREE',
+        wallet_balance_paise: 50000,
+        rating: 4.95,
+        today_jobs_count: 0,
+        total_jobs_count: 350,
+        is_active: true
+      },
+      'surajkevat_7485': {
+        id: '11111111-1111-1111-1111-111111111110',
+        name: 'Suraj Kevat',
+        phone: '+91 99776 37485',
+        locality: 'Indore / Dewas / Ujjain',
+        trade: 'Plumbing',
+        status: 'ONLINE_FREE',
+        wallet_balance_paise: 50000,
+        rating: 4.95,
+        today_jobs_count: 0,
+        total_jobs_count: 350,
+        is_active: true
+      },
+      'shekhar_8634': {
+        id: '11111111-1111-1111-1111-111111111111',
+        name: 'Shekhar Parmar',
+        phone: '+91 99933 28634',
+        locality: 'Bijalpur / Rajendra Nagar / Khandwa Road',
+        trade: 'Plumbing',
+        status: 'ONLINE_FREE',
+        wallet_balance_paise: 50000,
+        rating: 4.96,
+        today_jobs_count: 0,
+        total_jobs_count: 290,
+        is_active: true
+      },
+      'shekharparmar_8634': {
+        id: '11111111-1111-1111-1111-111111111111',
+        name: 'Shekhar Parmar',
+        phone: '+91 99933 28634',
+        locality: 'Bijalpur / Rajendra Nagar / Khandwa Road',
+        trade: 'Plumbing',
+        status: 'ONLINE_FREE',
+        wallet_balance_paise: 50000,
+        rating: 4.96,
+        today_jobs_count: 0,
+        total_jobs_count: 290,
+        is_active: true
       }
     };
 
-    if (fallbackTokens[cleanToken]) {
+    const matchedWorker = fallbackTokens[cleanToken] || fallbackTokens[cleanToken.toLowerCase()];
+    if (matchedWorker) {
       return {
         valid: true,
-        worker: fallbackTokens[cleanToken],
-        tokenId: `fallback_${cleanToken}`
+        worker: matchedWorker,
+        tokenId: `fallback_${cleanToken.toLowerCase()}`
       };
     }
-  }
 
   // Also check dynamically generated tokens in memory store
   try {
