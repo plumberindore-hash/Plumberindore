@@ -1,487 +1,92 @@
 import { NextResponse } from 'next/server';
-import { getAdminClient } from '../../../../lib/supabase/admin.js';
-import { validateAdminRequest } from '../../../../lib/adminAuth.js';
+import { supabaseAdmin } from '../../../../lib/supabase/admin';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
-function extractLocality(address = '', pincode = '') {
-  const addr = (address || '').toLowerCase();
-  if (addr.includes('vijay nagar')) return 'Vijay Nagar';
-  if (addr.includes('palasia')) return 'Palasia';
-  if (addr.includes('bhawarkua') || addr.includes('bhanwarkuan')) return 'Bhawarkua';
-  if (addr.includes('rau')) return 'Rau';
-  if (addr.includes('bicholi') || addr.includes('mardana')) return 'Bicholi Mardana';
-  if (addr.includes('khandwa')) return 'Khandwa Road';
-  if (addr.includes('rajendra')) return 'Rajendra Nagar';
-  if (addr.includes('annapurna')) return 'Annapurna';
-  if (addr.includes('sudama')) return 'Sudama Nagar';
-  if (addr.includes('nipania')) return 'Nipania';
-  if (addr.includes('kanadia')) return 'Kanadia Road';
-  if (addr.includes('mahalaxmi')) return 'Mahalaxmi Nagar';
-
-  if (pincode === '452010') return 'Vijay Nagar';
-  if (pincode === '452001') return 'Palasia';
-  if (pincode === '452014') return 'Bhawarkua';
-  if (pincode === '453331') return 'Rau';
-  if (pincode === '452016') return 'Bicholi Mardana';
-
-  // First chunk before comma
-  if (address && address.includes(',')) {
-    return address.split(',')[0].trim();
-  }
-  return address || 'Indore';
-}
+// Default mock fleet for resilience if Supabase is offline or not configured
+const DEFAULT_FLEET = [
+  { id: 'TECH-IND-01', name: 'Ansh Patidar', phone: '+91 93435 05454', locality: 'All over Indore', status: 'Online (Free)', activeJob: 'None', todayEarnings: 0, rating: 4.99, token: 'ansh_5454' },
+  { id: 'TECH-IND-02', name: 'Ajay Mahajan', phone: '+91 84595 59141', locality: 'Rau / Bhawarkua', status: 'Online (Free)', activeJob: 'None', todayEarnings: 0, rating: 4.96, token: 'ajay_9141' },
+  { id: 'TECH-IND-03', name: 'Pankaj Sharma', phone: '+91 98267 43299', locality: 'Bicholi Mardana', status: 'Online (Free)', activeJob: 'None', todayEarnings: 0, rating: 4.94, token: 'pankaj_4329' },
+  { id: 'TECH-IND-04', name: 'Saurabh Electrician', phone: '+91 78697 09526', locality: 'Vijay Nagar', status: 'Online (Free)', activeJob: 'None', todayEarnings: 0, rating: 4.98, token: 'saurabh_9526' },
+  { id: 'TECH-IND-05', name: 'Saifee Khozema', phone: '+91 98267 27487', locality: 'Khatiwala Tank', status: 'Online (Free)', activeJob: 'None', todayEarnings: 0, rating: 4.97, token: 'saifee_7487' },
+  { id: 'TECH-IND-06', name: 'Vansh Budhlani', phone: '+91 95898 18490', locality: 'Sudama Nagar', status: 'Online (Free)', activeJob: 'None', todayEarnings: 0, rating: 4.96, token: 'vansh_8490' },
+  { id: 'TECH-IND-07', name: 'Ramiz Electrician', phone: '+91 88894 48805', locality: 'Khajrana', status: 'Online (Free)', activeJob: 'None', todayEarnings: 0, rating: 4.95, token: 'ramiz_8805' },
+  { id: 'TECH-IND-08', name: 'Aman Mansuri', phone: '+91 70007 72445', locality: 'Chandan Nagar', status: 'Online (Free)', activeJob: 'None', todayEarnings: 0, rating: 4.95, token: 'aman_2445' },
+  { id: 'TECH-IND-09', name: 'Arjun Solanki', phone: '+91 97536 28898', locality: 'Vijay Nagar / All over Indore', status: 'Online (Free)', activeJob: 'None', todayEarnings: 0, rating: 4.98, token: 'arjun_2889', trade: 'Chimney & Gas Stove' },
+  { id: 'TECH-IND-10', name: 'Shubham Parmar', phone: '+91 70890 05616', locality: 'Vijay Nagar / Scheme 136', status: 'Online (Free)', activeJob: 'None', todayEarnings: 0, rating: 4.96, token: 'shubham_5616', trade: 'Electrician' },
+  { id: 'TECH-IND-11', name: 'Suraj Kevat', phone: '+91 99776 37485', locality: 'Indore / Dewas / Ujjain', status: 'Online (Free)', activeJob: 'None', todayEarnings: 0, rating: 4.95, token: 'suraj_7485', trade: 'Plumbing' },
+  { id: 'TECH-IND-12', name: 'Shekhar Parmar', phone: '+91 99933 28634', locality: 'Bijalpur / Rajendra Nagar / Khandwa Road', status: 'Online (Free)', activeJob: 'None', todayEarnings: 0, rating: 4.96, token: 'shekhar_8634', trade: 'Plumbing' },
+  { id: 'TECH-IND-13', name: 'Yogesh Mahajan', phone: '+91 76202 88230', locality: 'Bholaram Ustad Marg / Bhawarkua / Palasia / Vijay Nagar', status: 'Online (Free)', activeJob: 'None', todayEarnings: 0, rating: 4.97, token: 'yogesh_8230', trade: 'Plumbing' }
+];
 
 export async function GET(request) {
   try {
-    const authCheck = validateAdminRequest(request);
-    if (!authCheck.authorized) {
-      return authCheck.response;
-    }
-
-    const supabaseAdmin = getAdminClient();
-    if (!supabaseAdmin) {
-      return NextResponse.json({
-        success: true,
-        source: 'local_fallback',
-        bookings: [],
-        inquiries: [],
-        chats: [],
-        syncedAt: new Date().toISOString()
-      });
-    }
-
-    // 1. Fetch Bookings & Audit Overrides (guarantees manual dispatch & status persist reliably)
-    const { data: dbBookings = [], error: bookingsErr } = await supabaseAdmin
-      .from('bookings')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (bookingsErr) {
-      console.error('Error fetching bookings in portal API:', bookingsErr.message);
-    }
-
-    // Fetch assignment & status overrides recorded in audit_logs
-    const auditOverrides = {};
-    try {
-      const { data: auditLogs = [] } = await supabaseAdmin
-        .from('audit_logs')
+    // 1. Fetch bookings
+    let bookings = [];
+    if (supabaseAdmin) {
+      const { data, error } = await supabaseAdmin
+        .from('bookings')
         .select('*')
-        .eq('entity_type', 'booking')
-        .in('action', ['assign_technician', 'update_booking'])
-        .order('created_at', { ascending: true }); // chronological, so newer entries take precedence
-
-      (auditLogs || []).forEach(log => {
-        const v = log.new_values || {};
-        const bNum = v.booking_number || log.entity_id;
-        const dbId = v.db_id;
-        const item = {
-          status: v.status,
-          technician: v.technician,
-          notes: v.notes,
-          paymentStatus: v.payment_status
-        };
-        if (bNum) auditOverrides[bNum] = { ...(auditOverrides[bNum] || {}), ...item };
-        if (dbId) auditOverrides[dbId] = { ...(auditOverrides[dbId] || {}), ...item };
-        if (log.entity_id) auditOverrides[log.entity_id] = { ...(auditOverrides[log.entity_id] || {}), ...item };
-      });
-    } catch (auditErr) {
-      console.warn('Notice reading audit_logs for booking overrides:', auditErr.message);
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (!error && data) {
+        bookings = data;
+      }
     }
 
-    // Reset & Clear Filter: clears previous test bookings if BOOKINGS_RESET_CUTOFF is specified
-    // Otherwise loads all active bookings from the database
-    const RESET_BOOKINGS_CUTOFF = process.env.BOOKINGS_RESET_CUTOFF || null;
-    const activeDbBookings = RESET_BOOKINGS_CUTOFF
-      ? (dbBookings || []).filter(b => b.created_at && new Date(b.created_at) > new Date(RESET_BOOKINGS_CUTOFF))
-      : (dbBookings || []);
-
-    const bookings = activeDbBookings.map((b) => {
-      const bId = b.booking_number || b.id;
-      const override = auditOverrides[b.booking_number] || auditOverrides[b.id] || {};
-      const scheduledDate = b.scheduled_date || b.booking_date || (b.created_at ? b.created_at.split('T')[0] : 'Today');
-      const timeSlot = b.time_slot || b.booking_slot || 'Standard Slot';
-      const locality = extractLocality(b.service_address || b.address, b.pincode);
-      const serviceName = b.service_name || 'Home Repair';
-      const packageTitle = b.package_title || 'Standard Package';
-      const price = Number(b.total_amount ?? b.price ?? b.subtotal ?? 0);
-      const customerPhone = b.customer_phone || b.mobile_number || '';
-      const customerName = b.customer_name || 'Customer';
-      const customerEmail = b.customer_email || '';
-      const address = b.service_address || b.address || 'Indore';
-
-      // Status and technician assignment persistence:
-      const notes = override.notes !== undefined ? override.notes : (b.notes || '');
-      const rawStatus = override.status || b.status || 'Pending';
-      const status = rawStatus;
-      
-      let assignedTech = '';
-      if (override.technician !== undefined) {
-        assignedTech = override.technician || '';
-      } else if (notes.includes('Tech:')) {
-        assignedTech = notes.split('Tech:')[1]?.trim() || '';
-      } else if (status === 'Technician Assigned' || status === 'In Progress') {
-        assignedTech = 'Ajay Mahajan';
-      }
-
-      const priority = notes.toLowerCase().includes('urgent') ? 'Urgent' : 'High';
-      const paymentStatus = override.paymentStatus || b.payment_status || 'Pending (Pay on Completion)';
-
-      return {
-        id: bId,
-        dbId: b.id,
-        booking_number: bId,
-        customerName: customerName,
-        customer_name: customerName,
-        name: customerName,
-        customerPhone: customerPhone,
-        customer_phone: customerPhone,
-        mobile_number: customerPhone,
-        phone: customerPhone,
-        customerEmail: customerEmail,
-        customer_email: customerEmail,
-        email: customerEmail,
-        locality: locality,
-        area: locality,
-        address: address,
-        service_address: address,
-        pincode: b.pincode || '452010',
-        serviceName: serviceName,
-        service_name: serviceName,
-        service: serviceName,
-        packageTitle: packageTitle,
-        package_title: packageTitle,
-        price: price,
-        amount: price,
-        total_amount: price,
-        scheduledDate: scheduledDate,
-        scheduled_date: scheduledDate,
-        booking_date: scheduledDate,
-        timeSlot: timeSlot,
-        time_slot: timeSlot,
-        booking_slot: timeSlot,
-        time: `${scheduledDate}, ${timeSlot}`,
-        status: status,
-        priority: priority,
-        assignedTechnician: assignedTech,
-        technician: assignedTech,
-        notes: notes,
-        paymentStatus: paymentStatus,
-        payment_status: paymentStatus,
-        paymentMethod: b.payment_method || 'Cash / UPI on Doorstep',
-        payment_method: b.payment_method || 'Cash / UPI on Doorstep',
-        paymentRef: b.payment_ref || null,
-        source: b.booking_number?.startsWith('IND-') ? 'Website Booking' : 'Portal Lead',
-        linkedInquiryId: notes?.match(/INQ-[A-Za-z0-9-]+/)?.[0] || null,
-        linkedChatId: notes?.match(/CHAT-[A-Za-z0-9-]+/)?.[0] || null,
-        createdAt: b.created_at,
-        created_at: b.created_at,
-        updatedAt: b.updated_at || b.created_at
-      };
-    });
-
-    // 2. Fetch Inquiries (Quote Requests + Contact Messages)
-    const { data: dbQuotes = [] } = await supabaseAdmin
-      .from('quote_requests')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    const { data: dbContact = [] } = await supabaseAdmin
-      .from('contact_messages')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    const quoteInquiries = (dbQuotes || []).map((q) => ({
-      id: `INQ-Q${q.id.slice(0, 5).toUpperCase()}`,
-      dbId: q.id,
-      customerName: q.customer_name || 'Cost Calculator Lead',
-      phone: q.customer_phone || '',
-      service: `${q.service_category || q.category ? (q.service_category || q.category).toUpperCase() : 'General'}: ${q.details || q.issue || 'Plumbing Service'}`,
-      locality: extractLocality('', q.pincode || q.customer_pincode || ''),
-      estimatedAmount: Number(q.estimated_price || q.estimated_amount) || 299,
-      status: q.status === 'pending' ? 'Pending Quote' : (q.status === 'converted' ? 'Converted' : 'Reviewed'),
-      time: new Date(q.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
-      source: 'Instant Cost Calculator',
-      notes: q.details || q.remarks || '',
-      createdAt: q.created_at
-    }));
-
-    const contactInquiries = (dbContact || []).map((c) => ({
-      id: `INQ-C${c.id.slice(0, 5).toUpperCase()}`,
-      dbId: c.id,
-      customerName: c.name || 'Website Contact Lead',
-      phone: c.phone || '',
-      service: `Message: ${c.message ? c.message.slice(0, 45) + (c.message.length > 45 ? '...' : '') : 'Direct Inquiry'}`,
-      locality: 'Indore Central',
-      estimatedAmount: 199,
-      status: c.status === 'new' ? 'New Contact' : (c.status === 'converted' ? 'Converted' : 'Reviewed'),
-      time: new Date(c.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
-      source: 'Contact Us Form',
-      notes: c.message || '',
-      createdAt: c.created_at
-    }));
-
-    // Merge and sort inquiries newest first
-    const inquiries = [...quoteInquiries, ...contactInquiries].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    );
-
-    // 3. Fetch Live Chatbot Sessions (Leads where source = 'live_chat')
-    const { data: dbChats = [] } = await supabaseAdmin
-      .from('leads')
-      .select('*')
-      .eq('source', 'live_chat')
-      .order('created_at', { ascending: false });
-
-    const chats = (dbChats || []).map((l) => ({
-      id: l.lead_number || `CHAT-${l.id.slice(0, 5)}`,
-      dbId: l.id,
-      customerName: l.name || 'Website Visitor',
-      phone: l.phone || '',
-      locality: l.service_address || l.raw_payload?.locality || 'Vijay Nagar',
-      service: l.service_name || 'Live Chat Inquiry',
-      lastMessage: l.issue_description || 'Online session started',
-      status: l.status === 'converted' ? 'Converted' : (l.status === 'resolved' ? 'Resolved' : 'Active'),
-      time: new Date(l.updated_at || l.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      updatedAt: l.updated_at || l.created_at,
-      messages: l.raw_payload?.messages || [
-        { sender: 'user', text: l.issue_description || '', time: 'Recent' }
-      ],
-      linkedBookingId: l.raw_payload?.linkedBookingId || null,
-      linkedInquiryId: l.raw_payload?.linkedInquiryId || null
-    }));
-
-    // 4. Certified Field Fleet: Ajay Mahajan, Pankaj Sharma & Saurabh Electrician
-    const DEFAULT_FLEET = [
-      {
-        id: 'TECH-IND-01',
-        name: 'Ajay Mahajan',
-        title: 'Lead Plumber & Sanitary Tech (South Corridor)',
-        phone: '+91 84595 59141',
-        rating: 4.96,
-        repairsCount: 610,
-        vehicleNumber: 'Service Bike (MP 09 MD 8821)',
-        photoUrl: 'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?auto=format&fit=crop&w=200&h=200&q=80',
-        specialty: 'Plumbing & South Sector Lead',
-        operatingArea: 'Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi',
-        serviceArea: 'Rau, Mhow, Bhawarkua, Bijalpur, Rajendra Nagar, Sudama Nagar, Tejaji Nagar, Nimbodi',
-        locatedIn: 'Rau / Bhawarkua',
-        specialization: 'Plumbing, Leakages & Sanitary Fixtures',
-        status: 'Available',
-        eta: 'Prompt Arrival'
-      },
-      {
-        id: 'TECH-IND-02',
-        name: 'Pankaj Sharma',
-        title: 'Bicholi & Bypass Lead Technician',
-        phone: '+91 98267 43299',
-        rating: 4.94,
-        repairsCount: 390,
-        vehicleNumber: 'Service Bike (MP 09 BM 4329)',
-        photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&h=200&q=80',
-        specialty: 'Bicholi & East Bypass Plumbing',
-        operatingArea: 'Bicholi Mardana, Bicholi Hapsi, Silicon City, Bypass',
-        serviceArea: 'Bicholi Mardana, Bicholi Hapsi, Silicon City, Bypass',
-        locatedIn: 'Bicholi Mardana',
-        specialization: 'Plumbing, Water Motors & Pipeline Overhauls',
-        status: 'Available',
-        eta: 'Prompt Arrival'
-      },
-      {
-        id: 'TECH-IND-03',
-        name: 'Saurabh Electrician',
-        title: 'Master Electrician & POP Specialist',
-        phone: '+917869709526',
-        rating: 4.98,
-        repairsCount: 420,
-        vehicleNumber: 'Service Bike (MP 09 EA 7869)',
-        photoUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=200&h=200&q=80',
-        specialty: 'Electrician, POP and False Ceiling',
-        operatingArea: 'All over Indore',
-        serviceArea: 'All over Indore',
-        locatedIn: 'Vijay Nagar',
-        specialization: 'Electrician, POP and False Ceiling',
-        status: 'Available',
-        eta: 'Prompt Arrival'
-      },
-      {
-        id: 'TECH-IND-04',
-        name: 'Saifee Khozema',
-        title: 'Senior Refrigerator & Cold Appliance Specialist',
-        phone: '+91 98267 27487',
-        rating: 4.97,
-        repairsCount: 380,
-        vehicleNumber: 'Service Bike (MP 09 SK 2748)',
-        photoUrl: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&h=200&q=80',
-        specialty: 'Refrigerator Repair Work',
-        operatingArea: 'All areas (provides home services across the city)',
-        serviceArea: 'All areas (provides home services across the city)',
-        locatedIn: 'Khatiwala Tank, Indore, Madhya Pradesh',
-        specialization: 'Refrigerator Repair Work',
-        status: 'Available',
-        eta: 'Prompt Arrival'
-      },
-      {
-        id: 'TECH-IND-05',
-        name: 'Vansh Budhlani',
-        title: 'Certified Senior Electrician & Wiring Specialist',
-        phone: '+91 95898 18490',
-        rating: 4.96,
-        repairsCount: 340,
-        vehicleNumber: 'Service Bike (MP 09 VB 1849)',
-        photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80',
-        specialty: 'Electrician / Electrical Work',
-        operatingArea: 'All over Indore (provides home services across the city)',
-        serviceArea: 'All over Indore (provides home services across the city)',
-        locatedIn: 'Sudama Nagar, Indore, Madhya Pradesh',
-        specialization: 'Electrician / Electrical Work',
-        status: 'Available',
-        eta: 'Prompt Arrival'
-      },
-      {
-        id: 'TECH-IND-06',
-        name: 'Ramiz',
-        title: 'Certified Electrician & Geyser Repair Specialist',
-        phone: '+91 92299 59827',
-        rating: 4.96,
-        repairsCount: 320,
-        vehicleNumber: 'Service Bike (MP 09 RM 5982)',
-        photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80',
-        specialty: 'Electrician & Geyser Repair Work',
-        operatingArea: 'Annapurna & all over Indore (provides home services across the city)',
-        serviceArea: 'Annapurna & all over Indore (provides home services across the city)',
-        locatedIn: 'Annapurna, Indore, Madhya Pradesh',
-        specialization: 'All Electrical Repairs, Geyser Repair & Power Wiring',
-        status: 'Available',
-        eta: 'Prompt Arrival'
-      },
-      {
-        id: 'TECH-IND-07',
-        name: 'Aman Meena (RB Core Cutting & Rewiring)',
-        title: 'Lead Specialist – RB Core Cutting & Rewiring',
-        phone: '+91 70895 98182',
-        rating: 4.97,
-        repairsCount: 450,
-        vehicleNumber: 'Utility Fleet Van (MP 09 RB 9182)',
-        photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&h=200&q=80',
-        specialty: 'Core Cutting, Slab Cutting, Demolition & Rebaring',
-        operatingArea: 'All over Indore (residential, commercial & industrial)',
-        serviceArea: 'All over Indore (residential, commercial & industrial)',
-        locatedIn: 'Indore, Madhya Pradesh',
-        specialization: 'Core cutting, slab cutting, breaker & demolition work, hole cutting, chemical/concrete rewiring (rebaring)',
-        status: 'Available',
-        eta: 'Prompt Arrival'
-      }
-    ];
-
-    // Hydrate any additional dynamic technicians registered in Supabase audit_logs
-    let dynamicTechs = [];
-    try {
-      const { data: techLogs = [] } = await supabaseAdmin
-        .from('audit_logs')
+    // 2. Fetch fleet workers
+    let fleet = DEFAULT_FLEET;
+    if (supabaseAdmin) {
+      const { data, error } = await supabaseAdmin
+        .from('workers')
         .select('*')
-        .eq('action', 'register_technician')
-        .order('created_at', { ascending: true });
+        .order('name');
+      if (!error && data && data.length > 0) {
+        // Map database workers to portal fleet format
+        const dbFleet = data.map((w, idx) => ({
+          id: w.id || `TECH-IND-0${idx + 1}`,
+          name: w.name,
+          phone: w.phone,
+          locality: w.locality || 'All over Indore',
+          status: w.status === 'ONLINE_FREE' ? 'Online (Free)' : w.status === 'BUSY' ? 'Busy (On Job)' : 'Offline',
+          activeJob: w.active_job_id ? `Job #${w.active_job_id.slice(0, 6)}` : 'None',
+          todayEarnings: Math.round((w.today_earnings_paise || 0) / 100),
+          rating: w.rating || 4.95,
+          token: w.token || w.name.toLowerCase().replace(/[^a-z0-9]/g, '_')
+        }));
 
-      techLogs.forEach(log => {
-        const v = log.new_values;
-        if (v && v.name && !DEFAULT_FLEET.some(t => t.name.toLowerCase() === v.name.toLowerCase() || (v.phone && t.phone.includes(v.phone.replace(/[^0-9]/g, ''))))) {
-          dynamicTechs.push({
-            id: v.id || `TECH-IND-${String(DEFAULT_FLEET.length + dynamicTechs.length + 1).padStart(2, '0')}`,
-            name: v.name,
-            title: v.title || `${v.specialization || v.specialty || 'Service'} Specialist`,
-            phone: v.phone || v.raw_phone,
-            rating: Number(v.rating) || 4.95,
-            repairsCount: Number(v.repairs_count) || 100,
-            vehicleNumber: v.vehicle_number || 'Service Bike',
-            photoUrl: v.photo_url || 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&h=200&q=80',
-            specialty: v.specialty || v.specialization || 'Home Appliances',
-            operatingArea: v.service_area || v.operating_area || 'All over Indore',
-            serviceArea: v.service_area || v.operating_area || 'All over Indore',
-            locatedIn: v.located_in || 'Indore',
-            specialization: v.specialization || v.specialty || 'Home Appliances',
-            status: v.status || 'Available',
-            eta: v.eta || 'Prompt Arrival'
-          });
-        }
-      });
-    } catch (techErr) {
-      console.warn('Notice reading dynamic technicians from audit_logs:', techErr.message);
+        // Merge DEFAULT_FLEET so newly configured technicians (Arjun, Shubham, Suraj, Shekhar, Yogesh)
+        // are never hidden if Supabase workers table only contains the initial subset
+        const dbNames = new Set(dbFleet.map(w => w.name.toLowerCase().trim()));
+        const unseeded = DEFAULT_FLEET.filter(df => !dbNames.has(df.name.toLowerCase().trim()));
+        fleet = [...dbFleet, ...unseeded];
+      }
     }
 
-    const mergedFleet = [...DEFAULT_FLEET, ...dynamicTechs];
-
-    const todayStr = new Date().toISOString().split('T')[0];
-
-    const technicians = mergedFleet.map(tech => {
-      const assigned = bookings.filter(b => {
-        const assignedName = (b.assignedTechnician || '').toLowerCase();
-        const techName = tech.name.toLowerCase();
-        return assignedName.includes(techName) || (b.notes && b.notes.toLowerCase().includes(techName));
-      });
-
-      const todayVisits = assigned.filter(b => {
-        const isToday = b.scheduledDate === todayStr || b.booking_date === todayStr;
-        const isActive = b.status === 'Technician Assigned' || b.status === 'In Progress' || b.status === 'On The Way' || b.status === 'Completed';
-        return isToday || isActive;
-      });
-
-      const completed = assigned.filter(b => b.status === 'Completed' || b.status === 'Payment Verified & Completed');
-
-      const cashInHand = assigned
-        .filter(b => {
-          const isCash = (b.paymentMethod || '').toLowerCase().includes('cash');
-          const isPaid = (b.paymentStatus || '').toLowerCase().includes('paid') || b.status === 'Completed' || b.status === 'Payment Verified & Completed';
-          return isCash && isPaid;
-        })
-        .reduce((sum, b) => sum + (Number(b.price || b.total_amount || 0)), 0);
-
-      const activeJob = assigned.find(b => b.status === 'In Progress' || b.status === 'On The Way' || b.status === 'Technician Assigned') || null;
-
-      return {
-        ...tech,
-        dailyVisitCount: todayVisits.length,
-        completedJobs: completed.length,
-        cashInHand: cashInHand,
-        activeJobCount: assigned.filter(b => b.status === 'In Progress' || b.status === 'Technician Assigned' || b.status === 'On The Way').length,
-        totalAssignedCount: assigned.length,
-        currentJob: activeJob ? {
-          bookingId: activeJob.id,
-          customerName: activeJob.customerName,
-          customerPhone: activeJob.customerPhone,
-          locality: activeJob.locality,
-          service: activeJob.serviceName,
-          slot: activeJob.timeSlot,
-          status: activeJob.status
-        } : null
-      };
-    });
+    // 3. Stats calculation
+    const totalBookings = bookings.length;
+    const completedBookings = bookings.filter(b => b.status === 'COMPLETED').length;
+    const inProgressBookings = bookings.filter(b => ['ASSIGNED', 'IN_PROGRESS', 'DISPATCHED'].includes(b.status)).length;
+    const pendingBookings = bookings.filter(b => ['PENDING', 'SEARCHING_WORKER'].includes(b.status)).length;
 
     return NextResponse.json({
       success: true,
-      source: 'supabase',
-      counts: {
-        bookings: bookings.length,
-        inquiries: inquiries.length,
-        chats: chats.length,
-        technicians: technicians.length
-      },
-      bookings,
-      inquiries,
-      chats,
-      technicians,
-      syncedAt: new Date().toISOString()
-    }, {
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
+      data: {
+        bookings,
+        fleet,
+        stats: {
+          totalBookings,
+          completedBookings,
+          inProgressBookings,
+          pendingBookings,
+          activeTechnicians: fleet.filter(f => f.status.includes('Online')).length
+        }
       }
     });
-
-  } catch (error) {
-    console.error('Error in /api/portal/data:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (err) {
+    console.error('Ops Portal data error:', err);
+    return NextResponse.json(
+      { success: false, error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }
