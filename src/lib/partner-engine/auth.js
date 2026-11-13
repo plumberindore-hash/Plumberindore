@@ -497,6 +497,32 @@ export async function validateWorkerToken(tokenString) {
         today_jobs_count: 0,
         total_jobs_count: 290,
         is_active: true
+      },
+      'yogesh_8230': {
+        id: '11111111-1111-1111-1111-111111111112',
+        name: 'Yogesh Mahajan',
+        phone: '+91 76202 88230',
+        locality: 'Bholaram Ustad Marg / Bhawarkua / Palasia / Vijay Nagar',
+        trade: 'Plumbing',
+        status: 'ONLINE_FREE',
+        wallet_balance_paise: 50000,
+        rating: 4.97,
+        today_jobs_count: 0,
+        total_jobs_count: 360,
+        is_active: true
+      },
+      'yogeshmahajan_8230': {
+        id: '11111111-1111-1111-1111-111111111112',
+        name: 'Yogesh Mahajan',
+        phone: '+91 76202 88230',
+        locality: 'Bholaram Ustad Marg / Bhawarkua / Palasia / Vijay Nagar',
+        trade: 'Plumbing',
+        status: 'ONLINE_FREE',
+        wallet_balance_paise: 50000,
+        rating: 4.97,
+        today_jobs_count: 0,
+        total_jobs_count: 360,
+        is_active: true
       }
     };
 
